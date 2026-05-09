@@ -1,0 +1,35 @@
+# Normalize text files so Windows + Linux/Docker do not fight over line endings.
+* text=auto
+
+# Keep common source and config files as LF in the repository.
+*.bash text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.cmake text eol=lf
+CMakeLists.txt text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+Dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+
+# Keep Windows-specific scripts as CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.bag binary
+*.db3 binary
+

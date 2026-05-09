@@ -1,0 +1,16 @@
+name: robot-agnostic-ai
+
+services:
+  ros2-dev:
+    build:
+      context: .
+      dockerfile: docker/ros2-humble/Dockerfile
+    image: robot-agnostic-ai:ros2-humble
+    container_name: robot_agnostic_ai_ros2_dev
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    stdin_open: true
+    tty: true

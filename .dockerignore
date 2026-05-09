@@ -1,0 +1,16 @@
+.git
+.github
+build
+install
+log
+node_modules
+dist
+__pycache__
+.pytest_cache
+.venv
+venv
+*.bag
+*.db3
+*.log
+*.zip
+

@@ -74,10 +74,19 @@ The project should use a Docker-based development environment while keeping Wind
 Reason:
 Docker provides a more repeatable and higher-quality environment for ROS 2, simulation tools, dependencies, and future deployment. It may be harder to learn at first, but it should reduce long-term setup problems.
 
+### 008 - Start With ROS 2 Humble
+
+Status: Accepted
+
+Decision:
+The first ROS 2 development container will use ROS 2 Humble on Ubuntu 22.04.
+
+Reason:
+Humble is stable, widely supported, and a conservative match for Unitree Go2X-oriented ROS 2 development with Cyclone DDS.
+
 ## Pending Decisions
 
 - First mission scenario.
 - First payload or sensor.
-- ROS 2 distribution.
 - GitHub repository name.
 - Docker runtime strategy on Windows, likely Docker Desktop with WSL2 backend.

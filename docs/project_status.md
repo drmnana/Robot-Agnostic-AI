@@ -25,6 +25,10 @@ The project architecture and phase roadmap have been drafted.
 - Installed WSL2 and Ubuntu on the user's Windows account.
 - Installed Docker Desktop.
 - Verified Docker by running the `hello-world` container.
+- Selected ROS 2 Humble as the first development distribution.
+- Added first Docker Compose development container definition.
+- Added safety assumptions document.
+- Added `.gitattributes` for Windows/Linux line-ending stability.
 
 ## In Progress
 
@@ -35,14 +39,15 @@ The project architecture and phase roadmap have been drafted.
 
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
-3. Select the ROS 2 distribution.
-4. Define the Docker development environment.
-5. Define version 1 safety rules.
-6. Create the first ROS 2 Docker development container.
+3. Build and verify the ROS 2 Humble Docker development container.
+4. Define version 1 safety rules in more detail.
+5. Create the first ROS 2 workspace.
+6. Create the first mock robot package.
 
 ## Open Questions
 
 - Which ROS 2 distribution should be selected?
 - What is the first real-world mission scenario?
 - What is the first mounted payload?
-- Which ROS 2 distribution should be used inside Docker?
+- What should be the first mission scenario?
+- What should be the first mounted payload or simulated payload?

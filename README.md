@@ -11,6 +11,8 @@ The project is currently in the planning and foundation stage.
 - [Project Status](docs/project_status.md)
 - [Decision Log](docs/decision_log.md)
 - [Glossary](docs/glossary.md)
+- [Docker Environment](docs/docker_environment.md)
+- [Safety Assumptions](docs/safety_assumptions.md)
 
 ## Current Phase
 
@@ -38,3 +40,13 @@ Phase 01 - Project Foundation
 - WSL2: installed on the user's Windows account
 - Docker Desktop: installed
 - Docker validation: `hello-world` container ran successfully
+
+## Development Container
+
+The first development container uses ROS 2 Humble on Ubuntu 22.04 with Cyclone DDS selected for Unitree-oriented compatibility.
+
+Start it with:
+
+```powershell
+docker compose run --rm ros2-dev
+```
