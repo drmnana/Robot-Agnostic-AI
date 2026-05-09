@@ -31,3 +31,10 @@ Phase 01 - Project Foundation
 - First development target: simulation
 - Preferred host operating system: Windows
 - Preferred development strategy: Docker-based environment
+
+## Environment Status
+
+- Git for Windows: installed
+- WSL2: installed on the user's Windows account
+- Docker Desktop: installed
+- Docker validation: `hello-world` container ran successfully

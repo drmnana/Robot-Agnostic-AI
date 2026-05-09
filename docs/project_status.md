@@ -21,6 +21,10 @@ The project architecture and phase roadmap have been drafted.
 - Confirmed first target: simulation.
 - Confirmed preferred development operating system: Windows.
 - Confirmed preferred development strategy: Docker-based environment.
+- Installed Git for Windows.
+- Installed WSL2 and Ubuntu on the user's Windows account.
+- Installed Docker Desktop.
+- Verified Docker by running the `hello-world` container.
 
 ## In Progress
 
@@ -29,16 +33,16 @@ The project architecture and phase roadmap have been drafted.
 
 ## Next Recommended Steps
 
-1. Upload the initial project ZIP to GitHub.
-2. Confirm the first mission scenario.
-3. Confirm the first payload or sensor.
-4. Select the ROS 2 distribution.
-5. Define the Docker development environment.
-6. Define version 1 safety rules.
+1. Confirm the first mission scenario.
+2. Confirm the first payload or sensor.
+3. Select the ROS 2 distribution.
+4. Define the Docker development environment.
+5. Define version 1 safety rules.
+6. Create the first ROS 2 Docker development container.
 
 ## Open Questions
 
 - Which ROS 2 distribution should be selected?
 - What is the first real-world mission scenario?
 - What is the first mounted payload?
-- Should Docker run through Docker Desktop with WSL2 backend?
+- Which ROS 2 distribution should be used inside Docker?
