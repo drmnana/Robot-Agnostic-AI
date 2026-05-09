@@ -1,0 +1,165 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable
+
+import rclpy
+from core_interfaces.msg import MissionState, RobotCommand
+from rclpy.node import Node
+
+
+@dataclass(frozen=True)
+class MissionStep:
+    name: str
+    command_type: str
+    duration_sec: float
+    linear_x: float = 0.0
+    linear_y: float = 0.0
+    yaw_rate: float = 0.0
+    max_speed: float = 0.5
+
+
+class MissionManagerNode(Node):
+    """Run a small demo mission through the ORIMUS safety gate."""
+
+    def __init__(self) -> None:
+        super().__init__("mission_manager")
+
+        self.mission_id = self.declare_parameter(
+            "mission_id",
+            "demo_forward_stop",
+        ).value
+        self.mission_name = self.declare_parameter(
+            "mission_name",
+            "Demo Forward Stop",
+        ).value
+        self.autostart = bool(self.declare_parameter("autostart", True).value)
+        self.completion_marker_path = str(
+            self.declare_parameter("completion_marker_path", "").value
+        )
+
+        self.command_pub = self.create_publisher(
+            RobotCommand,
+            "robot/command_request",
+            10,
+        )
+        self.state_pub = self.create_publisher(MissionState, "mission/state", 10)
+
+        self.steps = [
+            MissionStep(name="stand", command_type="stand", duration_sec=1.0),
+            MissionStep(
+                name="walk_forward",
+                command_type="walk_velocity",
+                duration_sec=3.0,
+                linear_x=0.25,
+                max_speed=0.5,
+            ),
+            MissionStep(name="stop", command_type="stop", duration_sec=1.0),
+            MissionStep(name="sit", command_type="sit", duration_sec=1.0),
+        ]
+
+        self.current_step_index = -1
+        self.current_step_started = self.get_clock().now()
+        self.mission_started = False
+        self.mission_complete = False
+
+        self.timer = self.create_timer(0.2, self.tick)
+        self.publish_state("created", "Mission manager ready")
+        self.get_logger().info("ORIMUS mission manager started")
+
+    def tick(self) -> None:
+        if self.mission_complete:
+            return
+
+        if not self.mission_started:
+            if self.autostart:
+                self.start_mission()
+            return
+
+        current_step = self.steps[self.current_step_index]
+        elapsed = (
+            self.get_clock().now() - self.current_step_started
+        ).nanoseconds / 1_000_000_000.0
+
+        if elapsed >= current_step.duration_sec:
+            self.advance_step()
+
+    def start_mission(self) -> None:
+        self.mission_started = True
+        self.current_step_index = 0
+        self.current_step_started = self.get_clock().now()
+        self.publish_state("running", "Mission started")
+        self.publish_step_command(self.steps[self.current_step_index])
+
+    def advance_step(self) -> None:
+        self.current_step_index += 1
+
+        if self.current_step_index >= len(self.steps):
+            self.mission_complete = True
+            self.publish_state("completed", "Mission completed")
+            self.write_completion_marker()
+            self.get_logger().info("Mission completed")
+            return
+
+        self.current_step_started = self.get_clock().now()
+        step = self.steps[self.current_step_index]
+        self.publish_state("running", f"Running step: {step.name}")
+        self.publish_step_command(step)
+
+    def publish_step_command(self, step: MissionStep) -> None:
+        command = RobotCommand()
+        command.stamp = self.get_clock().now().to_msg()
+        command.command_id = f"{self.mission_id}_{step.name}_{command.stamp.sec}"
+        command.command_type = step.command_type
+        command.linear_x = step.linear_x
+        command.linear_y = step.linear_y
+        command.yaw_rate = step.yaw_rate
+        command.max_speed = step.max_speed
+        command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
+
+        self.command_pub.publish(command)
+        self.get_logger().info(f"Published mission step command: {step.name}")
+
+    def publish_state(self, state: str, message: str) -> None:
+        mission_state = MissionState()
+        mission_state.stamp = self.get_clock().now().to_msg()
+        mission_state.mission_id = self.mission_id
+        mission_state.name = self.mission_name
+        mission_state.state = state
+        mission_state.current_step = self.current_step_name()
+        mission_state.progress = self.progress()
+        mission_state.message = message
+        self.state_pub.publish(mission_state)
+
+    def current_step_name(self) -> str:
+        if 0 <= self.current_step_index < len(self.steps):
+            return self.steps[self.current_step_index].name
+        return ""
+
+    def progress(self) -> float:
+        if self.mission_complete:
+            return 1.0
+        if self.current_step_index < 0:
+            return 0.0
+        return float(self.current_step_index) / float(len(self.steps))
+
+    def write_completion_marker(self) -> None:
+        if not self.completion_marker_path:
+            return
+
+        marker_path = Path(self.completion_marker_path)
+        marker_path.parent.mkdir(parents=True, exist_ok=True)
+        marker_path.write_text("completed\n", encoding="utf-8")
+
+
+def main(args: Iterable[str] | None = None) -> None:
+    rclpy.init(args=args)
+    node = MissionManagerNode()
+    try:
+        rclpy.spin(node)
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

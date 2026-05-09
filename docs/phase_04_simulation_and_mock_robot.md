@@ -68,6 +68,12 @@ It can start the mock Go2X driver and safety manager together with:
 ros2 launch orimus_bringup mock_go2x.launch.py
 ```
 
+The launch file can also start the first demo mission:
+
+```text
+ros2 launch orimus_bringup mock_go2x.launch.py mission_autostart:=true
+```
+
 ## Completion Criteria
 
 This phase is complete when we can run a simple mission without real hardware and see robot state changes in software.

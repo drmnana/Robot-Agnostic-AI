@@ -40,7 +40,18 @@ The backend becomes the control center between the operator interface, ROS 2, AI
 - Event logging system
 - Live update stream
 
+## Initial ROS 2 Mission Skeleton
+
+The first mission manager exists as a ROS 2 package named `mission_manager`.
+
+It currently runs a simple demo mission:
+
+```text
+stand -> walk_forward -> stop -> sit
+```
+
+This is not the final backend mission system. It is the first vertical slice proving that mission logic can send requested commands through the safety manager to the mock robot.
+
 ## Completion Criteria
 
 This phase is complete when software clients can create missions, monitor state, and receive events through the backend.
-

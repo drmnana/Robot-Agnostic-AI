@@ -60,4 +60,5 @@ Initial packages:
 - `core_interfaces`: shared ROS 2 message definitions.
 - `mock_go2x_driver`: simulation-first mock Unitree Go2X driver.
 - `safety_manager`: safety gate for requested robot commands.
+- `mission_manager`: first simple mission sequencer.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.

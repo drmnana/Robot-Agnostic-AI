@@ -8,6 +8,8 @@ def generate_launch_description() -> LaunchDescription:
     robot_id = LaunchConfiguration("robot_id")
     max_linear_speed = LaunchConfiguration("max_linear_speed")
     max_yaw_rate = LaunchConfiguration("max_yaw_rate")
+    mission_autostart = LaunchConfiguration("mission_autostart")
+    completion_marker_path = LaunchConfiguration("completion_marker_path")
 
     return LaunchDescription(
         [
@@ -25,6 +27,16 @@ def generate_launch_description() -> LaunchDescription:
                 "max_yaw_rate",
                 default_value="1.0",
                 description="Maximum allowed yaw rate in radians per second.",
+            ),
+            DeclareLaunchArgument(
+                "mission_autostart",
+                default_value="false",
+                description="Whether to start the demo mission automatically.",
+            ),
+            DeclareLaunchArgument(
+                "completion_marker_path",
+                default_value="",
+                description="Optional file path written when the demo mission completes.",
             ),
             Node(
                 package="mock_go2x_driver",
@@ -49,6 +61,17 @@ def generate_launch_description() -> LaunchDescription:
                     }
                 ],
             ),
+            Node(
+                package="mission_manager",
+                executable="mission_manager_node",
+                name="mission_manager",
+                output="screen",
+                parameters=[
+                    {
+                        "autostart": mission_autostart,
+                        "completion_marker_path": completion_marker_path,
+                    }
+                ],
+            ),
         ]
     )
-

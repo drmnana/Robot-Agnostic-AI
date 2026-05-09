@@ -104,6 +104,16 @@ ORIMUS should first build a complete vertical slice around the Unitree Go2X simu
 Reason:
 A full working path from command request to safety validation to mock robot behavior gives the project a testable foundation. Additional platforms can be added later through the adapter pattern.
 
+### 010 - First Mission Is A Simple Demo Sequence
+
+Status: Accepted
+
+Decision:
+The first mission manager implementation will run a simple demo mission: stand, walk forward, stop, and sit.
+
+Reason:
+This gives ORIMUS a complete testable mission path without introducing navigation, mapping, payloads, or dashboard complexity too early.
+
 ## Pending Decisions
 
 - First mission scenario.

@@ -1,0 +1,2 @@
+"""ORIMUS mission manager package."""
+
