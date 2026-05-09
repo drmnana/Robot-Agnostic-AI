@@ -60,6 +60,14 @@ The command path now routes through the `safety_manager` package:
 /robot/command_request -> safety_manager -> /robot/command -> mock_go2x_driver
 ```
 
+The first launch package is `orimus_bringup`.
+
+It can start the mock Go2X driver and safety manager together with:
+
+```text
+ros2 launch orimus_bringup mock_go2x.launch.py
+```
+
 ## Completion Criteria
 
 This phase is complete when we can run a simple mission without real hardware and see robot state changes in software.

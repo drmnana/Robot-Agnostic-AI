@@ -36,6 +36,8 @@ The project architecture and phase roadmap have been drafted.
 - Created `mock_go2x_driver` ROS 2 package.
 - Created `safety_manager` ROS 2 package.
 - Added command request safety gate flow.
+- Created `orimus_bringup` ROS 2 launch package.
+- Added one-command launch flow for mock Go2X plus safety manager.
 
 ## In Progress
 
@@ -46,10 +48,10 @@ The project architecture and phase roadmap have been drafted.
 
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
-3. Add a basic launch file for mock simulation startup.
-4. Start defining the first mission scenario.
-5. Add a mission manager skeleton.
-6. Add a mock payload or simulated sensor.
+3. Start defining the first mission scenario.
+4. Add a mission manager skeleton.
+5. Add a mock payload or simulated sensor.
+6. Add basic launch configuration for mission-mode startup.
 
 ## Open Questions
 

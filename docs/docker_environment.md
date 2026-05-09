@@ -69,4 +69,4 @@ echo $RMW_IMPLEMENTATION
 2. Verify ROS 2 commands inside the container.
 3. Add a minimal ROS 2 workspace.
 4. Add mock robot and simulation package scaffolding.
-5. Document how the user starts and stops the environment.
+5. Add bringup launch files for repeatable runtime startup.
