@@ -29,6 +29,9 @@ The project architecture and phase roadmap have been drafted.
 - Added first Docker Compose development container definition.
 - Added safety assumptions document.
 - Added `.gitattributes` for Windows/Linux line-ending stability.
+- Created initial ROS 2 workspace.
+- Created `core_interfaces` ROS 2 package.
+- Created `mock_go2x_driver` ROS 2 package.
 
 ## In Progress
 
@@ -39,10 +42,10 @@ The project architecture and phase roadmap have been drafted.
 
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
-3. Build and verify the ROS 2 Humble Docker development container.
-4. Define version 1 safety rules in more detail.
-5. Create the first ROS 2 workspace.
-6. Create the first mock robot package.
+3. Build and verify the ROS 2 workspace.
+4. Run the mock Go2X node and publish a test command.
+5. Define version 1 safety rules in more detail.
+6. Add a basic launch file for mock simulation startup.
 
 ## Open Questions
 

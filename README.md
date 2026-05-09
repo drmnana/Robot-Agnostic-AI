@@ -50,3 +50,12 @@ Start it with:
 ```powershell
 docker compose run --rm ros2-dev
 ```
+
+## ROS 2 Workspace
+
+The first ROS 2 workspace is located in `ros2_ws/`.
+
+Initial packages:
+
+- `core_interfaces`: shared ROS 2 message definitions.
+- `mock_go2x_driver`: simulation-first mock Unitree Go2X driver.

@@ -42,6 +42,18 @@ A mock robot and simulation layer let us test mission logic, safety rules, backe
 - Fake telemetry stream
 - Fake payload stream
 
+## Initial Implementation
+
+The first mock robot implementation is the `mock_go2x_driver` ROS 2 package.
+
+It provides:
+
+- A mock Unitree Go2X-like node.
+- Simulated robot state.
+- Basic velocity command handling.
+- Stop, stand, sit, emergency stop, and clear emergency stop commands.
+- Safety events for blocked or unknown commands.
+
 ## Completion Criteria
 
 This phase is complete when we can run a simple mission without real hardware and see robot state changes in software.
