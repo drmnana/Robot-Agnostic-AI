@@ -1,0 +1,2 @@
+"""ORIMUS safety manager package."""
+

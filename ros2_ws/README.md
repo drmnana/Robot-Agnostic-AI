@@ -6,6 +6,7 @@ This workspace contains the ROS 2 packages for the robot-agnostic AI system.
 
 - `core_interfaces`: shared messages for robot commands, robot state, payload state, missions, perception events, and safety events.
 - `mock_go2x_driver`: simulation-first mock driver for the Unitree Go2X platform.
+- `safety_manager`: command validation gate that forwards safe robot commands and blocks unsafe requests.
 
 ## Build Inside Docker
 
@@ -29,3 +30,29 @@ The mock node publishes:
 The mock node subscribes to:
 
 - `robot/command`
+
+## Run The Safety Manager Flow
+
+The safety manager receives requested commands on `robot/command_request` and forwards approved commands to `robot/command`.
+
+```text
+operator / mission / AI
+        |
+        v
+robot/command_request
+        |
+        v
+safety_manager
+        |
+        v
+robot/command
+        |
+        v
+mock_go2x_driver
+```
+
+Smoke test:
+
+```powershell
+docker compose run --rm ros2-dev bash -lc "cd ros2_ws && bash scripts/smoke_test_safety_manager.sh"
+```

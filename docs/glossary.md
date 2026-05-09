@@ -1,5 +1,9 @@
 # Glossary
 
+## ORIMUS
+
+The project name for the robot-agnostic autonomous AI mission system.
+
 ## AI Planner
 
 The system component that turns goals or mission context into structured plans. It should not directly control motors.
@@ -43,4 +47,3 @@ Combining data from multiple sensors to produce a better estimate of the robot s
 ## Simulation
 
 A software environment where robot behavior can be tested without using real hardware.
-

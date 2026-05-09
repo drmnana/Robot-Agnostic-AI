@@ -1,5 +1,7 @@
 # Project Status
 
+Project name: ORIMUS
+
 ## Current Phase
 
 Phase 01 - Project Foundation
@@ -32,6 +34,8 @@ The project architecture and phase roadmap have been drafted.
 - Created initial ROS 2 workspace.
 - Created `core_interfaces` ROS 2 package.
 - Created `mock_go2x_driver` ROS 2 package.
+- Created `safety_manager` ROS 2 package.
+- Added command request safety gate flow.
 
 ## In Progress
 
@@ -42,10 +46,10 @@ The project architecture and phase roadmap have been drafted.
 
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
-3. Build and verify the ROS 2 workspace.
-4. Run the mock Go2X node and publish a test command.
-5. Define version 1 safety rules in more detail.
-6. Add a basic launch file for mock simulation startup.
+3. Add a basic launch file for mock simulation startup.
+4. Start defining the first mission scenario.
+5. Add a mission manager skeleton.
+6. Add a mock payload or simulated sensor.
 
 ## Open Questions
 

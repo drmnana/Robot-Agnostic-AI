@@ -4,6 +4,16 @@ This document records important project decisions so they are not lost in chat h
 
 ## Decisions
 
+### 000 - Project Name Is ORIMUS
+
+Status: Accepted
+
+Decision:
+The system name is ORIMUS.
+
+Reason:
+ORIMUS gives the project a clear identity while the engineering architecture remains robot-agnostic and modular.
+
 ### 001 - Use A Modular Robot-Agnostic Architecture
 
 Status: Accepted
@@ -83,6 +93,16 @@ The first ROS 2 development container will use ROS 2 Humble on Ubuntu 22.04.
 
 Reason:
 Humble is stable, widely supported, and a conservative match for Unitree Go2X-oriented ROS 2 development with Cyclone DDS.
+
+### 009 - Move Vertically Before Horizontally
+
+Status: Accepted
+
+Decision:
+ORIMUS should first build a complete vertical slice around the Unitree Go2X simulation path before adding adapters for other robot platforms.
+
+Reason:
+A full working path from command request to safety validation to mock robot behavior gives the project a testable foundation. Additional platforms can be added later through the adapter pattern.
 
 ## Pending Decisions
 

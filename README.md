@@ -1,6 +1,6 @@
-# Autonomous AI Robot Dog System
+# ORIMUS
 
-This project is an autonomous AI-powered control and mission system for quadruped robot platforms such as Unitree Go2, Unitree B2, Boston Dynamics Spot, Ghost Robotics platforms, and future ROS 2-compatible robots.
+ORIMUS is a robot-agnostic autonomous AI mission system for quadruped robot platforms such as Unitree Go2, Unitree B2, Boston Dynamics Spot, Ghost Robotics platforms, and future ROS 2-compatible robots.
 
 The project is currently in the planning and foundation stage.
 

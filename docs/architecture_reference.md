@@ -1,8 +1,8 @@
-# Autonomous AI Robot Dog System - Architecture Reference
+# ORIMUS - Architecture Reference
 
 ## 1. Project Objective
 
-The goal of this project is to develop an autonomous AI-powered system that can guide, monitor, and control quadruped robot platforms running through ROS 2 or vendor APIs.
+The goal of ORIMUS is to develop an autonomous AI-powered system that can guide, monitor, and control quadruped robot platforms running through ROS 2 or vendor APIs.
 
 Target robot platforms may include:
 
@@ -553,4 +553,3 @@ As the project develops, each major component should receive its own dedicated d
 - Dashboard design
 - Simulation strategy
 - Deployment strategy
-

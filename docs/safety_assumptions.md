@@ -18,6 +18,23 @@ AI planner -> structured command -> mission manager -> safety manager -> robot o
 
 Manual emergency stop must always have the highest priority.
 
+## Initial ROS 2 Safety Flow
+
+The first implemented safety flow is:
+
+```text
+/robot/command_request -> safety_manager -> /robot/command -> mock_go2x_driver
+```
+
+The safety manager currently:
+
+- Blocks unknown robot commands.
+- Tracks emergency stop state.
+- Blocks movement while emergency stop is active.
+- Clamps maximum linear speed.
+- Clamps maximum yaw rate.
+- Publishes safety events to `/safety/events`.
+
 ## Version 1 Safety Boundaries
 
 Version 1 should be simulation-first.
@@ -100,4 +117,3 @@ The system should log:
 - What payloads are allowed in version 1?
 - What should happen when battery is low?
 - Who is authorized to approve hazardous payload actions?
-

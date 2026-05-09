@@ -54,6 +54,12 @@ It provides:
 - Stop, stand, sit, emergency stop, and clear emergency stop commands.
 - Safety events for blocked or unknown commands.
 
+The command path now routes through the `safety_manager` package:
+
+```text
+/robot/command_request -> safety_manager -> /robot/command -> mock_go2x_driver
+```
+
 ## Completion Criteria
 
 This phase is complete when we can run a simple mission without real hardware and see robot state changes in software.
