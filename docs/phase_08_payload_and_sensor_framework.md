@@ -46,7 +46,28 @@ Payloads are useful only when the robot can be commanded safely and the software
 - First payload adapter
 - Payload configuration files
 
+## Initial Implementation
+
+The first payload framework includes:
+
+- `PayloadCommand` ROS 2 message.
+- `PayloadResult` ROS 2 message.
+- `payload_manager` package.
+- `mock_payloads` package.
+- `mock_inspection_camera` adapter.
+
+The initial command path is:
+
+```text
+/payload/command_request -> payload_manager -> /payload/command -> mock_inspection_camera
+```
+
+The mock inspection camera can publish:
+
+- `/payload/state`
+- `/payload/result`
+- `/perception/events`
+
 ## Completion Criteria
 
 This phase is complete when a payload can be registered, started, monitored, and used by a mission.
-

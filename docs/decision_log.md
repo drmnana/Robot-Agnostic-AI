@@ -114,6 +114,16 @@ The first mission manager implementation will run a simple demo mission: stand, 
 Reason:
 This gives ORIMUS a complete testable mission path without introducing navigation, mapping, payloads, or dashboard complexity too early.
 
+### 011 - Build Generic Payload Framework Before Specialized Payloads
+
+Status: Accepted
+
+Decision:
+ORIMUS should first implement a generic payload command and result framework with a mock inspection camera before adding specialized payloads such as chemical detectors, vibration sensors, or face recognition cameras.
+
+Reason:
+A generic payload flow keeps the architecture modular and prevents the first payload from forcing hardware-specific assumptions into the core system.
+
 ## Pending Decisions
 
 - First mission scenario.

@@ -1,0 +1,2 @@
+"""ORIMUS mock payload adapters."""
+

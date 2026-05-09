@@ -11,6 +11,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MissionState.msg"
+  "msg/PayloadCommand.msg"
+  "msg/PayloadResult.msg"
   "msg/PayloadState.msg"
   "msg/PerceptionEvent.msg"
   "msg/RobotCommand.msg"
@@ -21,4 +23,3 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
-

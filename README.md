@@ -61,4 +61,6 @@ Initial packages:
 - `mock_go2x_driver`: simulation-first mock Unitree Go2X driver.
 - `safety_manager`: safety gate for requested robot commands.
 - `mission_manager`: first simple mission sequencer.
+- `payload_manager`: safety-style gate for payload command requests.
+- `mock_payloads`: first simulated payload adapters.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.

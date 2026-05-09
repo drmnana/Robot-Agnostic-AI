@@ -62,6 +62,18 @@ def generate_launch_description() -> LaunchDescription:
                 ],
             ),
             Node(
+                package="payload_manager",
+                executable="payload_manager_node",
+                name="payload_manager",
+                output="screen",
+            ),
+            Node(
+                package="mock_payloads",
+                executable="mock_inspection_camera_node",
+                name="mock_inspection_camera",
+                output="screen",
+            ),
+            Node(
                 package="mission_manager",
                 executable="mission_manager_node",
                 name="mission_manager",

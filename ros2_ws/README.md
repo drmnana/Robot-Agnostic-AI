@@ -8,6 +8,8 @@ This workspace contains the ROS 2 packages for the robot-agnostic AI system.
 - `mock_go2x_driver`: simulation-first mock driver for the Unitree Go2X platform.
 - `safety_manager`: command validation gate that forwards safe robot commands and blocks unsafe requests.
 - `mission_manager`: simple mission sequencer that publishes command requests through the safety manager.
+- `payload_manager`: payload command validation gate.
+- `mock_payloads`: simulation-first mock payload adapters.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.
 
 ## Build Inside Docker
@@ -85,4 +87,18 @@ Mission smoke test:
 
 ```powershell
 docker compose run --rm ros2-dev bash -lc "cd ros2_ws && bash scripts/smoke_test_mission_manager.sh"
+```
+
+## Run The Mock Payload Flow
+
+The mock payload flow is:
+
+```text
+payload/command_request -> payload_manager -> payload/command -> mock_inspection_camera
+```
+
+Payload smoke test:
+
+```powershell
+docker compose run --rm ros2-dev bash -lc "cd ros2_ws && bash scripts/smoke_test_payload_manager.sh"
 ```

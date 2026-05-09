@@ -40,6 +40,9 @@ The project architecture and phase roadmap have been drafted.
 - Added one-command launch flow for mock Go2X plus safety manager.
 - Created `mission_manager` ROS 2 package.
 - Added first demo mission: stand, walk forward, stop, sit.
+- Added generic payload command and result interfaces.
+- Created `payload_manager` ROS 2 package.
+- Created `mock_payloads` ROS 2 package with a mock inspection camera.
 
 ## In Progress
 
@@ -51,9 +54,9 @@ The project architecture and phase roadmap have been drafted.
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
 3. Define the first real mission scenario.
-4. Add a mock payload or simulated sensor.
-5. Add mission configuration files instead of hardcoded mission steps.
-6. Add mission start, pause, resume, and cancel controls.
+4. Add mission configuration files instead of hardcoded mission steps.
+5. Add mission start, pause, resume, and cancel controls.
+6. Add payload-specific adapter specifications.
 
 ## Open Questions
 

@@ -28,6 +28,8 @@ The system should also support mission-specific payloads mounted on the robot, s
 - Environmental sensors
 - Future payload modules
 
+The first simulated payload adapter is a mock inspection camera. It exists to prove the generic payload command, state, result, and perception event flow before adding specialized hardware.
+
 ## 2. Core Design Principle
 
 The most important design principle is:
