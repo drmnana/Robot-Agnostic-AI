@@ -164,6 +164,16 @@ The mission manager should accept `start`, `pause`, `resume`, and `cancel` comma
 Reason:
 Operator control is required before connecting the mission system to a backend, dashboard, or AI planner.
 
+### 016 - Start Backend With A Small FastAPI Skeleton
+
+Status: Accepted
+
+Decision:
+The first backend should expose a small HTTP API for health checks, mission config discovery, mission config reading, and report reading before adding ROS 2 command integration.
+
+Reason:
+A small backend surface is easier to test and gives the future dashboard a stable API foundation.
+
 ## Pending Decisions
 
 - First mission scenario.

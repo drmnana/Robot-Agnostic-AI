@@ -52,6 +52,8 @@ The project architecture and phase roadmap have been drafted.
 - Added JSON mission report output.
 - Added mission control commands: start, pause, resume, cancel.
 - Added `configs/missions/control_test.yaml`.
+- Added FastAPI backend skeleton.
+- Added backend endpoints for health, mission configs, and latest mission report.
 
 ## In Progress
 
@@ -62,9 +64,9 @@ The project architecture and phase roadmap have been drafted.
 
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
-3. Define the first real mission scenario.
-4. Add payload-specific adapter specifications.
-5. Start backend/API planning around the current ROS 2 vertical slice.
+3. Add backend-to-ROS mission command publishing.
+4. Define the first real mission scenario.
+5. Add payload-specific adapter specifications.
 6. Add dashboard/operator control planning.
 
 ## Open Questions

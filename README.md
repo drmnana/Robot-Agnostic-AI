@@ -76,3 +76,14 @@ The first configurable mission is:
 - `configs/missions/control_test.yaml`
 
 Mission steps can target either `robot` or `payload`.
+
+## Backend
+
+The first backend skeleton is located in `backend/`.
+
+Initial endpoints:
+
+- `GET /health`
+- `GET /missions`
+- `GET /missions/{mission_id}`
+- `GET /reports/latest`

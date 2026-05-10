@@ -78,6 +78,19 @@ The mission manager now accepts operator-style mission commands on `/mission/com
 - `resume`
 - `cancel`
 
+## Initial Backend Skeleton
+
+The first backend service exists in `backend/`.
+
+Current endpoints:
+
+- `GET /health`
+- `GET /missions`
+- `GET /missions/{mission_id}`
+- `GET /reports/latest`
+
+The backend does not yet publish ROS 2 mission commands. That is the next backend integration step.
+
 ## Completion Criteria
 
 This phase is complete when software clients can create missions, monitor state, and receive events through the backend.

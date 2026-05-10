@@ -1,0 +1,2 @@
+"""ORIMUS backend application."""
+

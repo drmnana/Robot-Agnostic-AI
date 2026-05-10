@@ -14,3 +14,17 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     stdin_open: true
     tty: true
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    image: robot-agnostic-ai:backend
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      - ORIMUS_MISSION_CONFIG_DIR=/workspace/configs/missions
+      - ORIMUS_LATEST_REPORT_PATH=/workspace/reports/latest_mission_report.json
+    ports:
+      - "8000:8000"
