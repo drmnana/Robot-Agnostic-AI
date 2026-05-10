@@ -56,6 +56,8 @@ The project architecture and phase roadmap have been drafted.
 - Added backend endpoints for health, mission configs, and latest mission report.
 - Added ROS-aware mission API bridge.
 - Added HTTP endpoints that publish mission commands to `/mission/command`.
+- Connected the plain backend API to the ROS-aware mission API bridge.
+- Added backend mission command endpoints for start, pause, resume, and cancel.
 
 ## In Progress
 
@@ -66,10 +68,10 @@ The project architecture and phase roadmap have been drafted.
 
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
-3. Connect the plain backend API to the ROS mission API bridge.
-4. Define the first real mission scenario.
-5. Add payload-specific adapter specifications.
-6. Add dashboard/operator control planning.
+3. Define the first real mission scenario.
+4. Add payload-specific adapter specifications.
+5. Add dashboard/operator control planning.
+6. Add live robot, mission, and payload state endpoints for the backend.
 
 ## Open Questions
 

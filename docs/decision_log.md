@@ -184,6 +184,16 @@ Mission command HTTP endpoints should be exposed by a ROS-aware `mission_api_bri
 Reason:
 This keeps mission control real-time and avoids temporary file-based command passing between the backend and ROS 2.
 
+### 018 - Backend Forwards Mission Commands To ROS Bridge
+
+Status: Accepted
+
+Decision:
+The plain FastAPI backend should expose operator-facing mission command endpoints and forward those requests to the ROS-aware `mission_api_bridge`.
+
+Reason:
+This gives dashboards and other clients one stable backend API while keeping ROS 2 topic publishing inside the ROS runtime.
+
 ## Pending Decisions
 
 - First mission scenario.

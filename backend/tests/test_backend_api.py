@@ -1,7 +1,9 @@
 from pathlib import Path
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+import app.main as main_module
 from app.main import app, settings
 
 
@@ -29,6 +31,49 @@ def test_get_mission():
     assert len(data["steps"]) > 0
 
 
+def test_control_mission_start(monkeypatch):
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type):
+        calls.append((mission_id, command_type))
+        return {
+            "status": "accepted",
+            "mission_id": mission_id,
+            "command_type": command_type,
+        }
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+
+    response = client.post("/missions/demo_forward_stop/start")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "accepted",
+        "mission_id": "demo_forward_stop",
+        "command_type": "start",
+    }
+    assert calls == [("demo_forward_stop", "start")]
+
+
+def test_control_mission_rejects_unknown_command():
+    response = client.post("/missions/demo_forward_stop/reboot")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unsupported mission command"
+
+
+def test_control_mission_reports_bridge_unavailable(monkeypatch):
+    def fake_send_mission_command(settings, mission_id, command_type):
+        raise HTTPException(status_code=503, detail="Mission API bridge unavailable")
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+
+    response = client.post("/missions/demo_forward_stop/start")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Mission API bridge unavailable"
+
+
 def test_latest_report_not_found(tmp_path: Path):
     original_report_path = settings.latest_report_path
     settings.latest_report_path = tmp_path / "missing.json"
@@ -37,4 +82,3 @@ def test_latest_report_not_found(tmp_path: Path):
         assert response.status_code == 404
     finally:
         settings.latest_report_path = original_report_path
-

@@ -86,7 +86,14 @@ Initial endpoints:
 - `GET /health`
 - `GET /missions`
 - `GET /missions/{mission_id}`
+- `POST /missions/{mission_id}/start`
+- `POST /missions/{mission_id}/pause`
+- `POST /missions/{mission_id}/resume`
+- `POST /missions/{mission_id}/cancel`
 - `GET /reports/latest`
+
+Mission command endpoints forward operator requests to the ROS-aware mission API bridge.
+The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 
 ## ROS Mission API Bridge
 

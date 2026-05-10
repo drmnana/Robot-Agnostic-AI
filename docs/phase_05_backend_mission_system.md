@@ -87,9 +87,14 @@ Current endpoints:
 - `GET /health`
 - `GET /missions`
 - `GET /missions/{mission_id}`
+- `POST /missions/{mission_id}/start`
+- `POST /missions/{mission_id}/pause`
+- `POST /missions/{mission_id}/resume`
+- `POST /missions/{mission_id}/cancel`
 - `GET /reports/latest`
 
-The backend does not yet publish ROS 2 mission commands. That is the next backend integration step.
+The backend forwards mission command requests to the ROS-aware mission API bridge.
+The bridge URL is configured through `ORIMUS_MISSION_API_BRIDGE_URL`.
 
 ## ROS-Aware Mission API Bridge
 

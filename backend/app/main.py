@@ -4,11 +4,13 @@ import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
+from .mission_bridge_client import send_mission_command
 from .settings import Settings
 
 
 settings = Settings()
 app = FastAPI(title="ORIMUS Backend", version="0.1.0")
+MISSION_COMMANDS = {"start", "pause", "resume", "cancel"}
 
 
 @app.get("/health")
@@ -40,6 +42,14 @@ def get_mission(mission_id: str) -> dict:
     return read_yaml_file(mission_file)
 
 
+@app.post("/missions/{mission_id}/{command_type}")
+def control_mission(mission_id: str, command_type: str) -> dict:
+    if command_type not in MISSION_COMMANDS:
+        raise HTTPException(status_code=400, detail="Unsupported mission command")
+
+    return send_mission_command(settings, mission_id, command_type)
+
+
 @app.get("/reports/latest")
 def get_latest_report():
     report_path = settings.latest_report_path
@@ -68,4 +78,3 @@ def read_json_text(path: Path):
     import json
 
     return json.loads(path.read_text(encoding="utf-8"))
-
