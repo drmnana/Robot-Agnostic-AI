@@ -8,6 +8,7 @@ rm -f /tmp/orimus_mission_completed
 
 ros2 launch orimus_bringup mock_go2x.launch.py \
   mission_autostart:=true \
+  mission_config_path:=/workspace/configs/missions/demo_forward_stop.yaml \
   completion_marker_path:=/tmp/orimus_mission_completed \
   >/tmp/orimus_mission_launch.log 2>&1 &
 LAUNCH_PID=$!

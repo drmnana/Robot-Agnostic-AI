@@ -9,6 +9,7 @@ def generate_launch_description() -> LaunchDescription:
     max_linear_speed = LaunchConfiguration("max_linear_speed")
     max_yaw_rate = LaunchConfiguration("max_yaw_rate")
     mission_autostart = LaunchConfiguration("mission_autostart")
+    mission_config_path = LaunchConfiguration("mission_config_path")
     completion_marker_path = LaunchConfiguration("completion_marker_path")
 
     return LaunchDescription(
@@ -32,6 +33,11 @@ def generate_launch_description() -> LaunchDescription:
                 "mission_autostart",
                 default_value="false",
                 description="Whether to start the demo mission automatically.",
+            ),
+            DeclareLaunchArgument(
+                "mission_config_path",
+                default_value="",
+                description="Optional YAML mission configuration file.",
             ),
             DeclareLaunchArgument(
                 "completion_marker_path",
@@ -81,6 +87,7 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[
                     {
                         "autostart": mission_autostart,
+                        "mission_config_path": mission_config_path,
                         "completion_marker_path": completion_marker_path,
                     }
                 ],

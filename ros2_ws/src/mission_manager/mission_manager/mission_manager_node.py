@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Iterable
 
 import rclpy
+import yaml
 from core_interfaces.msg import MissionState, RobotCommand
 from rclpy.node import Node
 
@@ -33,6 +34,9 @@ class MissionManagerNode(Node):
             "Demo Forward Stop",
         ).value
         self.autostart = bool(self.declare_parameter("autostart", True).value)
+        self.mission_config_path = str(
+            self.declare_parameter("mission_config_path", "").value
+        )
         self.completion_marker_path = str(
             self.declare_parameter("completion_marker_path", "").value
         )
@@ -44,18 +48,7 @@ class MissionManagerNode(Node):
         )
         self.state_pub = self.create_publisher(MissionState, "mission/state", 10)
 
-        self.steps = [
-            MissionStep(name="stand", command_type="stand", duration_sec=1.0),
-            MissionStep(
-                name="walk_forward",
-                command_type="walk_velocity",
-                duration_sec=3.0,
-                linear_x=0.25,
-                max_speed=0.5,
-            ),
-            MissionStep(name="stop", command_type="stop", duration_sec=1.0),
-            MissionStep(name="sit", command_type="sit", duration_sec=1.0),
-        ]
+        self.steps = self.load_mission_steps()
 
         self.current_step_index = -1
         self.current_step_started = self.get_clock().now()
@@ -64,7 +57,9 @@ class MissionManagerNode(Node):
 
         self.timer = self.create_timer(0.2, self.tick)
         self.publish_state("created", "Mission manager ready")
-        self.get_logger().info("ORIMUS mission manager started")
+        self.get_logger().info(
+            f"ORIMUS mission manager started with {len(self.steps)} steps"
+        )
 
     def tick(self) -> None:
         if self.mission_complete:
@@ -118,6 +113,55 @@ class MissionManagerNode(Node):
 
         self.command_pub.publish(command)
         self.get_logger().info(f"Published mission step command: {step.name}")
+
+    def load_mission_steps(self) -> list[MissionStep]:
+        if not self.mission_config_path:
+            return self.default_steps()
+
+        config_path = Path(self.mission_config_path)
+        if not config_path.exists():
+            raise FileNotFoundError(f"Mission config not found: {config_path}")
+
+        with config_path.open("r", encoding="utf-8") as config_file:
+            mission_data = yaml.safe_load(config_file) or {}
+
+        self.mission_id = str(mission_data.get("mission_id", self.mission_id))
+        self.mission_name = str(mission_data.get("name", self.mission_name))
+        step_data = mission_data.get("steps", [])
+
+        if not isinstance(step_data, list) or not step_data:
+            raise ValueError(f"Mission config has no steps: {config_path}")
+
+        steps = [self.parse_step(step) for step in step_data]
+        self.get_logger().info(f"Loaded mission config: {config_path}")
+        return steps
+
+    @staticmethod
+    def parse_step(step_data: dict) -> MissionStep:
+        return MissionStep(
+            name=str(step_data["name"]),
+            command_type=str(step_data["command_type"]),
+            duration_sec=float(step_data.get("duration_sec", 1.0)),
+            linear_x=float(step_data.get("linear_x", 0.0)),
+            linear_y=float(step_data.get("linear_y", 0.0)),
+            yaw_rate=float(step_data.get("yaw_rate", 0.0)),
+            max_speed=float(step_data.get("max_speed", 0.5)),
+        )
+
+    @staticmethod
+    def default_steps() -> list[MissionStep]:
+        return [
+            MissionStep(name="stand", command_type="stand", duration_sec=1.0),
+            MissionStep(
+                name="walk_forward",
+                command_type="walk_velocity",
+                duration_sec=3.0,
+                linear_x=0.25,
+                max_speed=0.5,
+            ),
+            MissionStep(name="stop", command_type="stop", duration_sec=1.0),
+            MissionStep(name="sit", command_type="sit", duration_sec=1.0),
+        ]
 
     def publish_state(self, state: str, message: str) -> None:
         mission_state = MissionState()

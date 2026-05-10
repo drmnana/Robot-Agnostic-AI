@@ -50,7 +50,15 @@ It currently runs a simple demo mission:
 stand -> walk_forward -> stop -> sit
 ```
 
-This is not the final backend mission system. It is the first vertical slice proving that mission logic can send requested commands through the safety manager to the mock robot.
+The mission steps are now loaded from YAML config files in `configs/missions/`.
+
+The first config is:
+
+```text
+configs/missions/demo_forward_stop.yaml
+```
+
+This is not the final backend mission system. It is the first vertical slice proving that mission logic can load a mission definition and send requested commands through the safety manager to the mock robot.
 
 ## Completion Criteria
 

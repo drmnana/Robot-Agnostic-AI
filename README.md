@@ -64,3 +64,11 @@ Initial packages:
 - `payload_manager`: safety-style gate for payload command requests.
 - `mock_payloads`: first simulated payload adapters.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.
+
+## Mission Configs
+
+Mission YAML files live in `configs/missions/`.
+
+The first configurable mission is:
+
+- `configs/missions/demo_forward_stop.yaml`

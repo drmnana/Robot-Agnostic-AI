@@ -80,7 +80,7 @@ docker compose run --rm ros2-dev bash -lc "cd ros2_ws && bash scripts/smoke_test
 The demo mission stands, walks forward briefly, stops, and sits.
 
 ```powershell
-docker compose run --rm ros2-dev bash -lc "cd ros2_ws && source install/setup.bash && ros2 launch orimus_bringup mock_go2x.launch.py mission_autostart:=true"
+docker compose run --rm ros2-dev bash -lc "cd ros2_ws && source install/setup.bash && ros2 launch orimus_bringup mock_go2x.launch.py mission_autostart:=true mission_config_path:=/workspace/configs/missions/demo_forward_stop.yaml"
 ```
 
 Mission smoke test:

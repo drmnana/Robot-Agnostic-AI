@@ -1,0 +1,23 @@
+mission_id: demo_forward_stop
+name: Demo Forward Stop
+steps:
+  - name: stand
+    command_type: stand
+    duration_sec: 1.0
+
+  - name: walk_forward
+    command_type: walk_velocity
+    duration_sec: 3.0
+    linear_x: 0.25
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.5
+
+  - name: stop
+    command_type: stop
+    duration_sec: 1.0
+
+  - name: sit
+    command_type: sit
+    duration_sec: 1.0
+

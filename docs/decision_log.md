@@ -124,6 +124,16 @@ ORIMUS should first implement a generic payload command and result framework wit
 Reason:
 A generic payload flow keeps the architecture modular and prevents the first payload from forcing hardware-specific assumptions into the core system.
 
+### 012 - Use YAML Mission Configuration
+
+Status: Accepted
+
+Decision:
+Mission definitions should be loaded from YAML configuration files instead of being hardcoded in the mission manager.
+
+Reason:
+YAML mission files make it easier to define patrol, inspection, scan, and payload-triggering missions without editing Python code.
+
 ## Pending Decisions
 
 - First mission scenario.
