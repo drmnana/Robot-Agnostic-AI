@@ -47,6 +47,9 @@ The project architecture and phase roadmap have been drafted.
 - Added first mission config: `configs/missions/demo_forward_stop.yaml`.
 - Extended mission YAML steps to target either robot commands or payload commands.
 - Updated the demo mission to trigger a mock inspection camera scan.
+- Added mission event messages.
+- Added `report_manager` ROS 2 package.
+- Added JSON mission report output.
 
 ## In Progress
 
@@ -60,7 +63,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add mission start, pause, resume, and cancel controls.
 5. Add payload-specific adapter specifications.
-6. Add mission result summaries.
+6. Start backend/API planning around the current ROS 2 vertical slice.
 
 ## Open Questions
 

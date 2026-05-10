@@ -1,0 +1,2 @@
+"""ORIMUS report manager package."""
+

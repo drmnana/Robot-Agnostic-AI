@@ -11,6 +11,7 @@ def generate_launch_description() -> LaunchDescription:
     mission_autostart = LaunchConfiguration("mission_autostart")
     mission_config_path = LaunchConfiguration("mission_config_path")
     completion_marker_path = LaunchConfiguration("completion_marker_path")
+    report_path = LaunchConfiguration("report_path")
 
     return LaunchDescription(
         [
@@ -43,6 +44,11 @@ def generate_launch_description() -> LaunchDescription:
                 "completion_marker_path",
                 default_value="",
                 description="Optional file path written when the demo mission completes.",
+            ),
+            DeclareLaunchArgument(
+                "report_path",
+                default_value="/workspace/reports/latest_mission_report.json",
+                description="Mission report JSON output path.",
             ),
             Node(
                 package="mock_go2x_driver",
@@ -78,6 +84,17 @@ def generate_launch_description() -> LaunchDescription:
                 executable="mock_inspection_camera_node",
                 name="mock_inspection_camera",
                 output="screen",
+            ),
+            Node(
+                package="report_manager",
+                executable="report_manager_node",
+                name="report_manager",
+                output="screen",
+                parameters=[
+                    {
+                        "report_path": report_path,
+                    }
+                ],
             ),
             Node(
                 package="mission_manager",

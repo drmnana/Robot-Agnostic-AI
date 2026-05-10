@@ -10,6 +10,7 @@ This workspace contains the ROS 2 packages for the robot-agnostic AI system.
 - `mission_manager`: simple mission sequencer that publishes command requests through the safety manager.
 - `payload_manager`: payload command validation gate.
 - `mock_payloads`: simulation-first mock payload adapters.
+- `report_manager`: mission report collector.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.
 
 ## Build Inside Docker

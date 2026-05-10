@@ -4,7 +4,7 @@ from typing import Iterable
 
 import rclpy
 import yaml
-from core_interfaces.msg import MissionState, PayloadCommand, RobotCommand
+from core_interfaces.msg import MissionEvent, MissionState, PayloadCommand, RobotCommand
 from rclpy.node import Node
 
 
@@ -58,6 +58,7 @@ class MissionManagerNode(Node):
             10,
         )
         self.state_pub = self.create_publisher(MissionState, "mission/state", 10)
+        self.event_pub = self.create_publisher(MissionEvent, "mission/events", 10)
 
         self.steps = self.load_mission_steps()
 
@@ -94,6 +95,11 @@ class MissionManagerNode(Node):
         self.current_step_index = 0
         self.current_step_started = self.get_clock().now()
         self.publish_state("running", "Mission started")
+        self.publish_event(
+            event_type="mission_started",
+            step=self.steps[self.current_step_index],
+            message="Mission started",
+        )
         self.publish_step(self.steps[self.current_step_index])
 
     def advance_step(self) -> None:
@@ -101,6 +107,11 @@ class MissionManagerNode(Node):
 
         if self.current_step_index >= len(self.steps):
             self.mission_complete = True
+            self.publish_event(
+                event_type="mission_completed",
+                step=None,
+                message="Mission completed",
+            )
             self.publish_state("completed", "Mission completed")
             self.write_completion_marker()
             self.get_logger().info("Mission completed")
@@ -109,6 +120,11 @@ class MissionManagerNode(Node):
         self.current_step_started = self.get_clock().now()
         step = self.steps[self.current_step_index]
         self.publish_state("running", f"Running step: {step.name}")
+        self.publish_event(
+            event_type="step_started",
+            step=step,
+            message=f"Running step: {step.name}",
+        )
         self.publish_step(step)
 
     def publish_step(self, step: MissionStep) -> None:
@@ -131,6 +147,11 @@ class MissionManagerNode(Node):
         command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
 
         self.command_pub.publish(command)
+        self.publish_event(
+            event_type="robot_command_requested",
+            step=step,
+            message=f"Requested robot command: {step.command_type}",
+        )
         self.get_logger().info(f"Published robot mission step command: {step.name}")
 
     def publish_payload_step_command(self, step: MissionStep) -> None:
@@ -147,7 +168,37 @@ class MissionManagerNode(Node):
         command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
 
         self.payload_command_pub.publish(command)
+        self.publish_event(
+            event_type="payload_command_requested",
+            step=step,
+            message=f"Requested payload command: {step.command_type}",
+        )
         self.get_logger().info(f"Published payload mission step command: {step.name}")
+
+    def publish_event(
+        self,
+        event_type: str,
+        step: MissionStep | None,
+        message: str,
+    ) -> None:
+        stamp = self.get_clock().now().to_msg()
+        event = MissionEvent()
+        event.stamp = stamp
+        event.event_id = f"{self.mission_id}_{event_type}_{stamp.sec}_{stamp.nanosec}"
+        event.mission_id = self.mission_id
+        event.event_type = event_type
+        event.step_name = step.name if step else ""
+        event.target = step.target if step else ""
+        event.message = message
+        event.details_json = (
+            f'{{"mission_name":"{self.mission_name}"}}'
+            if step is None
+            else (
+                f'{{"mission_name":"{self.mission_name}",'
+                f'"command_type":"{step.command_type}"}}'
+            )
+        )
+        self.event_pub.publish(event)
 
     def load_mission_steps(self) -> list[MissionStep]:
         if not self.mission_config_path:

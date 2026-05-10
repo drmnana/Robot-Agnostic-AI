@@ -30,6 +30,8 @@ The system should also support mission-specific payloads mounted on the robot, s
 
 The first simulated payload adapter is a mock inspection camera. It exists to prove the generic payload command, state, result, and perception event flow before adding specialized hardware.
 
+The first reporting layer is a ROS 2 `report_manager` package that writes a JSON mission report after mission completion.
+
 ## 2. Core Design Principle
 
 The most important design principle is:

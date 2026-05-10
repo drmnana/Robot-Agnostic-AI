@@ -63,6 +63,7 @@ Initial packages:
 - `mission_manager`: first simple mission sequencer.
 - `payload_manager`: safety-style gate for payload command requests.
 - `mock_payloads`: first simulated payload adapters.
+- `report_manager`: JSON mission report collector.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.
 
 ## Mission Configs

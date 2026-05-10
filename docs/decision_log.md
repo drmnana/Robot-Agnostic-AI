@@ -144,6 +144,16 @@ Mission YAML steps can target either the robot command path or the payload comma
 Reason:
 Real ORIMUS missions will combine movement and sensor actions, such as walking to a point and triggering an inspection camera, chemical scan, or vibration reading.
 
+### 014 - Generate JSON Mission Reports
+
+Status: Accepted
+
+Decision:
+ORIMUS should generate structured JSON mission reports from ROS 2 mission, robot, payload, perception, and safety events.
+
+Reason:
+Reports make the system auditable and prepare the project for backend, dashboard, replay, and operator review features.
+
 ## Pending Decisions
 
 - First mission scenario.

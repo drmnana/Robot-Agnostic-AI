@@ -67,6 +67,10 @@ Mission steps can now target:
 
 The demo mission now includes a mock inspection scan step.
 
+Mission execution now also emits structured mission events on `/mission/events`.
+
+The `report_manager` package collects mission states, mission events, robot state, payload state, payload results, perception events, and safety events into a JSON mission report.
+
 ## Completion Criteria
 
 This phase is complete when software clients can create missions, monitor state, and receive events through the backend.
