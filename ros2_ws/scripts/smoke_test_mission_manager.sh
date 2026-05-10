@@ -23,9 +23,11 @@ sleep 12
 test -f /tmp/orimus_mission_completed
 grep -q "completed" /tmp/orimus_mission_completed
 grep -q "Mission completed" /tmp/orimus_mission_launch.log
-grep -q "Published mission step command: stand" /tmp/orimus_mission_launch.log
-grep -q "Published mission step command: walk_forward" /tmp/orimus_mission_launch.log
-grep -q "Published mission step command: stop" /tmp/orimus_mission_launch.log
-grep -q "Published mission step command: sit" /tmp/orimus_mission_launch.log
+grep -q "Published robot mission step command: stand" /tmp/orimus_mission_launch.log
+grep -q "Published robot mission step command: walk_forward" /tmp/orimus_mission_launch.log
+grep -q "Published robot mission step command: stop" /tmp/orimus_mission_launch.log
+grep -q "Published payload mission step command: inspect_area" /tmp/orimus_mission_launch.log
+grep -q "Published mock inspection scan result" /tmp/orimus_mission_launch.log
+grep -q "Published robot mission step command: sit" /tmp/orimus_mission_launch.log
 
 echo "MISSION_MANAGER_SMOKE_TEST_OK"

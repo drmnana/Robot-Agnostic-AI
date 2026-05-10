@@ -45,6 +45,8 @@ The project architecture and phase roadmap have been drafted.
 - Created `mock_payloads` ROS 2 package with a mock inspection camera.
 - Added mission YAML configuration support.
 - Added first mission config: `configs/missions/demo_forward_stop.yaml`.
+- Extended mission YAML steps to target either robot commands or payload commands.
+- Updated the demo mission to trigger a mock inspection camera scan.
 
 ## In Progress
 
@@ -58,7 +60,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add mission start, pause, resume, and cancel controls.
 5. Add payload-specific adapter specifications.
-6. Add mission steps that can trigger payload scans.
+6. Add mission result summaries.
 
 ## Open Questions
 

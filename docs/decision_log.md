@@ -134,6 +134,16 @@ Mission definitions should be loaded from YAML configuration files instead of be
 Reason:
 YAML mission files make it easier to define patrol, inspection, scan, and payload-triggering missions without editing Python code.
 
+### 013 - Mission Steps Can Target Robot Or Payload
+
+Status: Accepted
+
+Decision:
+Mission YAML steps can target either the robot command path or the payload command path.
+
+Reason:
+Real ORIMUS missions will combine movement and sensor actions, such as walking to a point and triggering an inspection camera, chemical scan, or vibration reading.
+
 ## Pending Decisions
 
 - First mission scenario.

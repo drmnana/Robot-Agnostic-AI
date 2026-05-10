@@ -68,6 +68,8 @@ The mock inspection camera can publish:
 - `/payload/result`
 - `/perception/events`
 
+Mission YAML files can now trigger payload commands by using `target: payload`.
+
 ## Completion Criteria
 
 This phase is complete when a payload can be registered, started, monitored, and used by a mission.

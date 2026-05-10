@@ -4,19 +4,25 @@ from typing import Iterable
 
 import rclpy
 import yaml
-from core_interfaces.msg import MissionState, RobotCommand
+from core_interfaces.msg import MissionState, PayloadCommand, RobotCommand
 from rclpy.node import Node
 
 
 @dataclass(frozen=True)
 class MissionStep:
     name: str
+    target: str
     command_type: str
     duration_sec: float
     linear_x: float = 0.0
     linear_y: float = 0.0
     yaw_rate: float = 0.0
     max_speed: float = 0.5
+    payload_id: str = ""
+    payload_type: str = ""
+    target_x: float = 0.0
+    target_y: float = 0.0
+    target_z: float = 0.0
 
 
 class MissionManagerNode(Node):
@@ -44,6 +50,11 @@ class MissionManagerNode(Node):
         self.command_pub = self.create_publisher(
             RobotCommand,
             "robot/command_request",
+            10,
+        )
+        self.payload_command_pub = self.create_publisher(
+            PayloadCommand,
+            "payload/command_request",
             10,
         )
         self.state_pub = self.create_publisher(MissionState, "mission/state", 10)
@@ -83,7 +94,7 @@ class MissionManagerNode(Node):
         self.current_step_index = 0
         self.current_step_started = self.get_clock().now()
         self.publish_state("running", "Mission started")
-        self.publish_step_command(self.steps[self.current_step_index])
+        self.publish_step(self.steps[self.current_step_index])
 
     def advance_step(self) -> None:
         self.current_step_index += 1
@@ -98,9 +109,17 @@ class MissionManagerNode(Node):
         self.current_step_started = self.get_clock().now()
         step = self.steps[self.current_step_index]
         self.publish_state("running", f"Running step: {step.name}")
-        self.publish_step_command(step)
+        self.publish_step(step)
 
-    def publish_step_command(self, step: MissionStep) -> None:
+    def publish_step(self, step: MissionStep) -> None:
+        if step.target == "robot":
+            self.publish_robot_step_command(step)
+        elif step.target == "payload":
+            self.publish_payload_step_command(step)
+        else:
+            raise ValueError(f"Unsupported mission step target: {step.target}")
+
+    def publish_robot_step_command(self, step: MissionStep) -> None:
         command = RobotCommand()
         command.stamp = self.get_clock().now().to_msg()
         command.command_id = f"{self.mission_id}_{step.name}_{command.stamp.sec}"
@@ -112,7 +131,23 @@ class MissionManagerNode(Node):
         command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
 
         self.command_pub.publish(command)
-        self.get_logger().info(f"Published mission step command: {step.name}")
+        self.get_logger().info(f"Published robot mission step command: {step.name}")
+
+    def publish_payload_step_command(self, step: MissionStep) -> None:
+        command = PayloadCommand()
+        command.stamp = self.get_clock().now().to_msg()
+        command.command_id = f"{self.mission_id}_{step.name}_{command.stamp.sec}"
+        command.payload_id = step.payload_id
+        command.payload_type = step.payload_type
+        command.command_type = step.command_type
+        command.target_x = step.target_x
+        command.target_y = step.target_y
+        command.target_z = step.target_z
+        command.duration_sec = step.duration_sec
+        command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
+
+        self.payload_command_pub.publish(command)
+        self.get_logger().info(f"Published payload mission step command: {step.name}")
 
     def load_mission_steps(self) -> list[MissionStep]:
         if not self.mission_config_path:
@@ -140,27 +175,49 @@ class MissionManagerNode(Node):
     def parse_step(step_data: dict) -> MissionStep:
         return MissionStep(
             name=str(step_data["name"]),
+            target=str(step_data.get("target", "robot")).lower(),
             command_type=str(step_data["command_type"]),
             duration_sec=float(step_data.get("duration_sec", 1.0)),
             linear_x=float(step_data.get("linear_x", 0.0)),
             linear_y=float(step_data.get("linear_y", 0.0)),
             yaw_rate=float(step_data.get("yaw_rate", 0.0)),
             max_speed=float(step_data.get("max_speed", 0.5)),
+            payload_id=str(step_data.get("payload_id", "")),
+            payload_type=str(step_data.get("payload_type", "")),
+            target_x=float(step_data.get("target_x", 0.0)),
+            target_y=float(step_data.get("target_y", 0.0)),
+            target_z=float(step_data.get("target_z", 0.0)),
         )
 
     @staticmethod
     def default_steps() -> list[MissionStep]:
         return [
-            MissionStep(name="stand", command_type="stand", duration_sec=1.0),
+            MissionStep(
+                name="stand",
+                target="robot",
+                command_type="stand",
+                duration_sec=1.0,
+            ),
             MissionStep(
                 name="walk_forward",
+                target="robot",
                 command_type="walk_velocity",
                 duration_sec=3.0,
                 linear_x=0.25,
                 max_speed=0.5,
             ),
-            MissionStep(name="stop", command_type="stop", duration_sec=1.0),
-            MissionStep(name="sit", command_type="sit", duration_sec=1.0),
+            MissionStep(
+                name="stop",
+                target="robot",
+                command_type="stop",
+                duration_sec=1.0,
+            ),
+            MissionStep(
+                name="sit",
+                target="robot",
+                command_type="sit",
+                duration_sec=1.0,
+            ),
         ]
 
     def publish_state(self, state: str, message: str) -> None:

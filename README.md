@@ -72,3 +72,5 @@ Mission YAML files live in `configs/missions/`.
 The first configurable mission is:
 
 - `configs/missions/demo_forward_stop.yaml`
+
+Mission steps can target either `robot` or `payload`.

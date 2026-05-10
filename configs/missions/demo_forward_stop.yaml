@@ -2,10 +2,12 @@ mission_id: demo_forward_stop
 name: Demo Forward Stop
 steps:
   - name: stand
+    target: robot
     command_type: stand
     duration_sec: 1.0
 
   - name: walk_forward
+    target: robot
     command_type: walk_velocity
     duration_sec: 3.0
     linear_x: 0.25
@@ -14,10 +16,21 @@ steps:
     max_speed: 0.5
 
   - name: stop
+    target: robot
     command_type: stop
     duration_sec: 1.0
 
+  - name: inspect_area
+    target: payload
+    payload_id: inspection_camera_001
+    payload_type: mock_inspection_camera
+    command_type: scan
+    duration_sec: 1.0
+    target_x: 4.0
+    target_y: 2.0
+    target_z: 0.0
+
   - name: sit
+    target: robot
     command_type: sit
     duration_sec: 1.0
-

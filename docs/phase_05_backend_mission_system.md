@@ -60,6 +60,13 @@ configs/missions/demo_forward_stop.yaml
 
 This is not the final backend mission system. It is the first vertical slice proving that mission logic can load a mission definition and send requested commands through the safety manager to the mock robot.
 
+Mission steps can now target:
+
+- `robot`: publishes to `/robot/command_request`.
+- `payload`: publishes to `/payload/command_request`.
+
+The demo mission now includes a mock inspection scan step.
+
 ## Completion Criteria
 
 This phase is complete when software clients can create missions, monitor state, and receive events through the backend.
