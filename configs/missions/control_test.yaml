@@ -1,0 +1,22 @@
+mission_id: control_test
+name: Control Test Mission
+steps:
+  - name: stand
+    target: robot
+    command_type: stand
+    duration_sec: 1.0
+
+  - name: slow_walk
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 8.0
+    linear_x: 0.2
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.5
+
+  - name: stop
+    target: robot
+    command_type: stop
+    duration_sec: 1.0
+

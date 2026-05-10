@@ -4,7 +4,13 @@ from typing import Iterable
 
 import rclpy
 import yaml
-from core_interfaces.msg import MissionEvent, MissionState, PayloadCommand, RobotCommand
+from core_interfaces.msg import (
+    MissionCommand,
+    MissionEvent,
+    MissionState,
+    PayloadCommand,
+    RobotCommand,
+)
 from rclpy.node import Node
 
 
@@ -59,6 +65,12 @@ class MissionManagerNode(Node):
         )
         self.state_pub = self.create_publisher(MissionState, "mission/state", 10)
         self.event_pub = self.create_publisher(MissionEvent, "mission/events", 10)
+        self.mission_command_sub = self.create_subscription(
+            MissionCommand,
+            "mission/command",
+            self.handle_mission_command,
+            10,
+        )
 
         self.steps = self.load_mission_steps()
 
@@ -66,6 +78,9 @@ class MissionManagerNode(Node):
         self.current_step_started = self.get_clock().now()
         self.mission_started = False
         self.mission_complete = False
+        self.mission_paused = False
+        self.mission_canceled = False
+        self.paused_at = None
 
         self.timer = self.create_timer(0.2, self.tick)
         self.publish_state("created", "Mission manager ready")
@@ -74,7 +89,7 @@ class MissionManagerNode(Node):
         )
 
     def tick(self) -> None:
-        if self.mission_complete:
+        if self.mission_complete or self.mission_canceled or self.mission_paused:
             return
 
         if not self.mission_started:
@@ -91,7 +106,20 @@ class MissionManagerNode(Node):
             self.advance_step()
 
     def start_mission(self) -> None:
+        if self.mission_started:
+            self.publish_event(
+                event_type="mission_command_ignored",
+                step=None,
+                message="Start ignored because mission already started",
+            )
+            return
+
+        if self.mission_complete or self.mission_canceled:
+            self.reset_mission_runtime()
+
         self.mission_started = True
+        self.mission_paused = False
+        self.mission_canceled = False
         self.current_step_index = 0
         self.current_step_started = self.get_clock().now()
         self.publish_state("running", "Mission started")
@@ -101,6 +129,89 @@ class MissionManagerNode(Node):
             message="Mission started",
         )
         self.publish_step(self.steps[self.current_step_index])
+
+    def handle_mission_command(self, msg: MissionCommand) -> None:
+        if msg.mission_id and msg.mission_id != self.mission_id:
+            return
+
+        command = msg.command_type.strip().lower()
+
+        if command == "start":
+            self.start_mission()
+        elif command == "pause":
+            self.pause_mission()
+        elif command == "resume":
+            self.resume_mission()
+        elif command == "cancel":
+            self.cancel_mission()
+        else:
+            self.publish_event(
+                event_type="mission_command_rejected",
+                step=None,
+                message=f"Unknown mission command: {command}",
+            )
+
+    def pause_mission(self) -> None:
+        if not self.mission_started or self.mission_complete or self.mission_canceled:
+            return
+        if self.mission_paused:
+            return
+
+        self.mission_paused = True
+        self.paused_at = self.get_clock().now()
+        self.publish_stop_command("pause")
+        self.publish_event(
+            event_type="mission_paused",
+            step=self.current_step(),
+            message="Mission paused",
+        )
+        self.publish_state("paused", "Mission paused")
+        self.get_logger().info("Mission paused")
+
+    def resume_mission(self) -> None:
+        if not self.mission_paused:
+            return
+
+        now = self.get_clock().now()
+        if self.paused_at is not None:
+            paused_duration = now - self.paused_at
+            self.current_step_started = self.current_step_started + paused_duration
+
+        self.mission_paused = False
+        self.paused_at = None
+        step = self.current_step()
+        self.publish_event(
+            event_type="mission_resumed",
+            step=step,
+            message="Mission resumed",
+        )
+        self.publish_state("running", "Mission resumed")
+        if step is not None:
+            self.publish_step(step)
+        self.get_logger().info("Mission resumed")
+
+    def cancel_mission(self) -> None:
+        if self.mission_complete or self.mission_canceled:
+            return
+
+        self.mission_canceled = True
+        self.mission_paused = False
+        self.publish_stop_command("cancel")
+        self.publish_event(
+            event_type="mission_canceled",
+            step=self.current_step(),
+            message="Mission canceled",
+        )
+        self.publish_state("canceled", "Mission canceled")
+        self.get_logger().info("Mission canceled")
+
+    def publish_stop_command(self, reason: str) -> None:
+        command = RobotCommand()
+        command.stamp = self.get_clock().now().to_msg()
+        command.command_id = f"{self.mission_id}_{reason}_stop_{command.stamp.sec}"
+        command.command_type = "stop"
+        command.details_json = f'{{"mission_id":"{self.mission_id}","reason":"{reason}"}}'
+        self.command_pub.publish(command)
 
     def advance_step(self) -> None:
         self.current_step_index += 1
@@ -283,9 +394,13 @@ class MissionManagerNode(Node):
         self.state_pub.publish(mission_state)
 
     def current_step_name(self) -> str:
+        step = self.current_step()
+        return step.name if step else ""
+
+    def current_step(self) -> MissionStep | None:
         if 0 <= self.current_step_index < len(self.steps):
-            return self.steps[self.current_step_index].name
-        return ""
+            return self.steps[self.current_step_index]
+        return None
 
     def progress(self) -> float:
         if self.mission_complete:
@@ -301,6 +416,15 @@ class MissionManagerNode(Node):
         marker_path = Path(self.completion_marker_path)
         marker_path.parent.mkdir(parents=True, exist_ok=True)
         marker_path.write_text("completed\n", encoding="utf-8")
+
+    def reset_mission_runtime(self) -> None:
+        self.current_step_index = -1
+        self.current_step_started = self.get_clock().now()
+        self.mission_started = False
+        self.mission_complete = False
+        self.mission_paused = False
+        self.mission_canceled = False
+        self.paused_at = None
 
 
 def main(args: Iterable[str] | None = None) -> None:

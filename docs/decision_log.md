@@ -154,6 +154,16 @@ ORIMUS should generate structured JSON mission reports from ROS 2 mission, robot
 Reason:
 Reports make the system auditable and prepare the project for backend, dashboard, replay, and operator review features.
 
+### 015 - Add Operator-Style Mission Commands
+
+Status: Accepted
+
+Decision:
+The mission manager should accept `start`, `pause`, `resume`, and `cancel` commands through a ROS 2 mission command topic.
+
+Reason:
+Operator control is required before connecting the mission system to a backend, dashboard, or AI planner.
+
 ## Pending Decisions
 
 - First mission scenario.

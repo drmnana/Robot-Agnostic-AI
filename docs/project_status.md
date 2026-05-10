@@ -50,6 +50,8 @@ The project architecture and phase roadmap have been drafted.
 - Added mission event messages.
 - Added `report_manager` ROS 2 package.
 - Added JSON mission report output.
+- Added mission control commands: start, pause, resume, cancel.
+- Added `configs/missions/control_test.yaml`.
 
 ## In Progress
 
@@ -61,9 +63,9 @@ The project architecture and phase roadmap have been drafted.
 1. Confirm the first mission scenario.
 2. Confirm the first payload or sensor.
 3. Define the first real mission scenario.
-4. Add mission start, pause, resume, and cancel controls.
-5. Add payload-specific adapter specifications.
-6. Start backend/API planning around the current ROS 2 vertical slice.
+4. Add payload-specific adapter specifications.
+5. Start backend/API planning around the current ROS 2 vertical slice.
+6. Add dashboard/operator control planning.
 
 ## Open Questions
 
