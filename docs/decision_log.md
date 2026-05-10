@@ -194,6 +194,16 @@ The plain FastAPI backend should expose operator-facing mission command endpoint
 Reason:
 This gives dashboards and other clients one stable backend API while keeping ROS 2 topic publishing inside the ROS runtime.
 
+### 019 - Expose Live Runtime State Through The Bridge And Backend
+
+Status: Accepted
+
+Decision:
+The ROS-aware mission API bridge should cache the latest mission, robot, payload, perception, and safety messages, then expose them through HTTP runtime endpoints. The backend should forward those runtime endpoints for dashboard and client use.
+
+Reason:
+The operator interface needs both command flow and feedback flow. Keeping ROS subscriptions inside the ROS runtime avoids forcing the plain backend to become a ROS node.
+
 ## Pending Decisions
 
 - First mission scenario.

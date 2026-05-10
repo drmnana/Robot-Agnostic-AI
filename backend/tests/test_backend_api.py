@@ -74,6 +74,37 @@ def test_control_mission_reports_bridge_unavailable(monkeypatch):
     assert response.json()["detail"] == "Mission API bridge unavailable"
 
 
+def test_get_runtime_state(monkeypatch):
+    calls = []
+
+    def fake_get_runtime_resource(settings, resource):
+        calls.append(resource)
+        return {
+            "bridge": {"connected": True},
+            "mission": {"state": "running"},
+            "robot": {"connected": True},
+            "payload": None,
+            "perception": None,
+            "safety": None,
+        }
+
+    monkeypatch.setattr(main_module, "get_runtime_resource", fake_get_runtime_resource)
+
+    response = client.get("/runtime/state")
+
+    assert response.status_code == 200
+    assert response.json()["bridge"]["connected"] is True
+    assert response.json()["mission"]["state"] == "running"
+    assert calls == ["state"]
+
+
+def test_get_runtime_rejects_unknown_resource():
+    response = client.get("/runtime/navigation")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unsupported runtime resource"
+
+
 def test_latest_report_not_found(tmp_path: Path):
     original_report_path = settings.latest_report_path
     settings.latest_report_path = tmp_path / "missing.json"

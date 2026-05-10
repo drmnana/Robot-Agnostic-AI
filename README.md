@@ -90,9 +90,16 @@ Initial endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `GET /runtime/state`
+- `GET /runtime/mission`
+- `GET /runtime/robot`
+- `GET /runtime/payload`
+- `GET /runtime/perception`
+- `GET /runtime/safety`
 - `GET /reports/latest`
 
 Mission command endpoints forward operator requests to the ROS-aware mission API bridge.
+Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 
 ## ROS Mission API Bridge
@@ -108,3 +115,9 @@ Initial bridge endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `GET /runtime/state`
+- `GET /runtime/mission`
+- `GET /runtime/robot`
+- `GET /runtime/payload`
+- `GET /runtime/perception`
+- `GET /runtime/safety`

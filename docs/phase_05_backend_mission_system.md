@@ -91,9 +91,16 @@ Current endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `GET /runtime/state`
+- `GET /runtime/mission`
+- `GET /runtime/robot`
+- `GET /runtime/payload`
+- `GET /runtime/perception`
+- `GET /runtime/safety`
 - `GET /reports/latest`
 
 The backend forwards mission command requests to the ROS-aware mission API bridge.
+The backend forwards live runtime state requests from the ROS-aware mission API bridge.
 The bridge URL is configured through `ORIMUS_MISSION_API_BRIDGE_URL`.
 
 ## ROS-Aware Mission API Bridge
@@ -107,8 +114,14 @@ Bridge endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `GET /runtime/state`
+- `GET /runtime/mission`
+- `GET /runtime/robot`
+- `GET /runtime/payload`
+- `GET /runtime/perception`
+- `GET /runtime/safety`
 
-This gives ORIMUS a working HTTP-to-ROS command path.
+This gives ORIMUS a working HTTP-to-ROS command path and a ROS-to-HTTP live state path.
 
 ## Completion Criteria
 

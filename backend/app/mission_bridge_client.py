@@ -9,11 +9,19 @@ def send_mission_command(
     mission_id: str,
     command_type: str,
 ) -> dict:
+    return request_bridge_json(settings, "post", f"/missions/{mission_id}/{command_type}")
+
+
+def get_runtime_resource(settings: Settings, resource: str) -> dict:
+    return request_bridge_json(settings, "get", f"/runtime/{resource}")
+
+
+def request_bridge_json(settings: Settings, method: str, path: str) -> dict:
     bridge_url = settings.mission_api_bridge_url.rstrip("/")
-    command_url = f"{bridge_url}/missions/{mission_id}/{command_type}"
+    request_url = f"{bridge_url}{path}"
 
     try:
-        response = httpx.post(command_url, timeout=5.0)
+        response = httpx.request(method, request_url, timeout=5.0)
         response.raise_for_status()
     except httpx.ConnectError as exc:
         raise HTTPException(

@@ -4,13 +4,14 @@ import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
-from .mission_bridge_client import send_mission_command
+from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .settings import Settings
 
 
 settings = Settings()
 app = FastAPI(title="ORIMUS Backend", version="0.1.0")
 MISSION_COMMANDS = {"start", "pause", "resume", "cancel"}
+RUNTIME_RESOURCES = {"state", "mission", "robot", "payload", "perception", "safety"}
 
 
 @app.get("/health")
@@ -48,6 +49,14 @@ def control_mission(mission_id: str, command_type: str) -> dict:
         raise HTTPException(status_code=400, detail="Unsupported mission command")
 
     return send_mission_command(settings, mission_id, command_type)
+
+
+@app.get("/runtime/{resource}")
+def get_runtime(resource: str) -> dict:
+    if resource not in RUNTIME_RESOURCES:
+        raise HTTPException(status_code=400, detail="Unsupported runtime resource")
+
+    return get_runtime_resource(settings, resource)
 
 
 @app.get("/reports/latest")

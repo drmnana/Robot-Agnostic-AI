@@ -3,7 +3,14 @@ from typing import Iterable
 
 import rclpy
 import uvicorn
-from core_interfaces.msg import MissionCommand
+from core_interfaces.msg import (
+    MissionCommand,
+    MissionState,
+    PayloadState,
+    PerceptionEvent,
+    RobotState,
+    SafetyEvent,
+)
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from rclpy.node import Node
@@ -24,6 +31,23 @@ class MissionApiBridgeNode(Node):
         self.host = str(self.declare_parameter("host", "0.0.0.0").value)
         self.port = int(self.declare_parameter("port", 8010).value)
         self.command_pub = self.create_publisher(MissionCommand, "mission/command", 10)
+        self.state_lock = threading.Lock()
+        self.latest_mission_state: dict | None = None
+        self.latest_robot_state: dict | None = None
+        self.latest_payload_state: dict | None = None
+        self.latest_perception_event: dict | None = None
+        self.latest_safety_event: dict | None = None
+
+        self.create_subscription(MissionState, "mission/state", self.on_mission_state, 10)
+        self.create_subscription(RobotState, "robot/state", self.on_robot_state, 10)
+        self.create_subscription(PayloadState, "payload/state", self.on_payload_state, 10)
+        self.create_subscription(
+            PerceptionEvent,
+            "perception/events",
+            self.on_perception_event,
+            10,
+        )
+        self.create_subscription(SafetyEvent, "safety/events", self.on_safety_event, 10)
 
         self.app = FastAPI(title="ORIMUS Mission API Bridge", version="0.1.0")
         self.configure_routes()
@@ -49,6 +73,30 @@ class MissionApiBridgeNode(Node):
                 command_type=normalized_command,
             )
 
+        @self.app.get("/runtime/state")
+        def runtime_state() -> dict:
+            return self.get_runtime_snapshot()
+
+        @self.app.get("/runtime/mission")
+        def runtime_mission() -> dict:
+            return self.get_cached_resource("mission")
+
+        @self.app.get("/runtime/robot")
+        def runtime_robot() -> dict:
+            return self.get_cached_resource("robot")
+
+        @self.app.get("/runtime/payload")
+        def runtime_payload() -> dict:
+            return self.get_cached_resource("payload")
+
+        @self.app.get("/runtime/perception")
+        def runtime_perception() -> dict:
+            return self.get_cached_resource("perception")
+
+        @self.app.get("/runtime/safety")
+        def runtime_safety() -> dict:
+            return self.get_cached_resource("safety")
+
     def publish_mission_command(self, mission_id: str, command_type: str) -> None:
         command = MissionCommand()
         command.stamp = self.get_clock().now().to_msg()
@@ -59,6 +107,129 @@ class MissionApiBridgeNode(Node):
         self.command_pub.publish(command)
         self.get_logger().info(f"Published mission command: {mission_id} {command_type}")
 
+    def on_mission_state(self, msg: MissionState) -> None:
+        self.update_cached_resource(
+            "mission",
+            {
+                "stamp": time_to_dict(msg.stamp),
+                "mission_id": msg.mission_id,
+                "name": msg.name,
+                "state": msg.state,
+                "current_step": msg.current_step,
+                "progress": float(msg.progress),
+                "message": msg.message,
+            },
+        )
+
+    def on_robot_state(self, msg: RobotState) -> None:
+        self.update_cached_resource(
+            "robot",
+            {
+                "stamp": time_to_dict(msg.stamp),
+                "robot_id": msg.robot_id,
+                "platform": msg.platform,
+                "mode": msg.mode,
+                "connected": bool(msg.connected),
+                "estop_active": bool(msg.estop_active),
+                "battery_percent": float(msg.battery_percent),
+                "pose": {
+                    "x": float(msg.x),
+                    "y": float(msg.y),
+                    "yaw": float(msg.yaw),
+                },
+                "velocity": {
+                    "linear_x": float(msg.linear_x),
+                    "linear_y": float(msg.linear_y),
+                    "yaw_rate": float(msg.yaw_rate),
+                },
+                "message": msg.message,
+            },
+        )
+
+    def on_payload_state(self, msg: PayloadState) -> None:
+        self.update_cached_resource(
+            "payload",
+            {
+                "stamp": time_to_dict(msg.stamp),
+                "payload_id": msg.payload_id,
+                "payload_type": msg.payload_type,
+                "state": msg.state,
+                "active": bool(msg.active),
+                "health": float(msg.health),
+                "message": msg.message,
+            },
+        )
+
+    def on_perception_event(self, msg: PerceptionEvent) -> None:
+        self.update_cached_resource(
+            "perception",
+            {
+                "stamp": time_to_dict(msg.stamp),
+                "event_id": msg.event_id,
+                "event_type": msg.event_type,
+                "source": msg.source,
+                "confidence": float(msg.confidence),
+                "frame_id": msg.frame_id,
+                "position": {
+                    "x": float(msg.x),
+                    "y": float(msg.y),
+                    "z": float(msg.z),
+                },
+                "details_json": msg.details_json,
+            },
+        )
+
+    def on_safety_event(self, msg: SafetyEvent) -> None:
+        self.update_cached_resource(
+            "safety",
+            {
+                "stamp": time_to_dict(msg.stamp),
+                "event_id": msg.event_id,
+                "severity": msg.severity,
+                "source": msg.source,
+                "rule": msg.rule,
+                "command_blocked": bool(msg.command_blocked),
+                "message": msg.message,
+            },
+        )
+
+    def update_cached_resource(self, resource: str, value: dict) -> None:
+        with self.state_lock:
+            if resource == "mission":
+                self.latest_mission_state = value
+            elif resource == "robot":
+                self.latest_robot_state = value
+            elif resource == "payload":
+                self.latest_payload_state = value
+            elif resource == "perception":
+                self.latest_perception_event = value
+            elif resource == "safety":
+                self.latest_safety_event = value
+
+    def get_runtime_snapshot(self) -> dict:
+        with self.state_lock:
+            return {
+                "bridge": {
+                    "connected": True,
+                    "service": "mission-api-bridge",
+                },
+                "mission": self.latest_mission_state,
+                "robot": self.latest_robot_state,
+                "payload": self.latest_payload_state,
+                "perception": self.latest_perception_event,
+                "safety": self.latest_safety_event,
+            }
+
+    def get_cached_resource(self, resource: str) -> dict:
+        snapshot = self.get_runtime_snapshot()
+        if resource not in snapshot:
+            raise HTTPException(status_code=404, detail="Unknown runtime resource")
+
+        return {
+            "resource": resource,
+            "data": snapshot[resource],
+        }
+
     def run_server(self) -> None:
         config = uvicorn.Config(
             self.app,
@@ -68,6 +239,13 @@ class MissionApiBridgeNode(Node):
         )
         server = uvicorn.Server(config)
         server.run()
+
+
+def time_to_dict(stamp) -> dict:
+    return {
+        "sec": int(stamp.sec),
+        "nanosec": int(stamp.nanosec),
+    }
 
 
 def main(args: Iterable[str] | None = None) -> None:
@@ -82,4 +260,3 @@ def main(args: Iterable[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-
