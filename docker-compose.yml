@@ -12,6 +12,8 @@ services:
       - .:/workspace
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    ports:
+      - "8010:8010"
     stdin_open: true
     tty: true
 

@@ -91,6 +91,20 @@ Current endpoints:
 
 The backend does not yet publish ROS 2 mission commands. That is the next backend integration step.
 
+## ROS-Aware Mission API Bridge
+
+The `mission_api_bridge` ROS 2 package exposes HTTP endpoints from inside the ROS runtime and publishes mission commands to `/mission/command`.
+
+Bridge endpoints:
+
+- `GET /health`
+- `POST /missions/{mission_id}/start`
+- `POST /missions/{mission_id}/pause`
+- `POST /missions/{mission_id}/resume`
+- `POST /missions/{mission_id}/cancel`
+
+This gives ORIMUS a working HTTP-to-ROS command path.
+
 ## Completion Criteria
 
 This phase is complete when software clients can create missions, monitor state, and receive events through the backend.

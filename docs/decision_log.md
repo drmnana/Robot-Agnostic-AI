@@ -174,6 +174,16 @@ The first backend should expose a small HTTP API for health checks, mission conf
 Reason:
 A small backend surface is easier to test and gives the future dashboard a stable API foundation.
 
+### 017 - Use A ROS-Aware Mission API Bridge
+
+Status: Accepted
+
+Decision:
+Mission command HTTP endpoints should be exposed by a ROS-aware `mission_api_bridge` package that publishes directly to `/mission/command`.
+
+Reason:
+This keeps mission control real-time and avoids temporary file-based command passing between the backend and ROS 2.
+
 ## Pending Decisions
 
 - First mission scenario.

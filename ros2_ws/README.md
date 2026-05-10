@@ -11,6 +11,7 @@ This workspace contains the ROS 2 packages for the robot-agnostic AI system.
 - `payload_manager`: payload command validation gate.
 - `mock_payloads`: simulation-first mock payload adapters.
 - `report_manager`: mission report collector.
+- `mission_api_bridge`: ROS-aware HTTP bridge for mission commands.
 - `orimus_bringup`: launch files for starting ORIMUS runtime configurations.
 
 ## Build Inside Docker
@@ -88,6 +89,12 @@ Mission smoke test:
 
 ```powershell
 docker compose run --rm ros2-dev bash -lc "cd ros2_ws && bash scripts/smoke_test_mission_manager.sh"
+```
+
+Mission API bridge smoke test:
+
+```powershell
+docker compose run --rm ros2-dev bash -lc "cd ros2_ws && bash scripts/smoke_test_mission_api_bridge.sh"
 ```
 
 ## Run The Mock Payload Flow

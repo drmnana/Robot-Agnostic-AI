@@ -12,6 +12,7 @@ def generate_launch_description() -> LaunchDescription:
     mission_config_path = LaunchConfiguration("mission_config_path")
     completion_marker_path = LaunchConfiguration("completion_marker_path")
     report_path = LaunchConfiguration("report_path")
+    mission_api_port = LaunchConfiguration("mission_api_port")
 
     return LaunchDescription(
         [
@@ -49,6 +50,11 @@ def generate_launch_description() -> LaunchDescription:
                 "report_path",
                 default_value="/workspace/reports/latest_mission_report.json",
                 description="Mission report JSON output path.",
+            ),
+            DeclareLaunchArgument(
+                "mission_api_port",
+                default_value="8010",
+                description="HTTP port for the ROS-aware mission API bridge.",
             ),
             Node(
                 package="mock_go2x_driver",
@@ -106,6 +112,17 @@ def generate_launch_description() -> LaunchDescription:
                         "autostart": mission_autostart,
                         "mission_config_path": mission_config_path,
                         "completion_marker_path": completion_marker_path,
+                    }
+                ],
+            ),
+            Node(
+                package="mission_api_bridge",
+                executable="mission_api_bridge_node",
+                name="mission_api_bridge",
+                output="screen",
+                parameters=[
+                    {
+                        "port": mission_api_port,
                     }
                 ],
             ),

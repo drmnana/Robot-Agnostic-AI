@@ -87,3 +87,17 @@ Initial endpoints:
 - `GET /missions`
 - `GET /missions/{mission_id}`
 - `GET /reports/latest`
+
+## ROS Mission API Bridge
+
+The ROS-aware mission API bridge is provided by `mission_api_bridge`.
+
+It publishes HTTP mission commands to ROS 2 `/mission/command`.
+
+Initial bridge endpoints:
+
+- `GET /health`
+- `POST /missions/{mission_id}/start`
+- `POST /missions/{mission_id}/pause`
+- `POST /missions/{mission_id}/resume`
+- `POST /missions/{mission_id}/cancel`
