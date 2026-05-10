@@ -204,6 +204,16 @@ The ROS-aware mission API bridge should cache the latest mission, robot, payload
 Reason:
 The operator interface needs both command flow and feedback flow. Keeping ROS subscriptions inside the ROS runtime avoids forcing the plain backend to become a ROS node.
 
+### 020 - Serve The First Dashboard From The Backend
+
+Status: Accepted
+
+Decision:
+The first ORIMUS operator dashboard prototype should live in `dashboard/` and be served by the FastAPI backend at `/dashboard/`.
+
+Reason:
+Serving the prototype from the backend avoids a separate frontend toolchain while the operator workflow is still being proven.
+
 ## Pending Decisions
 
 - First mission scenario.

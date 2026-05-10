@@ -102,6 +102,18 @@ Mission command endpoints forward operator requests to the ROS-aware mission API
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 
+## Operator Dashboard
+
+The first operator dashboard prototype is located in `dashboard/` and is served by the backend.
+
+Open it at:
+
+```text
+http://localhost:8000/dashboard/
+```
+
+The dashboard can list missions, send mission commands, and display live runtime state from the backend.
+
 ## ROS Mission API Bridge
 
 The ROS-aware mission API bridge is provided by `mission_api_bridge`.

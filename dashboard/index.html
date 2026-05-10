@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ORIMUS Operator Dashboard</title>
+    <link rel="stylesheet" href="/dashboard/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">ORIMUS</p>
+          <h1>Operator Dashboard</h1>
+        </div>
+        <div class="status-strip" aria-live="polite">
+          <span id="backend-status" class="status-pill pending">Backend</span>
+          <span id="bridge-status" class="status-pill pending">ROS Bridge</span>
+          <span id="last-updated" class="timestamp">Waiting for data</span>
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <section class="panel mission-panel">
+          <div class="panel-header">
+            <h2>Missions</h2>
+            <button id="refresh-button" class="icon-button" type="button" aria-label="Refresh dashboard data">
+              <span aria-hidden="true">R</span>
+            </button>
+          </div>
+          <div id="mission-list" class="mission-list"></div>
+        </section>
+
+        <section class="panel command-panel">
+          <div class="panel-header">
+            <h2>Mission Control</h2>
+            <span id="selected-mission-label" class="muted">No mission selected</span>
+          </div>
+          <div class="command-grid">
+            <button class="command-button start" type="button" data-command="start">
+              <span aria-hidden="true">&gt;</span>
+              Start
+            </button>
+            <button class="command-button pause" type="button" data-command="pause">
+              <span aria-hidden="true">||</span>
+              Pause
+            </button>
+            <button class="command-button resume" type="button" data-command="resume">
+              <span aria-hidden="true">|&gt;</span>
+              Resume
+            </button>
+            <button class="command-button cancel" type="button" data-command="cancel">
+              <span aria-hidden="true">X</span>
+              Cancel
+            </button>
+          </div>
+          <div id="command-message" class="message-line" role="status"></div>
+        </section>
+
+        <section class="panel runtime-panel">
+          <div class="panel-header">
+            <h2>Runtime</h2>
+            <span id="mission-state-pill" class="state-pill">Unknown</span>
+          </div>
+          <div class="runtime-map">
+            <div>
+              <span class="metric-label">Mission</span>
+              <strong id="mission-state">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Step</span>
+              <strong id="mission-step">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Progress</span>
+              <strong id="mission-progress">0%</strong>
+            </div>
+            <div>
+              <span class="metric-label">Message</span>
+              <strong id="mission-message">No data</strong>
+            </div>
+          </div>
+          <div class="progress-track" aria-label="Mission progress">
+            <span id="progress-bar"></span>
+          </div>
+        </section>
+
+        <section class="panel robot-panel">
+          <div class="panel-header">
+            <h2>Robot</h2>
+            <span id="robot-connected" class="state-pill">Unknown</span>
+          </div>
+          <div class="metric-grid">
+            <div>
+              <span class="metric-label">Platform</span>
+              <strong id="robot-platform">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Battery</span>
+              <strong id="robot-battery">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Mode</span>
+              <strong id="robot-mode">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Pose</span>
+              <strong id="robot-pose">No data</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel payload-panel">
+          <div class="panel-header">
+            <h2>Payload</h2>
+            <span id="payload-active" class="state-pill">Unknown</span>
+          </div>
+          <div class="metric-grid">
+            <div>
+              <span class="metric-label">Type</span>
+              <strong id="payload-type">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">State</span>
+              <strong id="payload-state">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Health</span>
+              <strong id="payload-health">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Message</span>
+              <strong id="payload-message">No data</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel event-panel">
+          <div class="panel-header">
+            <h2>Events</h2>
+            <span class="muted">Latest</span>
+          </div>
+          <div class="event-stack">
+            <div>
+              <span class="metric-label">Perception</span>
+              <strong id="perception-event">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Safety</span>
+              <strong id="safety-event">No data</strong>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/dashboard/app.js" defer></script>
+  </body>
+</html>

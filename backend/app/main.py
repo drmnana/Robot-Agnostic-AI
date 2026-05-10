@@ -3,6 +3,8 @@ from pathlib import Path
 import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .settings import Settings
@@ -12,6 +14,15 @@ settings = Settings()
 app = FastAPI(title="ORIMUS Backend", version="0.1.0")
 MISSION_COMMANDS = {"start", "pause", "resume", "cancel"}
 RUNTIME_RESOURCES = {"state", "mission", "robot", "payload", "perception", "safety"}
+DASHBOARD_DIR = Path(__file__).resolve().parents[2] / "dashboard"
+
+if DASHBOARD_DIR.exists():
+    app.mount("/dashboard", StaticFiles(directory=DASHBOARD_DIR, html=True), name="dashboard")
+
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/dashboard/")
 
 
 @app.get("/health")

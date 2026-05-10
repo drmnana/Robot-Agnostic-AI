@@ -41,7 +41,24 @@ However, a simple prototype can be created earlier if needed for planning.
 - Payload status panel
 - Event log viewer
 
+## Initial Dashboard Prototype
+
+The first dashboard prototype is located in `dashboard/` and is served by the backend at:
+
+```text
+http://localhost:8000/dashboard/
+```
+
+Current capabilities:
+
+- Lists mission YAML configs through `GET /missions`.
+- Selects one mission for operator commands.
+- Sends start, pause, resume, and cancel through backend mission endpoints.
+- Polls `GET /runtime/state` for mission, robot, payload, perception, and safety status.
+- Shows backend and ROS bridge connection status.
+
+This is intentionally a compact operational screen, not a final polished control station.
+
 ## Completion Criteria
 
 This phase is complete when an operator can monitor the system and control basic missions from the dashboard.
-
