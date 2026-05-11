@@ -59,6 +59,7 @@ const elements = {
   reportHash: document.querySelector("#report-hash"),
   reportFullHash: document.querySelector("#report-full-hash"),
   reportCopyHash: document.querySelector("#report-copy-hash"),
+  reportExportJson: document.querySelector("#report-export-json"),
   reportTimelineCount: document.querySelector("#report-timeline-count"),
   reportTimeline: document.querySelector("#report-timeline"),
   reportCommandCount: document.querySelector("#report-command-count"),
@@ -74,6 +75,7 @@ const elements = {
 elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
+elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
 elements.reportFilterClear.addEventListener("click", () => clearReportFilters());
 [
   elements.reportFilterOutcome,
@@ -631,6 +633,15 @@ async function copyReportHash() {
   } catch (error) {
     elements.reportStatus.textContent = "Could not copy report hash";
   }
+}
+
+function exportSelectedReport() {
+  if (!state.selectedReportId) {
+    elements.reportStatus.textContent = "Select a report to export";
+    return;
+  }
+
+  window.location.href = `/reports/${encodeURIComponent(state.selectedReportId)}/export`;
 }
 
 function syncCommandButtons() {

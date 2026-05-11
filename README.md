@@ -13,6 +13,7 @@ The project is currently in the planning and foundation stage.
 - [Glossary](docs/glossary.md)
 - [Docker Environment](docs/docker_environment.md)
 - [Safety Assumptions](docs/safety_assumptions.md)
+- [Evidence Package Schema v1.0](docs/evidence_package_schema_v1.md)
 
 ## Current Phase
 
@@ -100,6 +101,7 @@ Initial endpoints:
 - `GET /runtime/safety`
 - `GET /runtime/events`
 - `GET /reports`
+- `GET /reports/{report_id}/export`
 - `GET /reports/latest`
 - `GET /reports/{report_id}`
 
@@ -108,6 +110,7 @@ Runtime endpoints forward live state reads from the ROS-aware mission API bridge
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 
 `GET /reports` supports audit filters for `outcome`, `mission_id`, `sector`, `date_from`, `date_to`, `perception_event_type`, `has_safety_event`, and `command_blocked`.
+`GET /reports/{report_id}/export` returns a JSON-only ORIMUS Evidence Package using schema version `1.0` with an export-level SHA-256 hash.
 
 ## Operator Dashboard
 
@@ -124,6 +127,7 @@ The dashboard can list missions, send mission commands, reset missions for repea
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
 Each finalized report is stored with a SHA-256 content hash for audit traceability.
 Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
+Selected reports can be exported as JSON evidence packages.
 
 ## ROS Mission API Bridge
 

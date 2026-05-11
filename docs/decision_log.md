@@ -314,6 +314,26 @@ Perception events should include `evidence_artifact_url` and `evidence_hash`, ev
 Reason:
 Future camera frames, sensor captures, and other evidence artifacts should plug into the report model without restructuring the dashboard or database.
 
+### 031 - Define JSON Evidence Package Schema v1.0
+
+Status: Accepted
+
+Decision:
+ORIMUS evidence exports should use a documented JSON-only Evidence Package Schema v1.0.
+
+Reason:
+The schema version in each export must point to a stable contract. Future versions can extend the package without breaking existing review workflows.
+
+### 032 - Add Export-Level Hashes
+
+Status: Accepted
+
+Decision:
+Each evidence package should include an `export_hash`, calculated as SHA-256 over the canonical JSON package with `export_hash` excluded from the hashing input.
+
+Reason:
+The mission report `content_hash` verifies the finalized report, while `export_hash` verifies the downloaded package has not changed after export.
+
 ## Pending Decisions
 
 - First mission scenario.

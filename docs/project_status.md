@@ -74,6 +74,7 @@ The project architecture and phase roadmap have been drafted.
 - Added Mission History dashboard filter controls.
 - Added command-linked safety events and forward-compatible perception evidence artifact fields.
 - Added unified dashboard audit timeline and report detail drilldowns.
+- Added JSON-only ORIMUS Evidence Package export with schema v1.0 and export-level SHA-256 hash.
 
 ## In Progress
 
@@ -87,7 +88,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Add export/download support for selected mission reports.
+6. Add PDF report export as a separate future ticket after layout and branding decisions.
 
 ## Open Questions
 

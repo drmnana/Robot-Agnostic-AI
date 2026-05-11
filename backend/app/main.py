@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .report_store import get_report, list_reports
 from .settings import Settings
@@ -113,6 +114,20 @@ def get_reports(
             command_blocked=command_blocked,
         )
     }
+
+
+@app.get("/reports/{report_id}/export")
+def export_report(report_id: str):
+    report = get_report(settings.report_database_path, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Mission report not found")
+
+    package = build_evidence_package(report)
+    filename = f"orimus-evidence-{report_id}.json"
+    return JSONResponse(
+        content=package,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.get("/reports/{report_id}")

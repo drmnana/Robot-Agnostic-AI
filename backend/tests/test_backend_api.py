@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import app.main as main_module
+from app.evidence_package import hash_evidence_package
 from app.main import app, settings
 
 
@@ -206,6 +207,43 @@ def test_get_report_detail_from_database(tmp_path: Path):
         settings.report_database_path = original_database_path
 
 
+def test_export_report_evidence_package_from_database(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/report-001/export")
+        assert response.status_code == 200
+        assert (
+            response.headers["content-disposition"]
+            == 'attachment; filename="orimus-evidence-report-001.json"'
+        )
+        package = response.json()
+        assert package["package_type"] == "orimus_evidence_package"
+        assert package["schema_version"] == "1.0"
+        assert package["report"]["report_id"] == "report-001"
+        assert package["report"]["content_hash"] == "abc123"
+        assert package["mission"]["mission_id"] == "demo_forward_stop"
+        assert package["mission"]["sector"] == "sector-alpha"
+        assert package["artifact_manifest"][0]["source_event_id"] == "perception-001"
+        assert package["export_hash"] == hash_evidence_package(package)
+
+        tampered = dict(package)
+        tampered["mission"] = {**package["mission"], "sector": "tampered-sector"}
+        assert package["export_hash"] != hash_evidence_package(tampered)
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_export_report_not_found(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/missing-report/export")
+        assert response.status_code == 404
+    finally:
+        settings.report_database_path = original_database_path
+
+
 def test_get_report_detail_not_found(tmp_path: Path):
     original_database_path = settings.report_database_path
     settings.report_database_path = create_report_database(tmp_path)
@@ -226,7 +264,19 @@ def create_report_database(tmp_path: Path) -> Path:
             "name": "Demo Forward Stop",
             "state": "completed",
             "sector": "sector-alpha",
+            "stamp": {"sec": 200, "nanosec": 0},
         },
+        "mission_states": [{"stamp": {"sec": 100, "nanosec": 0}}],
+        "mission_events": [],
+        "perception_events": [
+            {
+                "event_id": "perception-001",
+                "event_type": "person_detected",
+                "source": "mock_inspection_camera",
+                "evidence_artifact_url": None,
+                "evidence_hash": None,
+            }
+        ],
     }
     report_002 = {
         "report_id": "report-002",
