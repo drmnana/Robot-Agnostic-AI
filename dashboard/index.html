@@ -165,6 +165,46 @@
             </button>
           </div>
           <div id="report-status" class="report-status">No reports loaded</div>
+          <div class="report-filters" aria-label="Mission history filters">
+            <label>
+              Outcome
+              <select id="report-filter-outcome">
+                <option value="">Any</option>
+                <option value="completed">Completed</option>
+                <option value="canceled">Canceled</option>
+                <option value="failed">Failed</option>
+              </select>
+            </label>
+            <label>
+              Mission
+              <input id="report-filter-mission" type="search" placeholder="mission id or name" />
+            </label>
+            <label>
+              Sector
+              <input id="report-filter-sector" type="search" placeholder="training-yard-alpha" />
+            </label>
+            <label>
+              Perception
+              <input id="report-filter-perception" type="search" placeholder="person_detected" />
+            </label>
+            <label>
+              From
+              <input id="report-filter-date-from" type="date" />
+            </label>
+            <label>
+              To
+              <input id="report-filter-date-to" type="date" />
+            </label>
+            <label class="filter-check">
+              <input id="report-filter-safety" type="checkbox" />
+              Safety events
+            </label>
+            <label class="filter-check">
+              <input id="report-filter-blocked" type="checkbox" />
+              Blocked command
+            </label>
+            <button id="report-filter-clear" class="filter-clear" type="button">Clear</button>
+          </div>
           <div id="report-list" class="report-list"></div>
           <div class="report-grid">
             <div>

@@ -45,6 +45,12 @@ class MissionManagerNode(Node):
             "mission_name",
             "Demo Forward Stop",
         ).value
+        self.mission_sector = str(
+            self.declare_parameter(
+                "mission_sector",
+                "unspecified",
+            ).value
+        )
         self.autostart = bool(self.declare_parameter("autostart", True).value)
         self.mission_config_path = str(
             self.declare_parameter("mission_config_path", "").value
@@ -316,14 +322,17 @@ class MissionManagerNode(Node):
         event.step_name = step.name if step else ""
         event.target = step.target if step else ""
         event.message = message
-        event.details_json = (
-            f'{{"mission_name":"{self.mission_name}"}}'
-            if step is None
-            else (
+        if step is None:
+            event.details_json = (
                 f'{{"mission_name":"{self.mission_name}",'
+                f'"sector":"{self.mission_sector}"}}'
+            )
+        else:
+            event.details_json = (
+                f'{{"mission_name":"{self.mission_name}",'
+                f'"sector":"{self.mission_sector}",'
                 f'"command_type":"{step.command_type}"}}'
             )
-        )
         self.event_pub.publish(event)
 
     def load_mission_steps(self) -> list[MissionStep]:
@@ -339,6 +348,7 @@ class MissionManagerNode(Node):
 
         self.mission_id = str(mission_data.get("mission_id", self.mission_id))
         self.mission_name = str(mission_data.get("name", self.mission_name))
+        self.mission_sector = str(mission_data.get("sector", self.mission_sector))
         step_data = mission_data.get("steps", [])
 
         if not isinstance(step_data, list) or not step_data:

@@ -109,6 +109,19 @@ The backend forwards live runtime state requests from the ROS-aware mission API 
 The backend reads persisted mission report history from the SQLite audit database.
 The bridge URL is configured through `ORIMUS_MISSION_API_BRIDGE_URL`.
 
+Mission YAML metadata now includes `sector`, allowing finalized reports to be searched by operating area.
+
+`GET /reports` supports query filters for:
+
+- `outcome`
+- `mission_id`
+- `sector`
+- `date_from`
+- `date_to`
+- `perception_event_type`
+- `has_safety_event`
+- `command_blocked`
+
 ## ROS-Aware Mission API Bridge
 
 The `mission_api_bridge` ROS 2 package exposes HTTP endpoints from inside the ROS runtime and publishes mission commands to `/mission/command`.

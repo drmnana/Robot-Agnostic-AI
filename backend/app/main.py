@@ -1,7 +1,8 @@
 from pathlib import Path
+from typing import Optional
 
 import yaml
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -89,8 +90,29 @@ def get_latest_report():
 
 
 @app.get("/reports")
-def get_reports() -> dict:
-    return {"reports": list_reports(settings.report_database_path)}
+def get_reports(
+    outcome: Optional[str] = None,
+    mission_id: Optional[str] = None,
+    sector: Optional[str] = None,
+    date_from: Optional[int] = None,
+    date_to: Optional[int] = None,
+    perception_event_type: Optional[str] = None,
+    has_safety_event: Optional[bool] = Query(default=None),
+    command_blocked: Optional[bool] = Query(default=None),
+) -> dict:
+    return {
+        "reports": list_reports(
+            settings.report_database_path,
+            outcome=outcome,
+            mission_id=mission_id,
+            sector=sector,
+            date_from=date_from,
+            date_to=date_to,
+            perception_event_type=perception_event_type,
+            has_safety_event=has_safety_event,
+            command_blocked=command_blocked,
+        )
+    }
 
 
 @app.get("/reports/{report_id}")
@@ -107,6 +129,7 @@ def read_mission_summary(mission_file: Path) -> dict:
     return {
         "mission_id": mission_data.get("mission_id", mission_file.stem),
         "name": mission_data.get("name", mission_file.stem),
+        "sector": mission_data.get("sector", ""),
         "path": str(mission_file),
         "step_count": len(mission_data.get("steps", [])),
     }

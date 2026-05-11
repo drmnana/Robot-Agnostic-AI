@@ -1,5 +1,6 @@
 mission_id: demo_forward_stop
 name: Demo Forward Stop
+sector: training-yard-alpha
 steps:
   - name: stand
     target: robot

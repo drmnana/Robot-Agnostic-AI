@@ -39,6 +39,15 @@ const elements = {
   eventHistory: document.querySelector("#event-history"),
   reportStatus: document.querySelector("#report-status"),
   reportList: document.querySelector("#report-list"),
+  reportFilterOutcome: document.querySelector("#report-filter-outcome"),
+  reportFilterMission: document.querySelector("#report-filter-mission"),
+  reportFilterSector: document.querySelector("#report-filter-sector"),
+  reportFilterPerception: document.querySelector("#report-filter-perception"),
+  reportFilterDateFrom: document.querySelector("#report-filter-date-from"),
+  reportFilterDateTo: document.querySelector("#report-filter-date-to"),
+  reportFilterSafety: document.querySelector("#report-filter-safety"),
+  reportFilterBlocked: document.querySelector("#report-filter-blocked"),
+  reportFilterClear: document.querySelector("#report-filter-clear"),
   reportMission: document.querySelector("#report-mission"),
   reportState: document.querySelector("#report-state"),
   reportMissionEvents: document.querySelector("#report-mission-events"),
@@ -51,6 +60,19 @@ const elements = {
 
 elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
+elements.reportFilterClear.addEventListener("click", () => clearReportFilters());
+[
+  elements.reportFilterOutcome,
+  elements.reportFilterDateFrom,
+  elements.reportFilterDateTo,
+  elements.reportFilterSafety,
+  elements.reportFilterBlocked,
+].forEach((control) => {
+  control.addEventListener("change", () => refreshLatestReport({ resetSelection: true }));
+});
+[elements.reportFilterMission, elements.reportFilterSector, elements.reportFilterPerception].forEach((control) => {
+  control.addEventListener("input", debounce(() => refreshLatestReport({ resetSelection: true }), 350));
+});
 elements.commandButtons.forEach((button) => {
   button.addEventListener("click", () => sendMissionCommand(button.dataset.command));
 });
@@ -119,9 +141,13 @@ async function sendMissionCommand(command) {
   }
 }
 
-async function refreshLatestReport() {
+async function refreshLatestReport(options = {}) {
+  if (options.resetSelection) {
+    state.selectedReportId = null;
+  }
+
   try {
-    const data = await fetchJson("/reports");
+    const data = await fetchJson(buildReportListUrl());
     state.reports = data.reports ?? [];
     if (!state.selectedReportId && state.reports.length > 0) {
       state.selectedReportId = state.reports[0].id;
@@ -138,6 +164,56 @@ async function refreshLatestReport() {
     state.reports = [];
     renderReportUnavailable(error.message);
   }
+}
+
+function buildReportListUrl() {
+  const params = new URLSearchParams();
+  addParam(params, "outcome", elements.reportFilterOutcome.value);
+  addParam(params, "mission_id", elements.reportFilterMission.value);
+  addParam(params, "sector", elements.reportFilterSector.value);
+  addParam(params, "perception_event_type", elements.reportFilterPerception.value);
+  addDateParam(params, "date_from", elements.reportFilterDateFrom.value, false);
+  addDateParam(params, "date_to", elements.reportFilterDateTo.value, true);
+  if (elements.reportFilterSafety.checked) {
+    params.set("has_safety_event", "true");
+  }
+  if (elements.reportFilterBlocked.checked) {
+    params.set("command_blocked", "true");
+  }
+
+  const query = params.toString();
+  return query ? `/reports?${query}` : "/reports";
+}
+
+function addParam(params, key, value) {
+  const trimmed = String(value ?? "").trim();
+  if (trimmed) {
+    params.set(key, trimmed);
+  }
+}
+
+function addDateParam(params, key, value, endOfDay) {
+  if (!value) {
+    return;
+  }
+
+  const suffix = endOfDay ? "T23:59:59" : "T00:00:00";
+  const timestamp = Math.floor(new Date(`${value}${suffix}`).getTime() / 1000);
+  if (!Number.isNaN(timestamp)) {
+    params.set(key, String(timestamp));
+  }
+}
+
+function clearReportFilters() {
+  elements.reportFilterOutcome.value = "";
+  elements.reportFilterMission.value = "";
+  elements.reportFilterSector.value = "";
+  elements.reportFilterPerception.value = "";
+  elements.reportFilterDateFrom.value = "";
+  elements.reportFilterDateTo.value = "";
+  elements.reportFilterSafety.checked = false;
+  elements.reportFilterBlocked.checked = false;
+  refreshLatestReport({ resetSelection: true });
 }
 
 function renderMissions() {
@@ -282,6 +358,7 @@ function renderReportList() {
         <span>${escapeHtml(report.outcome ?? "unknown")} - ${formatStamp({
           sec: report.ended_at_sec,
         })}</span>
+        <span>${escapeHtml(report.sector ?? "unspecified sector")}</span>
         <span>${escapeHtml(shortenHash(report.content_hash))}</span>
       `;
       button.addEventListener("click", async () => {
@@ -405,6 +482,14 @@ function shortenHash(value) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function debounce(callback, waitMs) {
+  let timeoutId;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => callback(...args), waitMs);
+  };
 }
 
 function escapeHtml(value) {

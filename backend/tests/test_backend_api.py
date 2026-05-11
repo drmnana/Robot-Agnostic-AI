@@ -45,6 +45,7 @@ def test_get_mission():
     assert response.status_code == 200
     data = response.json()
     assert data["mission_id"] == "demo_forward_stop"
+    assert data["sector"] == "training-yard-alpha"
     assert len(data["steps"]) > 0
 
 
@@ -160,10 +161,35 @@ def test_list_reports_from_database(tmp_path: Path):
         response = client.get("/reports")
         assert response.status_code == 200
         reports = response.json()["reports"]
-        assert len(reports) == 1
-        assert reports[0]["id"] == "report-001"
-        assert reports[0]["outcome"] == "completed"
-        assert reports[0]["content_hash"] == "abc123"
+        assert len(reports) == 2
+        assert reports[0]["id"] == "report-002"
+        assert reports[1]["id"] == "report-001"
+        assert reports[1]["outcome"] == "completed"
+        assert reports[1]["content_hash"] == "abc123"
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_list_reports_filters_by_mission_metadata_and_events(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        expectations = [
+            ("/reports?outcome=completed", ["report-001"]),
+            ("/reports?mission_id=control", ["report-002"]),
+            ("/reports?sector=sector-alpha", ["report-001"]),
+            ("/reports?date_from=250", ["report-002"]),
+            ("/reports?date_to=250", ["report-001"]),
+            ("/reports?perception_event_type=person_detected", ["report-001"]),
+            ("/reports?has_safety_event=true", ["report-002"]),
+            ("/reports?has_safety_event=false", ["report-001"]),
+            ("/reports?command_blocked=true", ["report-002"]),
+        ]
+
+        for url, expected_ids in expectations:
+            response = client.get(url)
+            assert response.status_code == 200
+            assert [report["id"] for report in response.json()["reports"]] == expected_ids
     finally:
         settings.report_database_path = original_database_path
 
@@ -192,13 +218,24 @@ def test_get_report_detail_not_found(tmp_path: Path):
 
 def create_report_database(tmp_path: Path) -> Path:
     database_path = tmp_path / "orimus.db"
-    report = {
+    report_001 = {
         "report_id": "report-001",
         "content_hash": "abc123",
         "mission": {
             "mission_id": "demo_forward_stop",
             "name": "Demo Forward Stop",
             "state": "completed",
+            "sector": "sector-alpha",
+        },
+    }
+    report_002 = {
+        "report_id": "report-002",
+        "content_hash": "def456",
+        "mission": {
+            "mission_id": "control_test",
+            "name": "Control Test Mission",
+            "state": "canceled",
+            "sector": "sector-bravo",
         },
     }
     with sqlite3.connect(database_path) as connection:
@@ -226,6 +263,34 @@ def create_report_database(tmp_path: Path) -> Path:
         )
         connection.execute(
             """
+            CREATE TABLE perception_events (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                source TEXT,
+                confidence REAL,
+                stamp_sec INTEGER,
+                stamp_nanosec INTEGER,
+                payload_json TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE safety_events (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL,
+                rule TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                command_blocked INTEGER NOT NULL,
+                stamp_sec INTEGER,
+                stamp_nanosec INTEGER,
+                payload_json TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
             INSERT INTO missions (
                 id, mission_id, name, sector, outcome,
                 started_at_sec, started_at_nanosec, ended_at_sec, ended_at_nanosec,
@@ -244,12 +309,76 @@ def create_report_database(tmp_path: Path) -> Path:
                 200,
                 0,
                 "abc123",
-                json.dumps(report),
+                json.dumps(report_001),
                 3,
                 2,
                 0,
                 1,
                 1,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO missions (
+                id, mission_id, name, sector, outcome,
+                started_at_sec, started_at_nanosec, ended_at_sec, ended_at_nanosec,
+                content_hash, report_json, mission_event_count, robot_command_count,
+                safety_event_count, perception_event_count, payload_result_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "report-002",
+                "control_test",
+                "Control Test Mission",
+                "sector-bravo",
+                "canceled",
+                250,
+                0,
+                300,
+                0,
+                "def456",
+                json.dumps(report_002),
+                2,
+                1,
+                1,
+                0,
+                0,
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO perception_events (
+                id, report_id, event_type, source, confidence,
+                stamp_sec, stamp_nanosec, payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "perception-001",
+                "report-001",
+                "person_detected",
+                "mock_inspection_camera",
+                0.92,
+                150,
+                0,
+                "{}",
+            ),
+        )
+        connection.execute(
+            """
+            INSERT INTO safety_events (
+                id, report_id, rule, severity, command_blocked,
+                stamp_sec, stamp_nanosec, payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "safety-001",
+                "report-002",
+                "operator_cancel",
+                "warning",
+                1,
+                280,
+                0,
+                "{}",
             ),
         )
     return database_path

@@ -1,5 +1,6 @@
 mission_id: control_test
 name: Control Test Mission
+sector: training-yard-alpha
 steps:
   - name: stand
     target: robot
@@ -19,4 +20,3 @@ steps:
     target: robot
     command_type: stop
     duration_sec: 1.0
-

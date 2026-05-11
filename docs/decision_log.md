@@ -264,6 +264,26 @@ Each finalized mission report should include and store a SHA-256 content hash.
 Reason:
 Content hashes provide a foundation for chain-of-custody checks and future tamper-evidence workflows.
 
+### 026 - Add Sector Metadata To Mission Definitions
+
+Status: Accepted
+
+Decision:
+Mission YAML files should include a `sector` metadata field.
+
+Reason:
+Sector must be recorded at mission definition and mission event time before reports can be reliably filtered by operating area.
+
+### 027 - Support Evidence-Based Audit Report Filters
+
+Status: Accepted
+
+Decision:
+The backend and dashboard should filter mission reports by mission metadata, date range, perception event type, safety-event presence, and blocked-command evidence.
+
+Reason:
+Defense audit workflows need to answer questions such as which missions detected a person, which missions had safety interventions, and which commands were blocked.
+
 ## Pending Decisions
 
 - First mission scenario.

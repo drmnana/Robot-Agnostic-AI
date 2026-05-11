@@ -76,6 +76,7 @@ The first configurable mission is:
 - `configs/missions/control_test.yaml`
 
 Mission steps can target either `robot` or `payload`.
+Mission YAML metadata includes a `sector` field so reports can be filtered by operating area.
 
 ## Backend
 
@@ -106,6 +107,8 @@ Mission command endpoints forward operator requests to the ROS-aware mission API
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 
+`GET /reports` supports audit filters for `outcome`, `mission_id`, `sector`, `date_from`, `date_to`, `perception_event_type`, `has_safety_event`, and `command_blocked`.
+
 ## Operator Dashboard
 
 The first operator dashboard prototype is located in `dashboard/` and is served by the backend.
@@ -116,7 +119,7 @@ Open it at:
 http://localhost:8000/dashboard/
 ```
 
-The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, and browse persisted mission reports from the backend.
+The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, and browse/filter persisted mission reports from the backend.
 
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
 Each finalized report is stored with a SHA-256 content hash for audit traceability.

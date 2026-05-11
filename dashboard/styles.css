@@ -334,6 +334,73 @@ strong {
   border-bottom: 1px solid var(--line);
 }
 
+.report-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.report-filters label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.report-filters input,
+.report-filters select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  background: #191916;
+  color: var(--text);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.86rem;
+  text-transform: none;
+}
+
+.report-filters input:focus,
+.report-filters select:focus {
+  outline: 2px solid rgba(80, 183, 173, 0.5);
+  outline-offset: 0;
+}
+
+.report-filters .filter-check {
+  align-content: end;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: #191916;
+}
+
+.report-filters .filter-check input {
+  width: 16px;
+  min-height: 16px;
+  padding: 0;
+}
+
+.filter-clear {
+  align-self: end;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.filter-clear:hover {
+  border-color: var(--teal);
+}
+
 .report-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -417,6 +484,7 @@ strong {
   .metric-grid,
   .report-grid,
   .report-list,
+  .report-filters,
   .command-grid {
     grid-template-columns: 1fr;
   }
