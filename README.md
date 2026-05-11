@@ -17,6 +17,7 @@ The project is currently in the planning and foundation stage.
 - [Evidence Package Verification](docs/evidence_package_verification.md)
 - [Evidence Bundle Schema v1.0](docs/evidence_bundle_schema_v1.md)
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
+- [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -112,6 +113,7 @@ Initial endpoints:
 - `GET /reports`
 - `GET /reports/{report_id}/export-bundle`
 - `GET /reports/{report_id}/export`
+- `GET /reports/{report_id}/replay`
 - `GET /reports/latest`
 - `GET /reports/{report_id}`
 
@@ -126,6 +128,7 @@ Evidence artifact files are stored under `data/artifacts`, indexed in SQLite, an
 `GET /reports` supports audit filters for `outcome`, `mission_id`, `sector`, `date_from`, `date_to`, `perception_event_type`, `has_safety_event`, and `command_blocked`.
 `GET /reports/{report_id}/export` returns a JSON-only ORIMUS Evidence Package using schema version `1.0` with an export-level SHA-256 hash.
 `GET /reports/{report_id}/export-bundle` returns a deterministic ZIP evidence bundle containing the evidence package JSON, manifest JSON, and referenced artifact files.
+`GET /reports/{report_id}/replay` returns normalized chronological replay frames with filters for category, timestamp, operator, and command.
 
 ## Operator Dashboard
 
@@ -148,6 +151,7 @@ Selected reports can be exported as JSON evidence packages or ZIP evidence bundl
 Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
 Evidence bundles can be verified with `backend/scripts/verify_evidence_bundle.py`.
 The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.
+The Mission Replay panel can play, scrub, speed up, and URL-address a selected report's chronological event stream.
 
 ## ROS Mission API Bridge
 

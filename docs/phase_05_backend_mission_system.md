@@ -107,6 +107,7 @@ Current endpoints:
 - `GET /reports`
 - `GET /reports/{report_id}/export-bundle`
 - `GET /reports/{report_id}/export`
+- `GET /reports/{report_id}/replay`
 - `GET /reports/latest`
 - `GET /reports/{report_id}`
 
@@ -142,6 +143,7 @@ Mission YAML metadata now includes `sector`, allowing finalized reports to be se
 
 `GET /reports/{report_id}/export` returns an ORIMUS Evidence Package JSON document using schema version `1.0`.
 `GET /reports/{report_id}/export-bundle` returns a deterministic ZIP evidence bundle containing the evidence package, manifest, and artifact files.
+`GET /reports/{report_id}/replay` returns normalized chronological replay frames with category, timestamp, operator, and command filters.
 
 ## ROS-Aware Mission API Bridge
 

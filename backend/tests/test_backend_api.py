@@ -54,6 +54,9 @@ def test_dashboard_is_served():
     assert "Mission History" in response.text
     assert "API Audit" in response.text
     assert "Export Bundle" in response.text
+    assert "Mission Replay" in response.text
+    assert 'id="replay-speed"' in response.text
+    assert 'id="replay-slider"' in response.text
     assert 'id="audit-filter-decision"' in response.text
     assert 'id="audit-list"' in response.text
 
@@ -64,6 +67,9 @@ def test_dashboard_artifact_link_markup_is_available():
 
     assert "artifact-link" in text
     assert "No artifact captured" in text
+    assert "replayIntervalMs" in text
+    assert 'params.get("frame")' in text
+    assert "highlightLinkedRecord" in text
 
 
 def test_list_missions():
@@ -484,6 +490,67 @@ def test_get_runtime_rejects_unknown_resource():
     assert response.json()["detail"] == "Unsupported runtime resource"
 
 
+def test_report_replay_returns_sorted_frames_and_cross_references(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/report-001/replay")
+        assert response.status_code == 200
+        frames = response.json()["frames"]
+
+        assert [frame["frame_index"] for frame in frames] == list(range(len(frames)))
+        assert [frame["timestamp_sec"] for frame in frames] == sorted(
+            frame["timestamp_sec"] for frame in frames
+        )
+        safety_frame = next(frame for frame in frames if frame["category"] == "safety")
+        perception_frame = next(
+            frame for frame in frames if frame["category"] == "perception"
+        )
+        assert safety_frame["command_id"] == "demo_forward_stop_stand_120"
+        assert perception_frame["artifact_url"] == "/artifacts/artifact-001/download"
+        assert perception_frame["artifact_hash"] == "artifact-hash-001"
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_report_replay_filters_apply_correctly(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        category = client.get("/reports/report-001/replay?category=perception").json()[
+            "frames"
+        ]
+        since = client.get("/reports/report-001/replay?since=140").json()["frames"]
+        operator = client.get(
+            "/reports/report-001/replay?operator_id=operator-demo"
+        ).json()["frames"]
+        command = client.get(
+            "/reports/report-001/replay?command_id=demo_forward_stop_stand_120"
+        ).json()["frames"]
+
+        assert [frame["category"] for frame in category] == ["perception"]
+        assert all(frame["timestamp_sec"] >= 140 for frame in since)
+        assert {frame["operator_id"] for frame in operator} == {"operator-demo"}
+        assert {frame["command_id"] for frame in command} == {
+            "demo_forward_stop_stand_120"
+        }
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_report_replay_empty_report_degrades_cleanly(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/report-002/replay")
+
+        assert response.status_code == 200
+        assert response.json()["frame_count"] == 0
+        assert response.json()["frames"] == []
+    finally:
+        settings.report_database_path = original_database_path
+
+
 def test_latest_report_not_found(tmp_path: Path):
     original_report_path = settings.latest_report_path
     settings.latest_report_path = tmp_path / "missing.json"
@@ -814,16 +881,29 @@ def create_report_database(tmp_path: Path) -> Path:
                 "command_id": "demo_forward_stop_stand_120",
                 "topic": "robot/command",
                 "command_type": "stand",
+                "operator_id": "operator-demo",
             }
         ],
-        "safety_events": [],
+        "safety_events": [
+            {
+                "stamp": {"sec": 130, "nanosec": 0},
+                "event_id": "safety-report-001",
+                "rule": "speed_limit",
+                "severity": "info",
+                "command_id": "demo_forward_stop_stand_120",
+                "operator_id": "operator-demo",
+                "command_blocked": False,
+                "message": "Command checked",
+            }
+        ],
         "perception_events": [
             {
+                "stamp": {"sec": 150, "nanosec": 0},
                 "event_id": "perception-001",
                 "event_type": "person_detected",
                 "source": "mock_inspection_camera",
-                "evidence_artifact_url": None,
-                "evidence_hash": None,
+                "evidence_artifact_url": "/artifacts/artifact-001/download",
+                "evidence_hash": "artifact-hash-001",
             }
         ],
     }

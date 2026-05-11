@@ -444,6 +444,16 @@ ORIMUS evidence bundles should be deterministic ZIP files with fixed member orde
 Reason:
 Audit handoff verification must be reproducible. Original artifact filenames remain metadata only so bundle paths cannot introduce path traversal risk.
 
+### 044 - Add URL-Addressable Mission Replay
+
+Status: Accepted
+
+Decision:
+Mission History should include replay frames that are filterable, speed-controlled, and addressable through dashboard URL parameters such as `frame` and `t`.
+
+Reason:
+Reviewers need a narrative way to inspect mission history and share exact moments without losing the forensic drilldown links back to commands, safety events, and artifacts.
+
 ## Pending Decisions
 
 - First mission scenario.

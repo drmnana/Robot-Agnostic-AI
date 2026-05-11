@@ -542,6 +542,81 @@ strong {
   background: var(--panel);
 }
 
+.replay-panel {
+  grid-column: span 2;
+}
+
+.replay-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, auto)) minmax(100px, 0.5fr) minmax(220px, 1fr);
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.replay-controls label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.replay-controls select,
+.replay-controls input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  background: #191916;
+  color: var(--text);
+  padding: 0 10px;
+  font: inherit;
+}
+
+.replay-frame {
+  display: grid;
+  gap: 8px;
+  min-height: 154px;
+  margin: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--steel);
+  background: #191916;
+}
+
+.replay-frame.command {
+  border-left-color: var(--green);
+}
+
+.replay-frame.safety {
+  border-left-color: var(--red);
+}
+
+.replay-frame.perception {
+  border-left-color: var(--amber);
+}
+
+.replay-frame.payload,
+.replay-frame.mission {
+  border-left-color: var(--teal);
+}
+
+.replay-link {
+  justify-self: start;
+  border: 1px solid rgba(80, 183, 173, 0.5);
+  background: transparent;
+  color: var(--teal);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.linked-highlight {
+  outline: 2px solid var(--teal);
+}
+
 .detail-header {
   display: flex;
   align-items: center;
@@ -660,6 +735,7 @@ strong {
   .audit-filters,
   .report-integrity,
   .report-detail-layout,
+  .replay-controls,
   .command-grid {
     grid-template-columns: 1fr;
   }

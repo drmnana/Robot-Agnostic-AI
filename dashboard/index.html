@@ -257,6 +257,36 @@
             </div>
           </div>
           <div class="report-detail-layout">
+            <section class="replay-panel">
+              <div class="detail-header">
+                <h3>Mission Replay</h3>
+                <span id="replay-count" class="muted">0 frames</span>
+              </div>
+              <div class="replay-controls">
+                <button id="replay-play" class="filter-clear" type="button">Play</button>
+                <button id="replay-prev" class="filter-clear" type="button">Prev</button>
+                <button id="replay-next" class="filter-clear" type="button">Next</button>
+                <button id="replay-jump" class="filter-clear" type="button">Jump Event</button>
+                <label>
+                  Speed
+                  <select id="replay-speed">
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                    <option value="10">10x</option>
+                  </select>
+                </label>
+                <label>
+                  Frame
+                  <input id="replay-slider" type="range" min="0" max="0" value="0" />
+                </label>
+              </div>
+              <article id="replay-frame" class="replay-frame empty">
+                <span class="history-meta">No replay loaded</span>
+                <strong>No frame selected</strong>
+                <span>Select a completed report to replay mission events.</span>
+              </article>
+            </section>
             <section>
               <div class="detail-header">
                 <h3>Audit Timeline</h3>

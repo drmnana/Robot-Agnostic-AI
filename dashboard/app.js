@@ -6,6 +6,10 @@ const state = {
   latestReport: null,
   reports: [],
   auditEvents: [],
+  replayFrames: [],
+  replayIndex: 0,
+  replayPlaying: false,
+  replayTimer: null,
 };
 
 const elements = {
@@ -73,6 +77,14 @@ const elements = {
   reportPerceptionList: document.querySelector("#report-perception-list"),
   reportPayloadListCount: document.querySelector("#report-payload-list-count"),
   reportPayloadList: document.querySelector("#report-payload-list"),
+  replayCount: document.querySelector("#replay-count"),
+  replayPlay: document.querySelector("#replay-play"),
+  replayPrev: document.querySelector("#replay-prev"),
+  replayNext: document.querySelector("#replay-next"),
+  replayJump: document.querySelector("#replay-jump"),
+  replaySpeed: document.querySelector("#replay-speed"),
+  replaySlider: document.querySelector("#replay-slider"),
+  replayFrame: document.querySelector("#replay-frame"),
   auditRefreshButton: document.querySelector("#audit-refresh-button"),
   auditStatus: document.querySelector("#audit-status"),
   auditList: document.querySelector("#audit-list"),
@@ -90,6 +102,12 @@ elements.auditRefreshButton.addEventListener("click", () => refreshAuditEvents()
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
 elements.reportExportBundle.addEventListener("click", () => exportSelectedReportBundle());
+elements.replayPlay.addEventListener("click", () => toggleReplayPlayback());
+elements.replayPrev.addEventListener("click", () => setReplayFrame(state.replayIndex - 1, true));
+elements.replayNext.addEventListener("click", () => setReplayFrame(state.replayIndex + 1, true));
+elements.replayJump.addEventListener("click", () => setReplayFrame(state.replayIndex + 1, true));
+elements.replaySpeed.addEventListener("change", () => restartReplayTimer());
+elements.replaySlider.addEventListener("input", () => setReplayFrame(Number(elements.replaySlider.value), true));
 elements.reportFilterClear.addEventListener("click", () => clearReportFilters());
 elements.auditFilterClear.addEventListener("click", () => clearAuditFilters());
 [
@@ -202,6 +220,7 @@ async function refreshLatestReport(options = {}) {
     if (state.selectedReportId) {
       state.latestReport = await fetchJson(`/reports/${state.selectedReportId}`);
       renderLatestReport();
+      await refreshReplay();
     } else {
       renderReportUnavailable("No mission reports found");
     }
@@ -425,6 +444,9 @@ function renderReportUnavailable(message) {
   elements.reportFullHash.textContent = "No report hash loaded";
   elements.reportTimelineCount.textContent = "0 entries";
   elements.reportTimeline.innerHTML = `<li class="empty-event">No report yet</li>`;
+  state.replayFrames = [];
+  stopReplayPlayback();
+  renderReplayUnavailable("No replay loaded");
   renderDetailList(elements.reportCommandList, [], "No commands");
   renderDetailList(elements.reportSafetyList, [], "No safety events");
   renderDetailList(elements.reportPerceptionList, [], "No perception events");
@@ -461,10 +483,159 @@ function renderReportList() {
         renderReportList();
         state.latestReport = await fetchJson(`/reports/${report.id}`);
         renderLatestReport();
+        await refreshReplay();
       });
       return button;
     }),
   );
+}
+
+async function refreshReplay() {
+  stopReplayPlayback();
+  if (!state.selectedReportId) {
+    renderReplayUnavailable("No replay loaded");
+    return;
+  }
+
+  try {
+    const data = await fetchJson(`/reports/${state.selectedReportId}/replay`);
+    state.replayFrames = data.frames ?? [];
+    const requestedIndex = replayIndexFromUrl(state.replayFrames);
+    renderReplay();
+    setReplayFrame(requestedIndex, false);
+  } catch (error) {
+    state.replayFrames = [];
+    renderReplayUnavailable(error.message);
+  }
+}
+
+function renderReplay() {
+  const frameCount = state.replayFrames.length;
+  elements.replayCount.textContent = `${frameCount} frames`;
+  elements.replaySlider.max = String(Math.max(frameCount - 1, 0));
+  elements.replaySlider.disabled = frameCount === 0;
+  elements.replayPlay.disabled = frameCount === 0;
+  elements.replayPrev.disabled = frameCount === 0;
+  elements.replayNext.disabled = frameCount === 0;
+  elements.replayJump.disabled = frameCount === 0;
+
+  if (frameCount === 0) {
+    renderReplayUnavailable("No replay frames available");
+  }
+}
+
+function renderReplayUnavailable(message) {
+  elements.replayCount.textContent = "0 frames";
+  elements.replaySlider.value = "0";
+  elements.replaySlider.max = "0";
+  elements.replayFrame.className = "replay-frame empty";
+  elements.replayFrame.innerHTML = `
+    <span class="history-meta">${escapeHtml(message)}</span>
+    <strong>No frame selected</strong>
+    <span>No replay events are available for this report.</span>
+  `;
+}
+
+function setReplayFrame(index, updateUrl) {
+  if (state.replayFrames.length === 0) {
+    renderReplayUnavailable("No replay frames available");
+    return;
+  }
+
+  state.replayIndex = clamp(Math.round(index), 0, state.replayFrames.length - 1);
+  const frame = state.replayFrames[state.replayIndex];
+  elements.replaySlider.value = String(state.replayIndex);
+  elements.replayFrame.className = `replay-frame ${frame.category}`;
+  elements.replayFrame.innerHTML = `
+    <span class="history-meta">Frame ${frame.frame_index + 1} / ${state.replayFrames.length} - ${escapeHtml(frame.category)} - ${formatAuditTime(frame.timestamp_sec)}</span>
+    <strong>${escapeHtml(frame.title)}</strong>
+    <span>${escapeHtml(frame.message)}</span>
+    ${frame.operator_id ? `<span class="history-detail">operator ${escapeHtml(frame.operator_id)}</span>` : ""}
+    ${frame.command_id ? `<button class="replay-link" type="button" data-link-kind="command" data-link-id="${escapeHtml(frame.command_id)}">command ${escapeHtml(frame.command_id)}</button>` : ""}
+    ${frame.artifact_url ? `<a class="artifact-link" href="${escapeHtml(frame.artifact_url)}">artifact ${escapeHtml(frame.artifact_url)}</a>` : ""}
+  `;
+  elements.replayFrame.querySelectorAll("[data-link-kind]").forEach((link) => {
+    link.addEventListener("click", () => highlightLinkedRecord(link.dataset.linkKind, link.dataset.linkId));
+  });
+  if (updateUrl) {
+    updateReplayUrl(state.replayIndex);
+  }
+}
+
+function toggleReplayPlayback() {
+  if (state.replayPlaying) {
+    stopReplayPlayback();
+  } else {
+    state.replayPlaying = true;
+    elements.replayPlay.textContent = "Pause";
+    restartReplayTimer();
+  }
+}
+
+function stopReplayPlayback() {
+  state.replayPlaying = false;
+  elements.replayPlay.textContent = "Play";
+  if (state.replayTimer) {
+    window.clearInterval(state.replayTimer);
+    state.replayTimer = null;
+  }
+}
+
+function restartReplayTimer() {
+  if (state.replayTimer) {
+    window.clearInterval(state.replayTimer);
+    state.replayTimer = null;
+  }
+  if (!state.replayPlaying || state.replayFrames.length === 0) {
+    return;
+  }
+  state.replayTimer = window.setInterval(() => {
+    if (state.replayIndex >= state.replayFrames.length - 1) {
+      stopReplayPlayback();
+      return;
+    }
+    setReplayFrame(state.replayIndex + 1, true);
+  }, replayIntervalMs());
+}
+
+function replayIntervalMs() {
+  const speed = Number(elements.replaySpeed.value || 1);
+  return Math.max(1000 / speed, 100);
+}
+
+function replayIndexFromUrl(frames) {
+  const params = new URLSearchParams(window.location.search);
+  const frameParam = params.get("frame");
+  if (frameParam !== null) {
+    return clamp(Number(frameParam), 0, Math.max(frames.length - 1, 0));
+  }
+  const timeParam = params.get("t");
+  if (timeParam !== null) {
+    const target = Number(timeParam);
+    const index = frames.findIndex((frame) => frame.timestamp_sec >= target);
+    return index >= 0 ? index : Math.max(frames.length - 1, 0);
+  }
+  return 0;
+}
+
+function updateReplayUrl(index) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("frame", String(index));
+  window.history.replaceState({}, "", url);
+}
+
+function highlightLinkedRecord(kind, id) {
+  const selector = kind === "command" ? "#report-command-list" : "#report-perception-list";
+  const container = document.querySelector(selector);
+  if (!container) {
+    return;
+  }
+  container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  const target = [...container.querySelectorAll(".history-item")].find((item) => item.textContent.includes(id));
+  if (target) {
+    target.classList.add("linked-highlight");
+    window.setTimeout(() => target.classList.remove("linked-highlight"), 1200);
+  }
 }
 
 function renderAuditEvents() {

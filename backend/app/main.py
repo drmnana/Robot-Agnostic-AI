@@ -18,6 +18,7 @@ from .evidence_bundle import build_evidence_bundle
 from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .operator_policy import is_mission_command_allowed
+from .replay import build_replay_frames
 from .report_store import get_report, list_reports
 from .settings import Settings
 
@@ -268,6 +269,32 @@ def export_report_bundle(report_id: str):
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.get("/reports/{report_id}/replay")
+def get_report_replay(
+    report_id: str,
+    category: Optional[str] = None,
+    since: Optional[float] = None,
+    operator_id: Optional[str] = None,
+    command_id: Optional[str] = None,
+) -> dict:
+    report = get_report(settings.report_database_path, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Mission report not found")
+
+    frames = build_replay_frames(
+        report,
+        category=category,
+        since=since,
+        operator_id=operator_id,
+        command_id=command_id,
+    )
+    return {
+        "report_id": report_id,
+        "frame_count": len(frames),
+        "frames": frames,
+    }
 
 
 @app.get("/reports/{report_id}")

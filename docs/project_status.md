@@ -84,6 +84,7 @@ The project architecture and phase roadmap have been drafted.
 - Added generic evidence artifact registry infrastructure with hash-checked download endpoints.
 - Added mock payload stub artifact generation and dashboard artifact links.
 - Added deterministic ZIP evidence bundle export and verifier support.
+- Added mission replay endpoint and dashboard replay controls with URL-addressable frame state.
 
 ## In Progress
 
