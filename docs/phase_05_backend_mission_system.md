@@ -100,10 +100,13 @@ Current endpoints:
 - `GET /runtime/perception`
 - `GET /runtime/safety`
 - `GET /runtime/events`
+- `GET /reports`
 - `GET /reports/latest`
+- `GET /reports/{report_id}`
 
 The backend forwards mission command requests to the ROS-aware mission API bridge.
 The backend forwards live runtime state requests from the ROS-aware mission API bridge.
+The backend reads persisted mission report history from the SQLite audit database.
 The bridge URL is configured through `ORIMUS_MISSION_API_BRIDGE_URL`.
 
 ## ROS-Aware Mission API Bridge

@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from .mission_bridge_client import get_runtime_resource, send_mission_command
+from .report_store import get_report, list_reports
 from .settings import Settings
 
 
@@ -85,6 +86,20 @@ def get_latest_report():
         raise HTTPException(status_code=404, detail="Mission report not found")
 
     return JSONResponse(content=read_json_text(report_path))
+
+
+@app.get("/reports")
+def get_reports() -> dict:
+    return {"reports": list_reports(settings.report_database_path)}
+
+
+@app.get("/reports/{report_id}")
+def get_report_detail(report_id: str) -> dict:
+    report = get_report(settings.report_database_path, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Mission report not found")
+
+    return report
 
 
 def read_mission_summary(mission_file: Path) -> dict:

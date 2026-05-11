@@ -1,4 +1,6 @@
 from pathlib import Path
+import json
+import sqlite3
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -28,7 +30,7 @@ def test_dashboard_is_served():
 
     assert response.status_code == 200
     assert "ORIMUS Operator Dashboard" in response.text
-    assert "Latest Report" in response.text
+    assert "Mission History" in response.text
 
 
 def test_list_missions():
@@ -149,3 +151,105 @@ def test_latest_report_not_found(tmp_path: Path):
         assert response.status_code == 404
     finally:
         settings.latest_report_path = original_report_path
+
+
+def test_list_reports_from_database(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports")
+        assert response.status_code == 200
+        reports = response.json()["reports"]
+        assert len(reports) == 1
+        assert reports[0]["id"] == "report-001"
+        assert reports[0]["outcome"] == "completed"
+        assert reports[0]["content_hash"] == "abc123"
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_get_report_detail_from_database(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/report-001")
+        assert response.status_code == 200
+        assert response.json()["report_id"] == "report-001"
+        assert response.json()["content_hash"] == "abc123"
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_get_report_detail_not_found(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/missing-report")
+        assert response.status_code == 404
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def create_report_database(tmp_path: Path) -> Path:
+    database_path = tmp_path / "orimus.db"
+    report = {
+        "report_id": "report-001",
+        "content_hash": "abc123",
+        "mission": {
+            "mission_id": "demo_forward_stop",
+            "name": "Demo Forward Stop",
+            "state": "completed",
+        },
+    }
+    with sqlite3.connect(database_path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE missions (
+                id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                sector TEXT,
+                outcome TEXT NOT NULL,
+                started_at_sec INTEGER,
+                started_at_nanosec INTEGER,
+                ended_at_sec INTEGER,
+                ended_at_nanosec INTEGER,
+                content_hash TEXT NOT NULL,
+                report_json TEXT NOT NULL,
+                mission_event_count INTEGER NOT NULL,
+                robot_command_count INTEGER NOT NULL,
+                safety_event_count INTEGER NOT NULL,
+                perception_event_count INTEGER NOT NULL,
+                payload_result_count INTEGER NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO missions (
+                id, mission_id, name, sector, outcome,
+                started_at_sec, started_at_nanosec, ended_at_sec, ended_at_nanosec,
+                content_hash, report_json, mission_event_count, robot_command_count,
+                safety_event_count, perception_event_count, payload_result_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "report-001",
+                "demo_forward_stop",
+                "Demo Forward Stop",
+                "sector-alpha",
+                "completed",
+                100,
+                0,
+                200,
+                0,
+                "abc123",
+                json.dumps(report),
+                3,
+                2,
+                0,
+                1,
+                1,
+            ),
+        )
+    return database_path

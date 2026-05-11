@@ -17,6 +17,8 @@ An autonomous robot system must be predictable, auditable, and recoverable. Logs
 - Finalize geofencing.
 - Finalize speed and proximity limits.
 - Add structured mission logs.
+- Persist mission audit records to SQLite.
+- Store SHA-256 content hashes for finalized reports.
 - Add ROS bag recording.
 - Add system health monitoring.
 - Add deployment scripts.
@@ -39,6 +41,8 @@ An autonomous robot system must be predictable, auditable, and recoverable. Logs
 
 - Safety model document
 - Logging and replay workflow
+- SQLite mission audit database
+- Hashed mission report records
 - Deployment guide
 - Field testing checklist
 - Failure recovery procedures
@@ -46,4 +50,3 @@ An autonomous robot system must be predictable, auditable, and recoverable. Logs
 ## Completion Criteria
 
 This phase is complete when the system can be deployed, monitored, stopped safely, debugged after a mission, and recovered after common failures.
-

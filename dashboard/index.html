@@ -159,12 +159,13 @@
 
         <section class="panel report-panel">
           <div class="panel-header">
-            <h2>Latest Report</h2>
+            <h2>Mission History</h2>
             <button id="report-refresh-button" class="icon-button" type="button" aria-label="Refresh latest mission report">
               <span aria-hidden="true">R</span>
             </button>
           </div>
-          <div id="report-status" class="report-status">No report loaded</div>
+          <div id="report-status" class="report-status">No reports loaded</div>
+          <div id="report-list" class="report-list"></div>
           <div class="report-grid">
             <div>
               <span class="metric-label">Mission</span>
@@ -189,6 +190,10 @@
             <div>
               <span class="metric-label">Safety Events</span>
               <strong id="report-safety-events">0</strong>
+            </div>
+            <div>
+              <span class="metric-label">Content Hash</span>
+              <strong id="report-hash">No data</strong>
             </div>
           </div>
           <ol id="report-timeline" class="event-history"></ol>

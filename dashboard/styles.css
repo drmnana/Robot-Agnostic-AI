@@ -171,7 +171,8 @@ h2 {
   padding: 12px;
 }
 
-.mission-card {
+.mission-card,
+.report-card {
   display: grid;
   gap: 6px;
   width: 100%;
@@ -185,17 +186,22 @@ h2 {
 }
 
 .mission-card:hover,
-.mission-card.selected {
+.mission-card.selected,
+.report-card:hover,
+.report-card.selected {
   border-color: rgba(80, 183, 173, 0.65);
   background: #22251f;
 }
 
 .mission-card strong,
-.mission-card span {
+.mission-card span,
+.report-card strong,
+.report-card span {
   overflow-wrap: anywhere;
 }
 
-.mission-card span {
+.mission-card span,
+.report-card span {
   color: var(--muted);
   font-size: 0.84rem;
 }
@@ -328,6 +334,14 @@ strong {
   border-bottom: 1px solid var(--line);
 }
 
+.report-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
 .report-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -402,6 +416,7 @@ strong {
   .runtime-map,
   .metric-grid,
   .report-grid,
+  .report-list,
   .command-grid {
     grid-template-columns: 1fr;
   }

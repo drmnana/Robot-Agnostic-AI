@@ -1,8 +1,10 @@
 const state = {
   missions: [],
   selectedMissionId: null,
+  selectedReportId: null,
   runtime: null,
   latestReport: null,
+  reports: [],
 };
 
 const elements = {
@@ -36,12 +38,14 @@ const elements = {
   eventCount: document.querySelector("#event-count"),
   eventHistory: document.querySelector("#event-history"),
   reportStatus: document.querySelector("#report-status"),
+  reportList: document.querySelector("#report-list"),
   reportMission: document.querySelector("#report-mission"),
   reportState: document.querySelector("#report-state"),
   reportMissionEvents: document.querySelector("#report-mission-events"),
   reportPayloadResults: document.querySelector("#report-payload-results"),
   reportPerceptionEvents: document.querySelector("#report-perception-events"),
   reportSafetyEvents: document.querySelector("#report-safety-events"),
+  reportHash: document.querySelector("#report-hash"),
   reportTimeline: document.querySelector("#report-timeline"),
 };
 
@@ -117,10 +121,21 @@ async function sendMissionCommand(command) {
 
 async function refreshLatestReport() {
   try {
-    state.latestReport = await fetchJson("/reports/latest");
-    renderLatestReport();
+    const data = await fetchJson("/reports");
+    state.reports = data.reports ?? [];
+    if (!state.selectedReportId && state.reports.length > 0) {
+      state.selectedReportId = state.reports[0].id;
+    }
+    renderReportList();
+    if (state.selectedReportId) {
+      state.latestReport = await fetchJson(`/reports/${state.selectedReportId}`);
+      renderLatestReport();
+    } else {
+      renderReportUnavailable("No mission reports found");
+    }
   } catch (error) {
     state.latestReport = null;
+    state.reports = [];
     renderReportUnavailable(error.message);
   }
 }
@@ -232,18 +247,52 @@ function renderLatestReport() {
   elements.reportPayloadResults.textContent = String(payloadResults.length);
   elements.reportPerceptionEvents.textContent = String(perceptionEvents.length);
   elements.reportSafetyEvents.textContent = String(safetyEvents.length);
+  elements.reportHash.textContent = shortenHash(report?.content_hash);
   renderReportTimeline(missionEvents);
 }
 
 function renderReportUnavailable(message) {
   elements.reportStatus.textContent = message || "Mission report not found";
+  elements.reportList.innerHTML = `<div class="message-line">No reports available.</div>`;
   elements.reportMission.textContent = "No data";
   elements.reportState.textContent = "No data";
   elements.reportMissionEvents.textContent = "0";
   elements.reportPayloadResults.textContent = "0";
   elements.reportPerceptionEvents.textContent = "0";
   elements.reportSafetyEvents.textContent = "0";
+  elements.reportHash.textContent = "No data";
   elements.reportTimeline.innerHTML = `<li class="empty-event">No report yet</li>`;
+}
+
+function renderReportList() {
+  if (state.reports.length === 0) {
+    elements.reportList.innerHTML = `<div class="message-line">No reports available.</div>`;
+    return;
+  }
+
+  elements.reportStatus.textContent = `${state.reports.length} report records`;
+  elements.reportList.replaceChildren(
+    ...state.reports.slice(0, 8).map((report) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "report-card";
+      button.classList.toggle("selected", report.id === state.selectedReportId);
+      button.innerHTML = `
+        <strong>${escapeHtml(report.name ?? report.mission_id ?? report.id)}</strong>
+        <span>${escapeHtml(report.outcome ?? "unknown")} - ${formatStamp({
+          sec: report.ended_at_sec,
+        })}</span>
+        <span>${escapeHtml(shortenHash(report.content_hash))}</span>
+      `;
+      button.addEventListener("click", async () => {
+        state.selectedReportId = report.id;
+        renderReportList();
+        state.latestReport = await fetchJson(`/reports/${report.id}`);
+        renderLatestReport();
+      });
+      return button;
+    }),
+  );
 }
 
 function renderReportTimeline(missionEvents) {
@@ -345,6 +394,13 @@ function formatStamp(stamp) {
   }
 
   return new Date(Number(stamp.sec) * 1000).toLocaleTimeString();
+}
+
+function shortenHash(value) {
+  if (!value) {
+    return "No data";
+  }
+  return value.length > 16 ? `${value.slice(0, 16)}...` : value;
 }
 
 function clamp(value, min, max) {

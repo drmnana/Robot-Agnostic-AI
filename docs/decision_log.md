@@ -239,10 +239,30 @@ Operators need situational awareness over time, not only the latest state snapsh
 Status: Accepted
 
 Decision:
-The operator dashboard should summarize the latest JSON mission report exposed by the backend.
+The operator dashboard should summarize mission reports exposed by the backend.
 
 Reason:
 Operators need an after-action review view that summarizes mission outcome, event counts, payload results, perception events, and safety events.
+
+### 024 - Use SQLite For Mission Audit Trail
+
+Status: Accepted
+
+Decision:
+ORIMUS should persist finalized mission reports to SQLite at `/workspace/data/orimus.db`, with queryable tables for missions, mission events, robot commands, safety events, perception events, and payload results.
+
+Reason:
+The defense audit trail must support browsing past missions by date, outcome, sector, and evidence category.
+
+### 025 - Hash Finalized Mission Reports
+
+Status: Accepted
+
+Decision:
+Each finalized mission report should include and store a SHA-256 content hash.
+
+Reason:
+Content hashes provide a foundation for chain-of-custody checks and future tamper-evidence workflows.
 
 ## Pending Decisions
 

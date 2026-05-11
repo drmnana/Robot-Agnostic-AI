@@ -30,3 +30,4 @@ Thumbs.db
 *.bag
 *.db3
 reports/
+data/

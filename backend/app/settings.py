@@ -13,6 +13,10 @@ class Settings(BaseSettings):
         default=Path("/workspace/reports/latest_mission_report.json"),
         alias="ORIMUS_LATEST_REPORT_PATH",
     )
+    report_database_path: Path = Field(
+        default=Path("/workspace/data/orimus.db"),
+        alias="ORIMUS_REPORT_DATABASE_PATH",
+    )
     mission_api_bridge_url: str = Field(
         default="http://ros2-dev:8010",
         alias="ORIMUS_MISSION_API_BRIDGE_URL",
