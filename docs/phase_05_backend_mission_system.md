@@ -93,6 +93,7 @@ Current endpoints:
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
 - `POST /missions/{mission_id}/reset`
+- `GET /audit/events`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
@@ -117,6 +118,8 @@ This is not production authentication. The value is self-asserted and trust-base
 Mission command requests are now checked against `configs/operator_policy.yaml` before forwarding to ROS.
 
 This is operator-to-API authorization. It does not replace, augment, or coordinate with the robot's `safety_manager` or any hardware-level safety constraints. Those are independent layers.
+
+Allowed and denied protected API calls are recorded in `backend_audit_events` inside the same SQLite database as mission reports. Backend audit events are append-only at the application layer.
 
 Mission YAML metadata now includes `sector`, allowing finalized reports to be searched by operating area.
 

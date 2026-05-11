@@ -3,11 +3,13 @@ import json
 import sqlite3
 import subprocess
 import sys
+import inspect
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import app.main as main_module
+from app.backend_audit import BackendAuditStore
 from app.evidence_package import hash_evidence_package, hash_mission_report
 from app.evidence_verifier import (
     EXIT_HASH_MISMATCH,
@@ -193,6 +195,148 @@ def test_control_mission_reports_bridge_unavailable(monkeypatch):
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Mission API bridge unavailable"
+
+
+def test_allowed_mission_command_is_logged_to_backend_audit(tmp_path: Path, monkeypatch):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = tmp_path / "orimus.db"
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        return {
+            "status": "accepted",
+            "mission_id": mission_id,
+            "command_type": command_type,
+            "operator_id": operator_id,
+        }
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+    try:
+        response = client.post(
+            "/missions/demo_forward_stop/start",
+            headers={"X-ORIMUS-Operator": "operator-demo"},
+        )
+        assert response.status_code == 200
+
+        audit_response = client.get("/audit/events?decision=allowed")
+        assert audit_response.status_code == 200
+        events = audit_response.json()["events"]
+        assert len(events) == 1
+        assert events[0]["event_type"] == "mission_command"
+        assert events[0]["operator_id"] == "operator-demo"
+        assert events[0]["decision"] == "allowed"
+        assert events[0]["mission_id"] == "demo_forward_stop"
+        assert events[0]["command_type"] == "start"
+        assert events[0]["reason"] == "operator_policy"
+        assert events[0]["retention_class"] == "standard"
+        assert events[0]["source_ip"]
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_denied_mission_command_is_logged_to_backend_audit(tmp_path: Path, monkeypatch):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = tmp_path / "orimus.db"
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
+        return {}
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+    try:
+        response = client.post("/missions/demo_forward_stop/start")
+        assert response.status_code == 403
+        assert calls == []
+
+        events = client.get("/audit/events?decision=denied").json()["events"]
+        assert len(events) == 1
+        assert events[0]["operator_id"] == "anonymous"
+        assert events[0]["decision"] == "denied"
+        assert events[0]["command_type"] == "start"
+        assert events[0]["reason"] == "operator_policy"
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_backend_audit_filters_work(tmp_path: Path, monkeypatch):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = tmp_path / "orimus.db"
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        return {
+            "status": "accepted",
+            "mission_id": mission_id,
+            "command_type": command_type,
+            "operator_id": operator_id,
+        }
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+    try:
+        client.post(
+            "/missions/demo_forward_stop/start",
+            headers={"X-ORIMUS-Operator": "operator-demo"},
+        )
+        client.post("/missions/demo_forward_stop/start")
+
+        by_operator = client.get("/audit/events?operator_id=operator-demo").json()[
+            "events"
+        ]
+        by_event_type = client.get("/audit/events?event_type=mission_command").json()[
+            "events"
+        ]
+        by_decision = client.get("/audit/events?decision=denied").json()["events"]
+        by_date = client.get("/audit/events?date_from=0").json()["events"]
+
+        assert [event["operator_id"] for event in by_operator] == ["operator-demo"]
+        assert len(by_event_type) == 2
+        assert [event["decision"] for event in by_decision] == ["denied"]
+        assert len(by_date) == 2
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_backend_audit_source_ip_toggle_off(tmp_path: Path, monkeypatch):
+    original_database_path = settings.report_database_path
+    original_log_source_ip = settings.log_source_ip
+    settings.report_database_path = tmp_path / "orimus.db"
+    settings.log_source_ip = False
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        return {
+            "status": "accepted",
+            "mission_id": mission_id,
+            "command_type": command_type,
+            "operator_id": operator_id,
+        }
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+    try:
+        client.post(
+            "/missions/demo_forward_stop/start",
+            headers={"X-ORIMUS-Operator": "operator-demo"},
+        )
+        events = client.get("/audit/events").json()["events"]
+        assert events[0]["source_ip"] is None
+    finally:
+        settings.report_database_path = original_database_path
+        settings.log_source_ip = original_log_source_ip
+
+
+def test_backend_audit_store_public_write_surface_is_append_only():
+    public_methods = {
+        name
+        for name, member in inspect.getmembers(BackendAuditStore, inspect.isfunction)
+        if not name.startswith("_")
+    }
+    write_methods = {
+        name
+        for name in public_methods
+        if any(token in name for token in ["record", "create", "insert", "update", "delete"])
+    }
+
+    assert write_methods == {"record_event"}
+    assert "update_event" not in public_methods
+    assert "delete_event" not in public_methods
 
 
 def test_get_runtime_state(monkeypatch):

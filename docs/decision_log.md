@@ -384,6 +384,36 @@ The operator policy layer is application-level API authorization only. It does n
 Reason:
 API access control and robot execution safety are independent layers. Mixing them would make the system harder to reason about and could create false confidence.
 
+### 038 - Store Backend Audit Events In The Same SQLite Database
+
+Status: Accepted
+
+Decision:
+Backend audit events should be stored in `orimus.db` in a separate `backend_audit_events` table.
+
+Reason:
+Keeping mission audit and backend audit in one SQLite database simplifies pilot operations. The table boundary keeps the concepts separate and allows a future datastore migration.
+
+### 039 - Log Allowed And Denied Protected API Calls
+
+Status: Accepted
+
+Decision:
+Every protected mission command API call should write a backend audit event, whether allowed or denied.
+
+Reason:
+Compliance review needs to answer both what was blocked and what authorized operators actually did.
+
+### 040 - Keep Backend Audit Append-Only
+
+Status: Accepted
+
+Decision:
+Backend audit events are append-only at the application layer. The public write method is `record_event`; no update or delete API is exposed.
+
+Reason:
+Audit logs should preserve event history rather than mutate it.
+
 ## Pending Decisions
 
 - First mission scenario.

@@ -3,11 +3,12 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .backend_audit import BackendAuditStore
 from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .operator_policy import is_mission_command_allowed
@@ -70,6 +71,7 @@ def get_mission(mission_id: str) -> dict:
 
 @app.post("/missions/{mission_id}/{command_type}")
 def control_mission(
+    request: Request,
     mission_id: str,
     command_type: str,
     operator_id: Optional[str] = Header(default=None, alias="X-ORIMUS-Operator"),
@@ -83,6 +85,16 @@ def control_mission(
         normalized_operator_id,
         command_type,
     ):
+        audit_store().record_event(
+            event_type="mission_command",
+            decision="denied",
+            operator_id=normalized_operator_id,
+            mission_id=mission_id,
+            command_type=command_type,
+            reason="operator_policy",
+            request_path=str(request.url.path),
+            source_ip=request_source_ip(request),
+        )
         logger.warning(
             "Mission command denied by operator policy: operator_id=%s mission_id=%s command_type=%s",
             normalized_operator_id,
@@ -97,12 +109,41 @@ def control_mission(
             ),
         )
 
+    audit_store().record_event(
+        event_type="mission_command",
+        decision="allowed",
+        operator_id=normalized_operator_id,
+        mission_id=mission_id,
+        command_type=command_type,
+        reason="operator_policy",
+        request_path=str(request.url.path),
+        source_ip=request_source_ip(request),
+    )
     return send_mission_command(
         settings,
         mission_id,
         command_type,
         normalized_operator_id,
     )
+
+
+@app.get("/audit/events")
+def get_audit_events(
+    operator_id: Optional[str] = None,
+    decision: Optional[str] = None,
+    event_type: Optional[str] = None,
+    date_from: Optional[float] = None,
+    date_to: Optional[float] = None,
+) -> dict:
+    return {
+        "events": audit_store().list_events(
+            operator_id=operator_id,
+            decision=decision,
+            event_type=event_type,
+            date_from=date_from,
+            date_to=date_to,
+        )
+    }
 
 
 @app.get("/runtime/{resource}")
@@ -196,3 +237,15 @@ def read_json_text(path: Path):
 def normalize_operator_id(value: str | None) -> str:
     operator_id = (value or "").strip()
     return operator_id if operator_id else "anonymous"
+
+
+def audit_store() -> BackendAuditStore:
+    return BackendAuditStore(settings.report_database_path)
+
+
+def request_source_ip(request: Request) -> str | None:
+    if not settings.log_source_ip:
+        return None
+    if request.client is None:
+        return None
+    return request.client.host

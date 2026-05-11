@@ -16,6 +16,7 @@ The project is currently in the planning and foundation stage.
 - [Evidence Package Schema v1.0](docs/evidence_package_schema_v1.md)
 - [Evidence Package Verification](docs/evidence_package_verification.md)
 - [Operator API Policy](docs/operator_api_policy.md)
+- [Backend Audit Log](docs/backend_audit_log.md)
 
 ## Current Phase
 
@@ -95,6 +96,7 @@ Initial endpoints:
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
 - `POST /missions/{mission_id}/reset`
+- `GET /audit/events`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
@@ -110,6 +112,7 @@ Initial endpoints:
 Mission command endpoints forward operator requests to the ROS-aware mission API bridge.
 Development-mode operator identity is accepted through `X-ORIMUS-Operator`; missing or blank values are recorded as `anonymous`.
 Mission command API calls are gated by `configs/operator_policy.yaml`. This is operator-to-API authorization only and does not replace the ROS `safety_manager`.
+Allowed and denied protected API calls are recorded in the append-only backend audit table.
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 

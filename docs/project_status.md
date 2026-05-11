@@ -78,6 +78,7 @@ The project architecture and phase roadmap have been drafted.
 - Added evidence package verifier with standard exit codes and semantic consistency checks.
 - Added development-mode operator identity propagation from dashboard/backend through ROS commands, safety events, and reports.
 - Added operator-to-API mission command policy gate with 403 denials and backend audit logs.
+- Added append-only backend audit table for allowed and denied protected API decisions with query filters.
 
 ## In Progress
 
@@ -91,7 +92,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Decide whether denied backend API commands should persist in mission SQLite audit or a separate backend audit log.
+6. Add dashboard/backend audit browsing if operator workflows need it.
 
 ## Open Questions
 
