@@ -94,6 +94,9 @@ Current endpoints:
 - `POST /missions/{mission_id}/cancel`
 - `POST /missions/{mission_id}/reset`
 - `GET /audit/events`
+- `GET /artifacts`
+- `GET /artifacts/{artifact_id}`
+- `GET /artifacts/{artifact_id}/download`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
@@ -120,6 +123,8 @@ Mission command requests are now checked against `configs/operator_policy.yaml` 
 This is operator-to-API authorization. It does not replace, augment, or coordinate with the robot's `safety_manager` or any hardware-level safety constraints. Those are independent layers.
 
 Allowed and denied protected API calls are recorded in `backend_audit_events` inside the same SQLite database as mission reports. Backend audit events are append-only at the application layer.
+
+Mission evidence artifacts are indexed in `evidence_artifacts` inside the same SQLite database. Artifact downloads verify the stored SHA-256 hash before returning file content.
 
 Mission YAML metadata now includes `sector`, allowing finalized reports to be searched by operating area.
 

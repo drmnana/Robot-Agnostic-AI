@@ -15,6 +15,7 @@ The project is currently in the planning and foundation stage.
 - [Safety Assumptions](docs/safety_assumptions.md)
 - [Evidence Package Schema v1.0](docs/evidence_package_schema_v1.md)
 - [Evidence Package Verification](docs/evidence_package_verification.md)
+- [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -97,6 +98,9 @@ Initial endpoints:
 - `POST /missions/{mission_id}/cancel`
 - `POST /missions/{mission_id}/reset`
 - `GET /audit/events`
+- `GET /artifacts`
+- `GET /artifacts/{artifact_id}`
+- `GET /artifacts/{artifact_id}/download`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
@@ -115,6 +119,7 @@ Mission command API calls are gated by `configs/operator_policy.yaml`. This is o
 Allowed and denied protected API calls are recorded in the append-only backend audit table.
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
+Evidence artifact files are stored under `data/artifacts`, indexed in SQLite, and served through hash-checked artifact endpoints.
 
 `GET /reports` supports audit filters for `outcome`, `mission_id`, `sector`, `date_from`, `date_to`, `perception_event_type`, `has_safety_event`, and `command_blocked`.
 `GET /reports/{report_id}/export` returns a JSON-only ORIMUS Evidence Package using schema version `1.0` with an export-level SHA-256 hash.
@@ -135,6 +140,7 @@ The dashboard includes an operator ID field for development-mode command attribu
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
 Each finalized report is stored with a SHA-256 content hash for audit traceability.
 Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
+Report detail views show artifact links when perception events reference stored evidence files, and degrade to "No artifact captured" when no artifact exists.
 Selected reports can be exported as JSON evidence packages.
 Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
 The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.

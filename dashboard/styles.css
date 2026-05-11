@@ -614,6 +614,16 @@ strong {
   font-size: 0.82rem;
 }
 
+.artifact-link {
+  color: var(--teal);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.artifact-link:hover {
+  color: var(--green);
+}
+
 @media (max-width: 1020px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;

@@ -4,10 +4,15 @@ from typing import Optional
 
 import yaml
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from .artifact_store import (
+    ArtifactHashMismatchError,
+    ArtifactNotFoundError,
+    ArtifactStore,
+)
 from .backend_audit import BackendAuditStore
 from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
@@ -146,6 +151,47 @@ def get_audit_events(
     }
 
 
+@app.get("/artifacts")
+def get_artifacts(
+    mission_id: Optional[str] = None,
+    report_id: Optional[str] = None,
+    source: Optional[str] = None,
+    artifact_type: Optional[str] = None,
+) -> dict:
+    return {
+        "artifacts": artifact_store().list_artifacts(
+            mission_id=mission_id,
+            report_id=report_id,
+            source=source,
+            artifact_type=artifact_type,
+        )
+    }
+
+
+@app.get("/artifacts/{artifact_id}")
+def get_artifact_detail(artifact_id: str) -> dict:
+    artifact = artifact_store().get_artifact(artifact_id)
+    if artifact is None:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    return artifact
+
+
+@app.get("/artifacts/{artifact_id}/download")
+def download_artifact(artifact_id: str):
+    try:
+        artifact_path = artifact_store().artifact_file(artifact_id)
+    except ArtifactNotFoundError:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    except ArtifactHashMismatchError:
+        raise HTTPException(status_code=409, detail="Artifact hash mismatch")
+
+    return FileResponse(
+        artifact_path,
+        media_type="application/octet-stream",
+        filename=artifact_path.name,
+    )
+
+
 @app.get("/runtime/{resource}")
 def get_runtime(resource: str) -> dict:
     if resource not in RUNTIME_RESOURCES:
@@ -241,6 +287,12 @@ def normalize_operator_id(value: str | None) -> str:
 
 def audit_store() -> BackendAuditStore:
     return BackendAuditStore(settings.report_database_path)
+
+
+def artifact_store() -> ArtifactStore:
+    store = ArtifactStore(settings.report_database_path, settings.artifact_root)
+    store.initialize()
+    return store
 
 
 def request_source_ip(request: Request) -> str | None:

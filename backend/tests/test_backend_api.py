@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import app.main as main_module
+from app.artifact_store import ArtifactStore, hash_file
 from app.backend_audit import BackendAuditStore
 from app.evidence_package import hash_evidence_package, hash_mission_report
 from app.evidence_verifier import (
@@ -46,6 +47,14 @@ def test_dashboard_is_served():
     assert "API Audit" in response.text
     assert 'id="audit-filter-decision"' in response.text
     assert 'id="audit-list"' in response.text
+
+
+def test_dashboard_artifact_link_markup_is_available():
+    app_js = Path(__file__).resolve().parents[2] / "dashboard" / "app.js"
+    text = app_js.read_text(encoding="utf-8")
+
+    assert "artifact-link" in text
+    assert "No artifact captured" in text
 
 
 def test_list_missions():
@@ -340,6 +349,98 @@ def test_backend_audit_store_public_write_surface_is_append_only():
     assert write_methods == {"record_event"}
     assert "update_event" not in public_methods
     assert "delete_event" not in public_methods
+
+
+def test_artifact_registry_roundtrip_and_download(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    original_artifact_root = settings.artifact_root
+    settings.report_database_path = tmp_path / "orimus.db"
+    settings.artifact_root = tmp_path / "artifacts"
+    artifact_path = settings.artifact_root / "artifact-001.txt"
+    artifact_path.parent.mkdir(parents=True)
+    artifact_path.write_bytes(b"mock-payload-stub".ljust(1024, b" "))
+
+    try:
+        store = ArtifactStore(settings.report_database_path, settings.artifact_root)
+        artifact = store.register_artifact(
+            artifact_id="artifact-001",
+            mission_id="demo_forward_stop",
+            report_id="report-001",
+            source="mock_payload",
+            artifact_type="mock-payload-stub",
+            file_path=artifact_path,
+            created_at=123.0,
+            metadata={"note": "opaque"},
+        )
+
+        assert artifact["sha256_hash"] == hash_file(artifact_path)
+
+        response = client.get("/artifacts?report_id=report-001")
+        assert response.status_code == 200
+        artifacts = response.json()["artifacts"]
+        assert len(artifacts) == 1
+        assert artifacts[0]["artifact_id"] == "artifact-001"
+        assert artifacts[0]["artifact_type"] == "mock-payload-stub"
+
+        detail = client.get("/artifacts/artifact-001")
+        assert detail.status_code == 200
+        assert detail.json()["sha256_hash"] == artifact["sha256_hash"]
+
+        download = client.get("/artifacts/artifact-001/download")
+        assert download.status_code == 200
+        assert download.content == artifact_path.read_bytes()
+    finally:
+        settings.report_database_path = original_database_path
+        settings.artifact_root = original_artifact_root
+
+
+def test_artifact_download_verifies_hash(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    original_artifact_root = settings.artifact_root
+    settings.report_database_path = tmp_path / "orimus.db"
+    settings.artifact_root = tmp_path / "artifacts"
+    artifact_path = settings.artifact_root / "artifact-002.txt"
+    artifact_path.parent.mkdir(parents=True)
+    artifact_path.write_bytes(b"original".ljust(1024, b" "))
+
+    try:
+        store = ArtifactStore(settings.report_database_path, settings.artifact_root)
+        store.register_artifact(
+            artifact_id="artifact-002",
+            mission_id="demo_forward_stop",
+            report_id="report-001",
+            source="mock_payload",
+            artifact_type="mock-payload-stub",
+            file_path=artifact_path,
+            created_at=123.0,
+            metadata={},
+        )
+        artifact_path.write_bytes(b"tampered".ljust(1024, b" "))
+
+        response = client.get("/artifacts/artifact-002/download")
+
+        assert response.status_code == 409
+        assert response.json()["detail"] == "Artifact hash mismatch"
+    finally:
+        settings.report_database_path = original_database_path
+        settings.artifact_root = original_artifact_root
+
+
+def test_missing_artifact_returns_404(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    original_artifact_root = settings.artifact_root
+    settings.report_database_path = tmp_path / "orimus.db"
+    settings.artifact_root = tmp_path / "artifacts"
+
+    try:
+        response = client.get("/artifacts/missing-artifact")
+        download = client.get("/artifacts/missing-artifact/download")
+
+        assert response.status_code == 404
+        assert download.status_code == 404
+    finally:
+        settings.report_database_path = original_database_path
+        settings.artifact_root = original_artifact_root
 
 
 def test_get_runtime_state(monkeypatch):

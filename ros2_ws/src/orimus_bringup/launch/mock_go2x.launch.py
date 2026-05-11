@@ -12,6 +12,7 @@ def generate_launch_description() -> LaunchDescription:
     mission_config_path = LaunchConfiguration("mission_config_path")
     completion_marker_path = LaunchConfiguration("completion_marker_path")
     report_path = LaunchConfiguration("report_path")
+    artifact_root = LaunchConfiguration("artifact_root")
     mission_api_port = LaunchConfiguration("mission_api_port")
 
     return LaunchDescription(
@@ -52,6 +53,11 @@ def generate_launch_description() -> LaunchDescription:
                 description="Mission report JSON output path.",
             ),
             DeclareLaunchArgument(
+                "artifact_root",
+                default_value="/workspace/data/artifacts",
+                description="Directory where evidence artifact files are stored.",
+            ),
+            DeclareLaunchArgument(
                 "mission_api_port",
                 default_value="8010",
                 description="HTTP port for the ROS-aware mission API bridge.",
@@ -90,6 +96,11 @@ def generate_launch_description() -> LaunchDescription:
                 executable="mock_inspection_camera_node",
                 name="mock_inspection_camera",
                 output="screen",
+                parameters=[
+                    {
+                        "artifact_root": artifact_root,
+                    }
+                ],
             ),
             Node(
                 package="report_manager",
@@ -99,6 +110,7 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[
                     {
                         "report_path": report_path,
+                        "artifact_root": artifact_root,
                     }
                 ],
             ),

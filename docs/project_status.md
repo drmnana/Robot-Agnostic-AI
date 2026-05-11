@@ -81,6 +81,8 @@ The project architecture and phase roadmap have been drafted.
 - Added append-only backend audit table for allowed and denied protected API decisions with query filters.
 - Added dashboard API Audit browsing with filters and distinct denied-attempt treatment.
 - Logged API Audit export and verifier parity as a deferred future ticket.
+- Added generic evidence artifact registry infrastructure with hash-checked download endpoints.
+- Added mock payload stub artifact generation and dashboard artifact links.
 
 ## In Progress
 
@@ -94,7 +96,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Add API Audit JSON export and verifier support when audit handoff workflows need parity with Mission History.
+6. Define artifact type taxonomy and metadata schemas after integrating the first real perception source.
 
 ## Open Questions
 

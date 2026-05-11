@@ -29,6 +29,7 @@ services:
       - ORIMUS_MISSION_CONFIG_DIR=/workspace/configs/missions
       - ORIMUS_LATEST_REPORT_PATH=/workspace/reports/latest_mission_report.json
       - ORIMUS_REPORT_DATABASE_PATH=/workspace/data/orimus.db
+      - ORIMUS_ARTIFACT_ROOT=/workspace/data/artifacts
       - ORIMUS_MISSION_API_BRIDGE_URL=http://ros2-dev:8010
     ports:
       - "8000:8000"

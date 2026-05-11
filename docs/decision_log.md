@@ -424,6 +424,16 @@ API Audit should first ship as dashboard list and filter browsing. JSON export a
 Reason:
 Mission History already has filter, drilldown, export, and verifier workflows. Backend API Audit will eventually need similar review parity, but list and filter browsing is the correct scope for the current operator-dashboard step.
 
+### 042 - Keep Artifact Registry Schema Generic
+
+Status: Accepted
+
+Decision:
+The evidence artifact registry should use a deliberately generic schema with free-form `source`, free-form `artifact_type`, and opaque `metadata_json`.
+
+Reason:
+Artifact type taxonomy and metadata schema are deferred. They will be defined once real perception sources are integrated.
+
 ## Pending Decisions
 
 - First mission scenario.

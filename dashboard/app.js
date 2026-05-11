@@ -606,6 +606,7 @@ function renderEvidencePanels(report) {
     title: event.event_type ?? "perception_event",
     message: `${event.source ?? "sensor"} at ${formatPosition(event)}`,
     meta: `${formatRatioPercent(event.confidence)} confidence - ${evidenceLabel(event)}`,
+    metaHtml: `${escapeHtml(formatRatioPercent(event.confidence))} confidence - ${artifactLinkHtml(event)}`,
     category: "perception",
   }));
   const payload = (report?.payload_results ?? []).map((result) => ({
@@ -638,7 +639,7 @@ function renderDetailList(element, entries, emptyMessage) {
       item.innerHTML = `
         <strong>${escapeHtml(entry.title)}</strong>
         <span>${escapeHtml(entry.message)}</span>
-        <span class="history-detail">${escapeHtml(entry.meta)}</span>
+        <span class="history-detail">${entry.metaHtml ?? escapeHtml(entry.meta)}</span>
       `;
       return item;
     }),
@@ -710,6 +711,20 @@ function evidenceLabel(event) {
     parts.push(`hash ${shortenHash(event.evidence_hash)}`);
   }
   return parts.length > 0 ? parts.join(" - ") : "No artifact captured";
+}
+
+function artifactLinkHtml(event) {
+  if (!event?.evidence_artifact_url) {
+    return "No artifact captured";
+  }
+
+  const href = String(event.evidence_artifact_url);
+  if (!href.startsWith("/artifacts/")) {
+    return escapeHtml(evidenceLabel(event));
+  }
+
+  const hashText = event.evidence_hash ? ` hash ${shortenHash(event.evidence_hash)}` : "";
+  return `<a class="artifact-link" href="${escapeHtml(href)}">${escapeHtml(href)}</a>${escapeHtml(hashText)}`;
 }
 
 function formatPosition(event) {

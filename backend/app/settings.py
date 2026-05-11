@@ -21,6 +21,10 @@ class Settings(BaseSettings):
         default=Path("/workspace/data/orimus.db"),
         alias="ORIMUS_REPORT_DATABASE_PATH",
     )
+    artifact_root: Path = Field(
+        default=Path("/workspace/data/artifacts"),
+        alias="ORIMUS_ARTIFACT_ROOT",
+    )
     log_source_ip: bool = Field(
         default=True,
         alias="ORIMUS_LOG_SOURCE_IP",

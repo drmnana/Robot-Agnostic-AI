@@ -37,6 +37,12 @@ class ReportManagerNode(Node):
                 "/workspace/data/orimus.db",
             ).value
         )
+        self.artifact_root = str(
+            self.declare_parameter(
+                "artifact_root",
+                "/workspace/data/artifacts",
+            ).value
+        )
 
         self.report_run_id = ""
         self.mission_states: list[dict] = []
@@ -381,6 +387,18 @@ class ReportManagerNode(Node):
                     FOREIGN KEY(report_id) REFERENCES missions(id)
                 );
 
+                CREATE TABLE IF NOT EXISTS evidence_artifacts (
+                    artifact_id TEXT PRIMARY KEY,
+                    mission_id TEXT NOT NULL,
+                    report_id TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    artifact_type TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    sha256_hash TEXT NOT NULL,
+                    created_at REAL NOT NULL,
+                    metadata_json TEXT NOT NULL
+                );
+
                 CREATE INDEX IF NOT EXISTS idx_missions_ended_at
                     ON missions(ended_at_sec DESC, ended_at_nanosec DESC);
                 CREATE INDEX IF NOT EXISTS idx_missions_outcome ON missions(outcome);
@@ -390,6 +408,14 @@ class ReportManagerNode(Node):
                 CREATE INDEX IF NOT EXISTS idx_safety_events_report_id ON safety_events(report_id);
                 CREATE INDEX IF NOT EXISTS idx_perception_events_report_id ON perception_events(report_id);
                 CREATE INDEX IF NOT EXISTS idx_payload_results_report_id ON payload_results(report_id);
+                CREATE INDEX IF NOT EXISTS idx_evidence_artifacts_mission_id
+                    ON evidence_artifacts(mission_id);
+                CREATE INDEX IF NOT EXISTS idx_evidence_artifacts_report_id
+                    ON evidence_artifacts(report_id);
+                CREATE INDEX IF NOT EXISTS idx_evidence_artifacts_source
+                    ON evidence_artifacts(source);
+                CREATE INDEX IF NOT EXISTS idx_evidence_artifacts_type
+                    ON evidence_artifacts(artifact_type);
                 """
             )
             self.ensure_column(connection, "safety_events", "command_id", "TEXT")
@@ -467,6 +493,7 @@ class ReportManagerNode(Node):
             self.persist_safety_events(connection, report_id, report)
             self.persist_perception_events(connection, report_id, report)
             self.persist_payload_results(connection, report_id, report)
+            self.persist_evidence_artifacts(connection, report_id, report)
 
     @staticmethod
     def extract_sector(report: dict) -> str | None:
@@ -624,6 +651,66 @@ class ReportManagerNode(Node):
                     result.get("details_json"),
                 ),
             )
+
+    def persist_evidence_artifacts(
+        self,
+        connection,
+        report_id: str,
+        report: dict,
+    ) -> None:
+        mission = report.get("mission") or {}
+        mission_id = mission.get("mission_id", "")
+        for event in report.get("perception_events", []):
+            details = self.parse_json_object(event.get("details_json", ""))
+            artifact_id = details.get("artifact_id") or self.artifact_id_from_url(
+                event.get("evidence_artifact_url", "")
+            )
+            artifact_type = details.get("artifact_type")
+            if not artifact_id or not artifact_type:
+                continue
+
+            artifact_path = Path(self.artifact_root) / f"{artifact_id}.txt"
+            if not artifact_path.exists():
+                continue
+
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO evidence_artifacts (
+                    artifact_id, mission_id, report_id, source, artifact_type,
+                    file_path, sha256_hash, created_at, metadata_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(artifact_id),
+                    mission_id,
+                    report_id,
+                    event.get("source", ""),
+                    str(artifact_type),
+                    str(artifact_path),
+                    self.hash_file(artifact_path),
+                    self.stamp_seconds(event.get("stamp", {})),
+                    event.get("details_json") or "{}",
+                ),
+            )
+
+    @staticmethod
+    def artifact_id_from_url(value: str) -> str:
+        parts = [part for part in str(value or "").split("/") if part]
+        if len(parts) >= 3 and parts[-1] == "download" and parts[-3] == "artifacts":
+            return parts[-2]
+        return ""
+
+    @staticmethod
+    def stamp_seconds(stamp: dict) -> float:
+        return float(stamp.get("sec") or 0) + float(stamp.get("nanosec") or 0) / 1_000_000_000
+
+    @staticmethod
+    def hash_file(file_path: Path) -> str:
+        digest = hashlib.sha256()
+        with file_path.open("rb") as file:
+            for chunk in iter(lambda: file.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
 
 def main(args: Iterable[str] | None = None) -> None:
