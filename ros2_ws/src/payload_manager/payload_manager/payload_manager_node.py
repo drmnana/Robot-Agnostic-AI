@@ -48,6 +48,7 @@ class PayloadManagerNode(Node):
             self.publish_safety_event(
                 severity="warning",
                 rule="unknown_payload_type",
+                command_id=msg.command_id,
                 command_blocked=True,
                 message=f"Blocked payload type '{payload_type}'",
             )
@@ -57,6 +58,7 @@ class PayloadManagerNode(Node):
             self.publish_safety_event(
                 severity="warning",
                 rule="unknown_payload_command",
+                command_id=msg.command_id,
                 command_blocked=True,
                 message=f"Blocked payload command '{command_type}'",
             )
@@ -71,6 +73,7 @@ class PayloadManagerNode(Node):
             self.publish_safety_event(
                 severity="info",
                 rule="payload_duration_limit",
+                command_id=msg.command_id,
                 command_blocked=False,
                 message=f"Clamped payload duration to {self.max_duration_sec:.1f}s",
             )
@@ -93,6 +96,7 @@ class PayloadManagerNode(Node):
         self,
         severity: str,
         rule: str,
+        command_id: str,
         command_blocked: bool,
         message: str,
     ) -> None:
@@ -103,6 +107,7 @@ class PayloadManagerNode(Node):
         event.severity = severity
         event.source = "payload_manager"
         event.rule = rule
+        event.command_id = command_id
         event.command_blocked = command_blocked
         event.message = message
         self.safety_pub.publish(event)
@@ -136,4 +141,3 @@ def main(args: Iterable[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

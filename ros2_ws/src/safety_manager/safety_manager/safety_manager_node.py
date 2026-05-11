@@ -50,6 +50,7 @@ class SafetyManagerNode(Node):
             self.publish_safety_event(
                 severity="warning",
                 rule="unknown_command",
+                command_id=msg.command_id,
                 command_blocked=True,
                 message=f"Blocked unknown command '{command}'",
             )
@@ -59,6 +60,7 @@ class SafetyManagerNode(Node):
             self.publish_safety_event(
                 severity="critical",
                 rule="estop_active",
+                command_id=msg.command_id,
                 command_blocked=True,
                 message=f"Blocked command '{command}' while emergency stop is active",
             )
@@ -72,6 +74,7 @@ class SafetyManagerNode(Node):
             self.publish_safety_event(
                 severity="critical",
                 rule="manual_estop",
+                command_id=msg.command_id,
                 command_blocked=False,
                 message="Emergency stop forwarded and safety gate locked",
             )
@@ -85,6 +88,7 @@ class SafetyManagerNode(Node):
             self.publish_safety_event(
                 severity="info",
                 rule="estop_cleared",
+                command_id=msg.command_id,
                 command_blocked=False,
                 message="Emergency stop cleared",
             )
@@ -109,6 +113,7 @@ class SafetyManagerNode(Node):
             self.publish_safety_event(
                 severity="info",
                 rule="max_linear_speed",
+                command_id=command.command_id,
                 command_blocked=False,
                 message=f"Scaled linear speed to {limit:.2f} m/s",
             )
@@ -122,6 +127,7 @@ class SafetyManagerNode(Node):
             self.publish_safety_event(
                 severity="info",
                 rule="max_yaw_rate",
+                command_id=command.command_id,
                 command_blocked=False,
                 message=f"Clamped yaw rate to {self.max_yaw_rate:.2f} rad/s",
             )
@@ -137,6 +143,7 @@ class SafetyManagerNode(Node):
         self,
         severity: str,
         rule: str,
+        command_id: str,
         command_blocked: bool,
         message: str,
     ) -> None:
@@ -147,6 +154,7 @@ class SafetyManagerNode(Node):
         event.severity = severity
         event.source = "safety_manager"
         event.rule = rule
+        event.command_id = command_id
         event.command_blocked = command_blocked
         event.message = message
         self.safety_pub.publish(event)
@@ -186,4 +194,3 @@ def main(args: Iterable[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

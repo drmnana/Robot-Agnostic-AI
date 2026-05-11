@@ -208,8 +208,16 @@
           <div id="report-list" class="report-list"></div>
           <div class="report-grid">
             <div>
+              <span class="metric-label">Report ID</span>
+              <strong id="report-id">No data</strong>
+            </div>
+            <div>
               <span class="metric-label">Mission</span>
               <strong id="report-mission">No data</strong>
+            </div>
+            <div>
+              <span class="metric-label">Sector</span>
+              <strong id="report-sector">No data</strong>
             </div>
             <div>
               <span class="metric-label">Final State</span>
@@ -236,7 +244,49 @@
               <strong id="report-hash">No data</strong>
             </div>
           </div>
-          <ol id="report-timeline" class="event-history"></ol>
+          <div class="report-integrity">
+            <span id="report-full-hash">No report hash loaded</span>
+            <button id="report-copy-hash" class="filter-clear" type="button">Copy Hash</button>
+          </div>
+          <div class="report-detail-layout">
+            <section>
+              <div class="detail-header">
+                <h3>Audit Timeline</h3>
+                <span id="report-timeline-count" class="muted">0 entries</span>
+              </div>
+              <ol id="report-timeline" class="event-history audit-timeline"></ol>
+            </section>
+            <section class="evidence-grid">
+              <div>
+                <div class="detail-header">
+                  <h3>Commands</h3>
+                  <span id="report-command-count" class="muted">0</span>
+                </div>
+                <ol id="report-command-list" class="detail-list"></ol>
+              </div>
+              <div>
+                <div class="detail-header">
+                  <h3>Safety</h3>
+                  <span id="report-safety-list-count" class="muted">0</span>
+                </div>
+                <ol id="report-safety-list" class="detail-list"></ol>
+              </div>
+              <div>
+                <div class="detail-header">
+                  <h3>Perception</h3>
+                  <span id="report-perception-list-count" class="muted">0</span>
+                </div>
+                <ol id="report-perception-list" class="detail-list"></ol>
+              </div>
+              <div>
+                <div class="detail-header">
+                  <h3>Payload Results</h3>
+                  <span id="report-payload-list-count" class="muted">0</span>
+                </div>
+                <ol id="report-payload-list" class="detail-list"></ol>
+              </div>
+            </section>
+          </div>
         </section>
       </main>
     </div>

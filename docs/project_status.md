@@ -72,6 +72,8 @@ The project architecture and phase roadmap have been drafted.
 - Added sector metadata to mission YAML files for audit filtering.
 - Added backend mission report filters by outcome, mission, sector, date range, perception event type, safety-event presence, and blocked-command evidence.
 - Added Mission History dashboard filter controls.
+- Added command-linked safety events and forward-compatible perception evidence artifact fields.
+- Added unified dashboard audit timeline and report detail drilldowns.
 
 ## In Progress
 
@@ -85,7 +87,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Improve dashboard command state rules and add richer report detail drilldowns.
+6. Add export/download support for selected mission reports.
 
 ## Open Questions
 

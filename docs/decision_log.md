@@ -284,6 +284,36 @@ The backend and dashboard should filter mission reports by mission metadata, dat
 Reason:
 Defense audit workflows need to answer questions such as which missions detected a person, which missions had safety interventions, and which commands were blocked.
 
+### 028 - Use A Unified Mission Audit Timeline
+
+Status: Accepted
+
+Decision:
+Selected mission reports should default to one chronological timeline that combines mission events, robot commands, safety events, perception events, and payload results.
+
+Reason:
+Operators first need to understand what happened in order. Separate evidence panels are useful as drilldowns, but they should not force the operator to mentally interleave parallel tables.
+
+### 029 - Link Safety Events To Affected Commands
+
+Status: Accepted
+
+Decision:
+Safety events should carry the affected `command_id`, and report views should display safety verdicts inline with robot commands.
+
+Reason:
+Blocked, modified, or approved commands must read as one causal story in the audit trail.
+
+### 030 - Prepare Perception Events For Evidence Artifacts
+
+Status: Accepted
+
+Decision:
+Perception events should include `evidence_artifact_url` and `evidence_hash`, even when null or empty in the current mock payload.
+
+Reason:
+Future camera frames, sensor captures, and other evidence artifacts should plug into the report model without restructuring the dashboard or database.
+
 ## Pending Decisions
 
 - First mission scenario.

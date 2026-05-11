@@ -123,6 +123,7 @@ The dashboard can list missions, send mission commands, reset missions for repea
 
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
 Each finalized report is stored with a SHA-256 content hash for audit traceability.
+Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
 
 ## ROS Mission API Bridge
 

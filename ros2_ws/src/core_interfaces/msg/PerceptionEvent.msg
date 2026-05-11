@@ -7,5 +7,6 @@ string frame_id
 float64 x
 float64 y
 float64 z
+string evidence_artifact_url
+string evidence_hash
 string details_json
-

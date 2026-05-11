@@ -58,6 +58,7 @@ Current capabilities:
 - Shows a rolling event history from ROS mission, perception, and safety events.
 - Shows mission report history, selected report summary, content hash, and report timeline.
 - Filters mission history by outcome, mission, sector, date range, perception event type, safety-event presence, and blocked command evidence.
+- Shows selected report detail as a unified chronological audit timeline with command verdicts, safety links, perception evidence metadata, payload results, and report hash copy support.
 - Shows backend and ROS bridge connection status.
 
 This is intentionally a compact operational screen, not a final polished control station.

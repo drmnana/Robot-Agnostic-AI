@@ -271,6 +271,8 @@ def create_report_database(tmp_path: Path) -> Path:
                 confidence REAL,
                 stamp_sec INTEGER,
                 stamp_nanosec INTEGER,
+                evidence_artifact_url TEXT,
+                evidence_hash TEXT,
                 payload_json TEXT NOT NULL
             )
             """
@@ -282,6 +284,7 @@ def create_report_database(tmp_path: Path) -> Path:
                 report_id TEXT NOT NULL,
                 rule TEXT NOT NULL,
                 severity TEXT NOT NULL,
+                command_id TEXT,
                 command_blocked INTEGER NOT NULL,
                 stamp_sec INTEGER,
                 stamp_nanosec INTEGER,
@@ -349,8 +352,9 @@ def create_report_database(tmp_path: Path) -> Path:
             """
             INSERT INTO perception_events (
                 id, report_id, event_type, source, confidence,
-                stamp_sec, stamp_nanosec, payload_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                stamp_sec, stamp_nanosec, evidence_artifact_url, evidence_hash,
+                payload_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 "perception-001",
@@ -360,21 +364,24 @@ def create_report_database(tmp_path: Path) -> Path:
                 0.92,
                 150,
                 0,
+                None,
+                None,
                 "{}",
             ),
         )
         connection.execute(
             """
             INSERT INTO safety_events (
-                id, report_id, rule, severity, command_blocked,
+                id, report_id, rule, severity, command_id, command_blocked,
                 stamp_sec, stamp_nanosec, payload_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 "safety-001",
                 "report-002",
                 "operator_cancel",
                 "warning",
+                "control_test_cancel_300",
                 1,
                 280,
                 0,

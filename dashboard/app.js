@@ -48,18 +48,32 @@ const elements = {
   reportFilterSafety: document.querySelector("#report-filter-safety"),
   reportFilterBlocked: document.querySelector("#report-filter-blocked"),
   reportFilterClear: document.querySelector("#report-filter-clear"),
+  reportId: document.querySelector("#report-id"),
   reportMission: document.querySelector("#report-mission"),
+  reportSector: document.querySelector("#report-sector"),
   reportState: document.querySelector("#report-state"),
   reportMissionEvents: document.querySelector("#report-mission-events"),
   reportPayloadResults: document.querySelector("#report-payload-results"),
   reportPerceptionEvents: document.querySelector("#report-perception-events"),
   reportSafetyEvents: document.querySelector("#report-safety-events"),
   reportHash: document.querySelector("#report-hash"),
+  reportFullHash: document.querySelector("#report-full-hash"),
+  reportCopyHash: document.querySelector("#report-copy-hash"),
+  reportTimelineCount: document.querySelector("#report-timeline-count"),
   reportTimeline: document.querySelector("#report-timeline"),
+  reportCommandCount: document.querySelector("#report-command-count"),
+  reportCommandList: document.querySelector("#report-command-list"),
+  reportSafetyListCount: document.querySelector("#report-safety-list-count"),
+  reportSafetyList: document.querySelector("#report-safety-list"),
+  reportPerceptionListCount: document.querySelector("#report-perception-list-count"),
+  reportPerceptionList: document.querySelector("#report-perception-list"),
+  reportPayloadListCount: document.querySelector("#report-payload-list-count"),
+  reportPayloadList: document.querySelector("#report-payload-list"),
 };
 
 elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
+elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportFilterClear.addEventListener("click", () => clearReportFilters());
 [
   elements.reportFilterOutcome,
@@ -317,27 +331,43 @@ function renderLatestReport() {
   const safetyEvents = report?.safety_events ?? [];
 
   elements.reportStatus.textContent = "Report loaded";
+  elements.reportId.textContent = report?.report_id ?? "No data";
   elements.reportMission.textContent = mission?.name ?? mission?.mission_id ?? "No data";
+  elements.reportSector.textContent = reportSector(report);
   elements.reportState.textContent = mission?.state ?? "No data";
   elements.reportMissionEvents.textContent = String(missionEvents.length);
   elements.reportPayloadResults.textContent = String(payloadResults.length);
   elements.reportPerceptionEvents.textContent = String(perceptionEvents.length);
   elements.reportSafetyEvents.textContent = String(safetyEvents.length);
   elements.reportHash.textContent = shortenHash(report?.content_hash);
-  renderReportTimeline(missionEvents);
+  elements.reportFullHash.textContent = report?.content_hash ?? "No report hash loaded";
+  renderAuditTimeline(report);
+  renderEvidencePanels(report);
 }
 
 function renderReportUnavailable(message) {
   elements.reportStatus.textContent = message || "Mission report not found";
   elements.reportList.innerHTML = `<div class="message-line">No reports available.</div>`;
+  elements.reportId.textContent = "No data";
   elements.reportMission.textContent = "No data";
+  elements.reportSector.textContent = "No data";
   elements.reportState.textContent = "No data";
   elements.reportMissionEvents.textContent = "0";
   elements.reportPayloadResults.textContent = "0";
   elements.reportPerceptionEvents.textContent = "0";
   elements.reportSafetyEvents.textContent = "0";
   elements.reportHash.textContent = "No data";
+  elements.reportFullHash.textContent = "No report hash loaded";
+  elements.reportTimelineCount.textContent = "0 entries";
   elements.reportTimeline.innerHTML = `<li class="empty-event">No report yet</li>`;
+  renderDetailList(elements.reportCommandList, [], "No commands");
+  renderDetailList(elements.reportSafetyList, [], "No safety events");
+  renderDetailList(elements.reportPerceptionList, [], "No perception events");
+  renderDetailList(elements.reportPayloadList, [], "No payload results");
+  elements.reportCommandCount.textContent = "0";
+  elements.reportSafetyListCount.textContent = "0";
+  elements.reportPerceptionListCount.textContent = "0";
+  elements.reportPayloadListCount.textContent = "0";
 }
 
 function renderReportList() {
@@ -372,25 +402,235 @@ function renderReportList() {
   );
 }
 
-function renderReportTimeline(missionEvents) {
-  const recentEvents = [...missionEvents].slice(-10).reverse();
-  if (recentEvents.length === 0) {
+function renderAuditTimeline(report) {
+  const entries = buildAuditTimeline(report);
+  elements.reportTimelineCount.textContent = `${entries.length} entries`;
+
+  if (entries.length === 0) {
     elements.reportTimeline.innerHTML = `<li class="empty-event">No report events</li>`;
     return;
   }
 
   elements.reportTimeline.replaceChildren(
-    ...recentEvents.map((event) => {
+    ...entries.map((entry) => {
       const item = document.createElement("li");
-      item.className = "history-item mission";
+      item.className = `history-item ${entry.category}`;
       item.innerHTML = `
-        <span class="history-meta">report - ${formatStamp(event.stamp)}</span>
-        <strong>${escapeHtml(event.event_type ?? "event")}</strong>
-        <span>${escapeHtml(event.message ?? "")}</span>
+        <span class="history-meta">${escapeHtml(entry.category)} - ${formatStamp(entry.stamp)}</span>
+        <strong>${escapeHtml(entry.title)}</strong>
+        <span>${escapeHtml(entry.message)}</span>
+        ${entry.meta ? `<span class="history-detail">${escapeHtml(entry.meta)}</span>` : ""}
       `;
       return item;
     }),
   );
+}
+
+function buildAuditTimeline(report) {
+  const commandVerdicts = buildCommandVerdicts(report?.robot_commands ?? [], report?.safety_events ?? []);
+  const entries = [];
+
+  (report?.mission_events ?? []).forEach((event) => {
+    entries.push({
+      stamp: event.stamp,
+      category: "mission",
+      title: event.event_type ?? "mission_event",
+      message: event.message ?? "",
+      meta: [event.step_name, event.target].filter(Boolean).join(" - "),
+    });
+  });
+
+  (report?.robot_commands ?? []).forEach((command) => {
+    const verdict = commandVerdicts.get(command.command_id);
+    entries.push({
+      stamp: command.stamp,
+      category: "command",
+      title: `${command.command_type ?? "command"} ${command.topic === "robot/command" ? "approved" : "requested"}`,
+      message: verdict?.label ?? "No safety verdict recorded",
+      meta: command.command_id ?? "",
+    });
+  });
+
+  (report?.safety_events ?? []).forEach((event) => {
+    entries.push({
+      stamp: event.stamp,
+      category: "safety",
+      title: event.rule ?? "safety_event",
+      message: event.message ?? "",
+      meta: event.command_id ? `command ${event.command_id}` : "No command link",
+    });
+  });
+
+  (report?.perception_events ?? []).forEach((event) => {
+    const artifact = evidenceLabel(event);
+    entries.push({
+      stamp: event.stamp,
+      category: "perception",
+      title: event.event_type ?? "perception_event",
+      message: `${event.source ?? "sensor"} confidence ${formatRatioPercent(event.confidence)}`,
+      meta: artifact,
+    });
+  });
+
+  (report?.payload_results ?? []).forEach((result) => {
+    entries.push({
+      stamp: result.stamp,
+      category: "payload",
+      title: result.result_type ?? "payload_result",
+      message: result.summary ?? "",
+      meta: `${result.payload_id ?? "payload"} confidence ${formatRatioPercent(result.confidence)}`,
+    });
+  });
+
+  return entries.sort(compareStampedEntries);
+}
+
+function renderEvidencePanels(report) {
+  const commandVerdicts = buildCommandVerdicts(report?.robot_commands ?? [], report?.safety_events ?? []);
+  const commands = (report?.robot_commands ?? []).map((command) => ({
+    title: `${command.command_type ?? "command"} (${command.topic ?? "topic"})`,
+    message: commandVerdicts.get(command.command_id)?.label ?? "No safety verdict recorded",
+    meta: command.command_id ?? "No command id",
+    category: "command",
+  }));
+  const safety = (report?.safety_events ?? []).map((event) => ({
+    title: event.rule ?? "safety_event",
+    message: event.message ?? "",
+    meta: event.command_id ? `Affected command: ${event.command_id}` : "No command link",
+    category: "safety",
+  }));
+  const perception = (report?.perception_events ?? []).map((event) => ({
+    title: event.event_type ?? "perception_event",
+    message: `${event.source ?? "sensor"} at ${formatPosition(event)}`,
+    meta: `${formatRatioPercent(event.confidence)} confidence - ${evidenceLabel(event)}`,
+    category: "perception",
+  }));
+  const payload = (report?.payload_results ?? []).map((result) => ({
+    title: result.result_type ?? "payload_result",
+    message: result.summary ?? "",
+    meta: `${result.payload_id ?? "payload"} - ${formatRatioPercent(result.confidence)} confidence`,
+    category: "payload",
+  }));
+
+  elements.reportCommandCount.textContent = String(commands.length);
+  elements.reportSafetyListCount.textContent = String(safety.length);
+  elements.reportPerceptionListCount.textContent = String(perception.length);
+  elements.reportPayloadListCount.textContent = String(payload.length);
+  renderDetailList(elements.reportCommandList, commands, "No commands");
+  renderDetailList(elements.reportSafetyList, safety, "No safety events");
+  renderDetailList(elements.reportPerceptionList, perception, "No perception events");
+  renderDetailList(elements.reportPayloadList, payload, "No payload results");
+}
+
+function renderDetailList(element, entries, emptyMessage) {
+  if (entries.length === 0) {
+    element.innerHTML = `<li class="empty-event">${escapeHtml(emptyMessage)}</li>`;
+    return;
+  }
+
+  element.replaceChildren(
+    ...entries.map((entry) => {
+      const item = document.createElement("li");
+      item.className = `history-item ${entry.category}`;
+      item.innerHTML = `
+        <strong>${escapeHtml(entry.title)}</strong>
+        <span>${escapeHtml(entry.message)}</span>
+        <span class="history-detail">${escapeHtml(entry.meta)}</span>
+      `;
+      return item;
+    }),
+  );
+}
+
+function buildCommandVerdicts(commands, safetyEvents) {
+  const byCommand = new Map();
+  commands.forEach((command) => {
+    if (!command.command_id) {
+      return;
+    }
+    const verdict = byCommand.get(command.command_id) ?? { hasApproval: false, safetyEvents: [] };
+    if (command.topic === "robot/command") {
+      verdict.hasApproval = true;
+    }
+    byCommand.set(command.command_id, verdict);
+  });
+
+  safetyEvents.forEach((event) => {
+    if (!event.command_id) {
+      return;
+    }
+    const verdict = byCommand.get(event.command_id) ?? { hasApproval: false, safetyEvents: [] };
+    verdict.safetyEvents.push(event);
+    byCommand.set(event.command_id, verdict);
+  });
+
+  byCommand.forEach((verdict) => {
+    const blocked = verdict.safetyEvents.find((event) => event.command_blocked);
+    const adjusted = verdict.safetyEvents.find((event) => !event.command_blocked);
+    if (blocked) {
+      verdict.label = `Blocked by ${blocked.rule}: ${blocked.message}`;
+    } else if (adjusted && verdict.hasApproval) {
+      verdict.label = `Approved with safety note ${adjusted.rule}: ${adjusted.message}`;
+    } else if (verdict.hasApproval) {
+      verdict.label = "Approved by safety gate";
+    } else if (adjusted) {
+      verdict.label = `Safety note ${adjusted.rule}: ${adjusted.message}`;
+    } else {
+      verdict.label = "Requested; no approval observed";
+    }
+  });
+
+  return byCommand;
+}
+
+function reportSector(report) {
+  const missionSector = report?.mission?.sector;
+  if (missionSector) {
+    return missionSector;
+  }
+
+  for (const event of report?.mission_events ?? []) {
+    const details = parseJsonObject(event.details_json);
+    if (details.sector) {
+      return details.sector;
+    }
+  }
+  return "No data";
+}
+
+function evidenceLabel(event) {
+  const parts = [];
+  if (event?.evidence_artifact_url) {
+    parts.push(`artifact ${event.evidence_artifact_url}`);
+  }
+  if (event?.evidence_hash) {
+    parts.push(`hash ${shortenHash(event.evidence_hash)}`);
+  }
+  return parts.length > 0 ? parts.join(" - ") : "No artifact captured";
+}
+
+function formatPosition(event) {
+  return `x ${formatNumber(event?.x)}, y ${formatNumber(event?.y)}, z ${formatNumber(event?.z)}`;
+}
+
+function compareStampedEntries(left, right) {
+  const leftStamp = Number(left.stamp?.sec ?? 0) + Number(left.stamp?.nanosec ?? 0) / 1_000_000_000;
+  const rightStamp = Number(right.stamp?.sec ?? 0) + Number(right.stamp?.nanosec ?? 0) / 1_000_000_000;
+  return leftStamp - rightStamp;
+}
+
+async function copyReportHash() {
+  const hash = state.latestReport?.content_hash;
+  if (!hash) {
+    elements.reportStatus.textContent = "No hash available to copy";
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(hash);
+    elements.reportStatus.textContent = "Report hash copied";
+  } catch (error) {
+    elements.reportStatus.textContent = "Could not copy report hash";
+  }
 }
 
 function syncCommandButtons() {
@@ -478,6 +718,15 @@ function shortenHash(value) {
     return "No data";
   }
   return value.length > 16 ? `${value.slice(0, 16)}...` : value;
+}
+
+function parseJsonObject(value) {
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
 }
 
 function clamp(value, min, max) {

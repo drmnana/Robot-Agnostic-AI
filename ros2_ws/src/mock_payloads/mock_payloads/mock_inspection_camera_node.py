@@ -95,6 +95,8 @@ class MockInspectionCameraNode(Node):
         event.x = msg.target_x
         event.y = msg.target_y
         event.z = msg.target_z
+        event.evidence_artifact_url = ""
+        event.evidence_hash = ""
         event.details_json = result.details_json
         self.perception_pub.publish(event)
 
@@ -124,4 +126,3 @@ def main(args: Iterable[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main()
-

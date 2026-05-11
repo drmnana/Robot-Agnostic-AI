@@ -48,6 +48,7 @@ class MockGo2XNode(Node):
             self.publish_safety_event(
                 severity="warning",
                 rule="estop_active",
+                command_id=msg.command_id,
                 command_blocked=True,
                 message=f"Blocked command '{command}' because emergency stop is active",
             )
@@ -70,6 +71,7 @@ class MockGo2XNode(Node):
             self.publish_safety_event(
                 severity="critical",
                 rule="manual_estop",
+                command_id=msg.command_id,
                 command_blocked=False,
                 message="Emergency stop activated",
             )
@@ -81,6 +83,7 @@ class MockGo2XNode(Node):
             self.publish_safety_event(
                 severity="warning",
                 rule="unknown_command",
+                command_id=msg.command_id,
                 command_blocked=True,
                 message=f"Unknown robot command '{command}'",
             )
@@ -96,6 +99,7 @@ class MockGo2XNode(Node):
             self.publish_safety_event(
                 severity="info",
                 rule="max_speed_limit",
+                command_id=msg.command_id,
                 command_blocked=False,
                 message="Velocity command scaled to max_speed",
             )
@@ -149,6 +153,7 @@ class MockGo2XNode(Node):
         self,
         severity: str,
         rule: str,
+        command_id: str,
         command_blocked: bool,
         message: str,
     ) -> None:
@@ -158,6 +163,7 @@ class MockGo2XNode(Node):
         event.severity = severity
         event.source = "mock_go2x_driver"
         event.rule = rule
+        event.command_id = command_id
         event.command_blocked = command_blocked
         event.message = message
         self.safety_pub.publish(event)
@@ -184,4 +190,3 @@ def main(args=None) -> None:
 
 if __name__ == "__main__":
     main()
-

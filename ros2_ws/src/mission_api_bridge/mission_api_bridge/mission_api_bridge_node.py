@@ -199,6 +199,8 @@ class MissionApiBridgeNode(Node):
                 "y": float(msg.y),
                 "z": float(msg.z),
             },
+            "evidence_artifact_url": msg.evidence_artifact_url,
+            "evidence_hash": msg.evidence_hash,
             "details_json": msg.details_json,
             "message": f"{msg.event_type} from {msg.source}",
         }
@@ -213,6 +215,7 @@ class MissionApiBridgeNode(Node):
             "severity": msg.severity,
             "source": msg.source,
             "rule": msg.rule,
+            "command_id": msg.command_id,
             "command_blocked": bool(msg.command_blocked),
             "message": msg.message,
             "event_type": msg.rule,

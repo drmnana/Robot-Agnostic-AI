@@ -185,6 +185,8 @@ class ReportManagerNode(Node):
                 "x": msg.x,
                 "y": msg.y,
                 "z": msg.z,
+                "evidence_artifact_url": msg.evidence_artifact_url,
+                "evidence_hash": msg.evidence_hash,
                 "details_json": msg.details_json,
             }
         )
@@ -197,6 +199,7 @@ class ReportManagerNode(Node):
                 "severity": msg.severity,
                 "source": msg.source,
                 "rule": msg.rule,
+                "command_id": msg.command_id,
                 "command_blocked": msg.command_blocked,
                 "message": msg.message,
             }
@@ -332,6 +335,7 @@ class ReportManagerNode(Node):
                     severity TEXT,
                     source TEXT,
                     rule TEXT,
+                    command_id TEXT,
                     command_blocked INTEGER,
                     message TEXT,
                     FOREIGN KEY(report_id) REFERENCES missions(id)
@@ -350,6 +354,8 @@ class ReportManagerNode(Node):
                     x REAL,
                     y REAL,
                     z REAL,
+                    evidence_artifact_url TEXT,
+                    evidence_hash TEXT,
                     details_json TEXT,
                     FOREIGN KEY(report_id) REFERENCES missions(id)
                 );
@@ -380,6 +386,36 @@ class ReportManagerNode(Node):
                 CREATE INDEX IF NOT EXISTS idx_perception_events_report_id ON perception_events(report_id);
                 CREATE INDEX IF NOT EXISTS idx_payload_results_report_id ON payload_results(report_id);
                 """
+            )
+            self.ensure_column(connection, "safety_events", "command_id", "TEXT")
+            self.ensure_column(
+                connection,
+                "perception_events",
+                "evidence_artifact_url",
+                "TEXT",
+            )
+            self.ensure_column(connection, "perception_events", "evidence_hash", "TEXT")
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_safety_events_command_id
+                    ON safety_events(command_id)
+                """
+            )
+
+    @staticmethod
+    def ensure_column(
+        connection: sqlite3.Connection,
+        table_name: str,
+        column_name: str,
+        column_type: str,
+    ) -> None:
+        columns = {
+            row[1]
+            for row in connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+        }
+        if column_name not in columns:
+            connection.execute(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
             )
 
     def persist_report(self, report: dict, content_hash: str) -> None:
@@ -501,8 +537,8 @@ class ReportManagerNode(Node):
                 """
                 INSERT INTO safety_events (
                     report_id, stamp_sec, stamp_nanosec, event_id, severity,
-                    source, rule, command_blocked, message
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    source, rule, command_id, command_blocked, message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     report_id,
@@ -512,6 +548,7 @@ class ReportManagerNode(Node):
                     event.get("severity"),
                     event.get("source"),
                     event.get("rule"),
+                    event.get("command_id"),
                     int(bool(event.get("command_blocked"))),
                     event.get("message"),
                 ),
@@ -525,8 +562,9 @@ class ReportManagerNode(Node):
                 """
                 INSERT INTO perception_events (
                     report_id, stamp_sec, stamp_nanosec, event_id, event_type,
-                    source, confidence, frame_id, x, y, z, details_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    source, confidence, frame_id, x, y, z,
+                    evidence_artifact_url, evidence_hash, details_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     report_id,
@@ -540,6 +578,8 @@ class ReportManagerNode(Node):
                     event.get("x"),
                     event.get("y"),
                     event.get("z"),
+                    event.get("evidence_artifact_url"),
+                    event.get("evidence_hash"),
                     event.get("details_json"),
                 ),
             )
