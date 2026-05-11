@@ -13,7 +13,15 @@ from .settings import Settings
 settings = Settings()
 app = FastAPI(title="ORIMUS Backend", version="0.1.0")
 MISSION_COMMANDS = {"start", "pause", "resume", "cancel", "reset"}
-RUNTIME_RESOURCES = {"state", "mission", "robot", "payload", "perception", "safety"}
+RUNTIME_RESOURCES = {
+    "state",
+    "mission",
+    "robot",
+    "payload",
+    "perception",
+    "safety",
+    "events",
+}
 DASHBOARD_DIR = Path(__file__).resolve().parents[2] / "dashboard"
 
 if DASHBOARD_DIR.exists():

@@ -55,6 +55,7 @@ Current capabilities:
 - Selects one mission for operator commands.
 - Sends start, pause, resume, cancel, and reset through backend mission endpoints.
 - Polls `GET /runtime/state` for mission, robot, payload, perception, and safety status.
+- Shows a rolling event history from ROS mission, perception, and safety events.
 - Shows backend and ROS bridge connection status.
 
 This is intentionally a compact operational screen, not a final polished control station.

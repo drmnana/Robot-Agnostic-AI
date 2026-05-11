@@ -5,6 +5,7 @@ import rclpy
 import uvicorn
 from core_interfaces.msg import (
     MissionCommand,
+    MissionEvent,
     MissionState,
     PayloadState,
     PerceptionEvent,
@@ -37,8 +38,13 @@ class MissionApiBridgeNode(Node):
         self.latest_payload_state: dict | None = None
         self.latest_perception_event: dict | None = None
         self.latest_safety_event: dict | None = None
+        self.event_history_limit = int(
+            self.declare_parameter("event_history_limit", 50).value
+        )
+        self.event_history: list[dict] = []
 
         self.create_subscription(MissionState, "mission/state", self.on_mission_state, 10)
+        self.create_subscription(MissionEvent, "mission/events", self.on_mission_event, 10)
         self.create_subscription(RobotState, "robot/state", self.on_robot_state, 10)
         self.create_subscription(PayloadState, "payload/state", self.on_payload_state, 10)
         self.create_subscription(
@@ -97,6 +103,10 @@ class MissionApiBridgeNode(Node):
         def runtime_safety() -> dict:
             return self.get_cached_resource("safety")
 
+        @self.app.get("/runtime/events")
+        def runtime_events() -> dict:
+            return self.get_cached_resource("events")
+
     def publish_mission_command(self, mission_id: str, command_type: str) -> None:
         command = MissionCommand()
         command.stamp = self.get_clock().now().to_msg()
@@ -118,6 +128,21 @@ class MissionApiBridgeNode(Node):
                 "current_step": msg.current_step,
                 "progress": float(msg.progress),
                 "message": msg.message,
+            },
+        )
+
+    def on_mission_event(self, msg: MissionEvent) -> None:
+        self.add_event(
+            {
+                "stamp": time_to_dict(msg.stamp),
+                "category": "mission",
+                "event_id": msg.event_id,
+                "event_type": msg.event_type,
+                "mission_id": msg.mission_id,
+                "step_name": msg.step_name,
+                "target": msg.target,
+                "message": msg.message,
+                "details_json": msg.details_json,
             },
         )
 
@@ -161,37 +186,39 @@ class MissionApiBridgeNode(Node):
         )
 
     def on_perception_event(self, msg: PerceptionEvent) -> None:
-        self.update_cached_resource(
-            "perception",
-            {
-                "stamp": time_to_dict(msg.stamp),
-                "event_id": msg.event_id,
-                "event_type": msg.event_type,
-                "source": msg.source,
-                "confidence": float(msg.confidence),
-                "frame_id": msg.frame_id,
-                "position": {
-                    "x": float(msg.x),
-                    "y": float(msg.y),
-                    "z": float(msg.z),
-                },
-                "details_json": msg.details_json,
+        event = {
+            "stamp": time_to_dict(msg.stamp),
+            "category": "perception",
+            "event_id": msg.event_id,
+            "event_type": msg.event_type,
+            "source": msg.source,
+            "confidence": float(msg.confidence),
+            "frame_id": msg.frame_id,
+            "position": {
+                "x": float(msg.x),
+                "y": float(msg.y),
+                "z": float(msg.z),
             },
-        )
+            "details_json": msg.details_json,
+            "message": f"{msg.event_type} from {msg.source}",
+        }
+        self.update_cached_resource("perception", event)
+        self.add_event(event)
 
     def on_safety_event(self, msg: SafetyEvent) -> None:
-        self.update_cached_resource(
-            "safety",
-            {
-                "stamp": time_to_dict(msg.stamp),
-                "event_id": msg.event_id,
-                "severity": msg.severity,
-                "source": msg.source,
-                "rule": msg.rule,
-                "command_blocked": bool(msg.command_blocked),
-                "message": msg.message,
-            },
-        )
+        event = {
+            "stamp": time_to_dict(msg.stamp),
+            "category": "safety",
+            "event_id": msg.event_id,
+            "severity": msg.severity,
+            "source": msg.source,
+            "rule": msg.rule,
+            "command_blocked": bool(msg.command_blocked),
+            "message": msg.message,
+            "event_type": msg.rule,
+        }
+        self.update_cached_resource("safety", event)
+        self.add_event(event)
 
     def update_cached_resource(self, resource: str, value: dict) -> None:
         with self.state_lock:
@@ -206,6 +233,12 @@ class MissionApiBridgeNode(Node):
             elif resource == "safety":
                 self.latest_safety_event = value
 
+    def add_event(self, event: dict) -> None:
+        with self.state_lock:
+            self.event_history.append(event)
+            if len(self.event_history) > self.event_history_limit:
+                self.event_history = self.event_history[-self.event_history_limit :]
+
     def get_runtime_snapshot(self) -> dict:
         with self.state_lock:
             return {
@@ -218,6 +251,7 @@ class MissionApiBridgeNode(Node):
                 "payload": self.latest_payload_state,
                 "perception": self.latest_perception_event,
                 "safety": self.latest_safety_event,
+                "events": list(self.event_history),
             }
 
     def get_cached_resource(self, resource: str) -> dict:

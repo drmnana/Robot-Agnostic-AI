@@ -63,6 +63,7 @@ The project architecture and phase roadmap have been drafted.
 - Added first operator dashboard prototype.
 - Backend now serves the dashboard from `/dashboard/`.
 - Added mission reset support for repeated dashboard demos without restarting ROS.
+- Added live dashboard event history backed by ROS mission, perception, and safety events.
 
 ## In Progress
 
@@ -76,7 +77,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Improve dashboard command state rules and add a visible mission event history.
+6. Improve dashboard command state rules and add mission report viewing.
 
 ## Open Questions
 

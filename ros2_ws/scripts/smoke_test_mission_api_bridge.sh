@@ -48,6 +48,7 @@ sleep 1
 curl -fsS http://127.0.0.1:8010/runtime/state >/tmp/orimus_api_runtime_state.json
 curl -fsS http://127.0.0.1:8010/runtime/mission >/tmp/orimus_api_runtime_mission.json
 curl -fsS http://127.0.0.1:8010/runtime/robot >/tmp/orimus_api_runtime_robot.json
+curl -fsS http://127.0.0.1:8010/runtime/events >/tmp/orimus_api_runtime_events.json
 
 grep -q '"command_type":"start"' /tmp/orimus_api_start.json
 grep -q '"command_type":"pause"' /tmp/orimus_api_pause.json
@@ -58,6 +59,8 @@ grep -q '"command_type":"start"' /tmp/orimus_api_restart.json
 grep -q '"bridge":{"connected":true' /tmp/orimus_api_runtime_state.json
 grep -q '"resource":"mission"' /tmp/orimus_api_runtime_mission.json
 grep -q '"resource":"robot"' /tmp/orimus_api_runtime_robot.json
+grep -q '"resource":"events"' /tmp/orimus_api_runtime_events.json
+grep -q '"event_type":"mission_reset"' /tmp/orimus_api_runtime_events.json
 
 grep -q "Mission paused" /tmp/orimus_api_bridge_launch.log
 grep -q "Mission resumed" /tmp/orimus_api_bridge_launch.log

@@ -224,6 +224,16 @@ The mission manager, ROS mission API bridge, backend, and dashboard should suppo
 Reason:
 Operators need to rerun demo and test missions from the dashboard without restarting the ROS launch process.
 
+### 022 - Keep Rolling Runtime Event History
+
+Status: Accepted
+
+Decision:
+The ROS mission API bridge should keep a bounded rolling event history from mission, perception, and safety events and expose it through `/runtime/events` and `/runtime/state`.
+
+Reason:
+Operators need situational awareness over time, not only the latest state snapshot.
+
 ## Pending Decisions
 
 - First mission scenario.

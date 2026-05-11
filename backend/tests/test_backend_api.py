@@ -120,6 +120,7 @@ def test_get_runtime_state(monkeypatch):
             "payload": None,
             "perception": None,
             "safety": None,
+            "events": [],
         }
 
     monkeypatch.setattr(main_module, "get_runtime_resource", fake_get_runtime_resource)

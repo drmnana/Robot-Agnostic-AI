@@ -99,6 +99,7 @@ Current endpoints:
 - `GET /runtime/payload`
 - `GET /runtime/perception`
 - `GET /runtime/safety`
+- `GET /runtime/events`
 - `GET /reports/latest`
 
 The backend forwards mission command requests to the ROS-aware mission API bridge.
@@ -123,6 +124,7 @@ Bridge endpoints:
 - `GET /runtime/payload`
 - `GET /runtime/perception`
 - `GET /runtime/safety`
+- `GET /runtime/events`
 
 This gives ORIMUS a working HTTP-to-ROS command path and a ROS-to-HTTP live state path.
 

@@ -31,6 +31,8 @@ const elements = {
   payloadMessage: document.querySelector("#payload-message"),
   perceptionEvent: document.querySelector("#perception-event"),
   safetyEvent: document.querySelector("#safety-event"),
+  eventCount: document.querySelector("#event-count"),
+  eventHistory: document.querySelector("#event-history"),
 };
 
 elements.refreshButton.addEventListener("click", () => refreshAll());
@@ -137,6 +139,7 @@ function renderRuntime() {
   const payload = runtime.payload;
   const perception = runtime.perception;
   const safety = runtime.safety;
+  const events = runtime.events ?? [];
 
   const progress = clamp(Number(mission?.progress ?? 0), 0, 1);
   elements.missionState.textContent = mission?.state ?? "No data";
@@ -164,6 +167,30 @@ function renderRuntime() {
   elements.safetyEvent.textContent = safety
     ? `${safety.severity}: ${safety.message}`
     : "No data";
+  renderEventHistory(events);
+}
+
+function renderEventHistory(events) {
+  const recentEvents = [...events].slice(-12).reverse();
+  elements.eventCount.textContent = `${events.length} events`;
+
+  if (recentEvents.length === 0) {
+    elements.eventHistory.innerHTML = `<li class="empty-event">No events yet</li>`;
+    return;
+  }
+
+  elements.eventHistory.replaceChildren(
+    ...recentEvents.map((event) => {
+      const item = document.createElement("li");
+      item.className = `history-item ${event.category ?? "event"}`;
+      item.innerHTML = `
+        <span class="history-meta">${escapeHtml(event.category ?? "event")} · ${formatStamp(event.stamp)}</span>
+        <strong>${escapeHtml(event.event_type ?? event.rule ?? "event")}</strong>
+        <span>${escapeHtml(event.message ?? "")}</span>
+      `;
+      return item;
+    }),
+  );
 }
 
 function syncCommandButtons() {
@@ -229,6 +256,14 @@ function formatNumber(value) {
     return "0.00";
   }
   return Number(value).toFixed(2);
+}
+
+function formatStamp(stamp) {
+  if (!stamp || stamp.sec === undefined) {
+    return "--:--:--";
+  }
+
+  return new Date(Number(stamp.sec) * 1000).toLocaleTimeString();
 }
 
 function clamp(value, min, max) {

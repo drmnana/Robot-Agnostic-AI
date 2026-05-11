@@ -97,6 +97,7 @@ Initial endpoints:
 - `GET /runtime/payload`
 - `GET /runtime/perception`
 - `GET /runtime/safety`
+- `GET /runtime/events`
 - `GET /reports/latest`
 
 Mission command endpoints forward operator requests to the ROS-aware mission API bridge.
@@ -113,7 +114,7 @@ Open it at:
 http://localhost:8000/dashboard/
 ```
 
-The dashboard can list missions, send mission commands, reset missions for repeated demos, and display live runtime state from the backend.
+The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, and show mission event history from the backend.
 
 ## ROS Mission API Bridge
 
@@ -135,3 +136,4 @@ Initial bridge endpoints:
 - `GET /runtime/payload`
 - `GET /runtime/perception`
 - `GET /runtime/safety`
+- `GET /runtime/events`
