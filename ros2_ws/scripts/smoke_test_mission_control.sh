@@ -13,6 +13,13 @@ LAUNCH_PID=$!
 
 cleanup() {
   kill "$LAUNCH_PID" >/dev/null 2>&1 || true
+  pkill -f "mission_manager_node" >/dev/null 2>&1 || true
+  pkill -f "mission_api_bridge_node" >/dev/null 2>&1 || true
+  pkill -f "mock_go2x_node" >/dev/null 2>&1 || true
+  pkill -f "safety_manager_node" >/dev/null 2>&1 || true
+  pkill -f "payload_manager_node" >/dev/null 2>&1 || true
+  pkill -f "mock_inspection_camera_node" >/dev/null 2>&1 || true
+  pkill -f "report_manager_node" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -22,6 +29,6 @@ python3 scripts/mission_control_check.py
 grep -q "Mission paused" /tmp/orimus_mission_control_launch.log
 grep -q "Mission resumed" /tmp/orimus_mission_control_launch.log
 grep -q "Mission canceled" /tmp/orimus_mission_control_launch.log
+grep -q "Mission reset" /tmp/orimus_mission_control_launch.log
 
 echo "MISSION_CONTROL_SMOKE_TEST_OK"
-

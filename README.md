@@ -90,6 +90,7 @@ Initial endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `POST /missions/{mission_id}/reset`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
@@ -112,7 +113,7 @@ Open it at:
 http://localhost:8000/dashboard/
 ```
 
-The dashboard can list missions, send mission commands, and display live runtime state from the backend.
+The dashboard can list missions, send mission commands, reset missions for repeated demos, and display live runtime state from the backend.
 
 ## ROS Mission API Bridge
 
@@ -127,6 +128,7 @@ Initial bridge endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `POST /missions/{mission_id}/reset`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`

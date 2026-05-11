@@ -106,6 +106,9 @@ class MissionManagerNode(Node):
             self.advance_step()
 
     def start_mission(self) -> None:
+        if self.mission_complete or self.mission_canceled:
+            self.reset_mission_runtime()
+
         if self.mission_started:
             self.publish_event(
                 event_type="mission_command_ignored",
@@ -113,9 +116,6 @@ class MissionManagerNode(Node):
                 message="Start ignored because mission already started",
             )
             return
-
-        if self.mission_complete or self.mission_canceled:
-            self.reset_mission_runtime()
 
         self.mission_started = True
         self.mission_paused = False
@@ -144,6 +144,8 @@ class MissionManagerNode(Node):
             self.resume_mission()
         elif command == "cancel":
             self.cancel_mission()
+        elif command == "reset":
+            self.reset_mission()
         else:
             self.publish_event(
                 event_type="mission_command_rejected",
@@ -204,6 +206,19 @@ class MissionManagerNode(Node):
         )
         self.publish_state("canceled", "Mission canceled")
         self.get_logger().info("Mission canceled")
+
+    def reset_mission(self) -> None:
+        if self.mission_started and not self.mission_complete and not self.mission_canceled:
+            self.publish_stop_command("reset")
+
+        self.reset_mission_runtime()
+        self.publish_event(
+            event_type="mission_reset",
+            step=None,
+            message="Mission reset",
+        )
+        self.publish_state("ready", "Mission reset")
+        self.get_logger().info("Mission reset")
 
     def publish_stop_command(self, reason: str) -> None:
         command = RobotCommand()

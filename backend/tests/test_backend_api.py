@@ -69,6 +69,26 @@ def test_control_mission_start(monkeypatch):
     assert calls == [("demo_forward_stop", "start")]
 
 
+def test_control_mission_reset(monkeypatch):
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type):
+        calls.append((mission_id, command_type))
+        return {
+            "status": "accepted",
+            "mission_id": mission_id,
+            "command_type": command_type,
+        }
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+
+    response = client.post("/missions/demo_forward_stop/reset")
+
+    assert response.status_code == 200
+    assert response.json()["command_type"] == "reset"
+    assert calls == [("demo_forward_stop", "reset")]
+
+
 def test_control_mission_rejects_unknown_command():
     response = client.post("/missions/demo_forward_stop/reboot")
 

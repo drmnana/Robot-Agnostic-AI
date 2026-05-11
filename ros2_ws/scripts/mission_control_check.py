@@ -74,6 +74,16 @@ def main() -> int:
             print("MISSION_CONTROL_CHECK_FAILED missing canceled", file=sys.stderr)
             return 1
 
+        node.publish_command("reset")
+        if not node.wait_for_state("ready"):
+            print("MISSION_CONTROL_CHECK_FAILED missing reset ready", file=sys.stderr)
+            return 1
+
+        node.publish_command("start")
+        if not node.wait_for_state("running"):
+            print("MISSION_CONTROL_CHECK_FAILED missing restarted running", file=sys.stderr)
+            return 1
+
         print("MISSION_CONTROL_CHECK_OK")
         return 0
     finally:

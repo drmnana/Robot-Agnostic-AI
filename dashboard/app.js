@@ -116,7 +116,7 @@ function renderMissions() {
       button.classList.toggle("selected", mission.mission_id === state.selectedMissionId);
       button.innerHTML = `
         <strong>${escapeHtml(mission.name ?? mission.mission_id)}</strong>
-        <span>${escapeHtml(mission.mission_id)} · ${mission.step_count ?? 0} steps</span>
+        <span>${escapeHtml(mission.mission_id)} - ${mission.step_count ?? 0} steps</span>
       `;
       button.addEventListener("click", () => {
         state.selectedMissionId = mission.mission_id;
@@ -201,7 +201,7 @@ function missionStateClass(value) {
   if (["running", "completed"].includes(value)) {
     return "ok";
   }
-  if (["paused", "idle", "ready"].includes(value)) {
+  if (["paused", "idle", "ready", "reset"].includes(value)) {
     return "warn";
   }
   if (["canceled", "failed", "error"].includes(value)) {

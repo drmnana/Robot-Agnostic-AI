@@ -214,6 +214,16 @@ The first ORIMUS operator dashboard prototype should live in `dashboard/` and be
 Reason:
 Serving the prototype from the backend avoids a separate frontend toolchain while the operator workflow is still being proven.
 
+### 021 - Support Mission Reset For Repeated Operator Demos
+
+Status: Accepted
+
+Decision:
+The mission manager, ROS mission API bridge, backend, and dashboard should support a `reset` mission command.
+
+Reason:
+Operators need to rerun demo and test missions from the dashboard without restarting the ROS launch process.
+
 ## Pending Decisions
 
 - First mission scenario.

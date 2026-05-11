@@ -63,7 +63,7 @@ class MissionApiBridgeNode(Node):
         @self.app.post("/missions/{mission_id}/{command_type}", response_model=CommandResponse)
         def command_mission(mission_id: str, command_type: str) -> CommandResponse:
             normalized_command = command_type.strip().lower()
-            if normalized_command not in {"start", "pause", "resume", "cancel"}:
+            if normalized_command not in {"start", "pause", "resume", "cancel", "reset"}:
                 raise HTTPException(status_code=400, detail="Unsupported mission command")
 
             self.publish_mission_command(mission_id, normalized_command)

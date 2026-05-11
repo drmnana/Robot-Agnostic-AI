@@ -18,7 +18,7 @@ However, a simple prototype can be created earlier if needed for planning.
 - Show mission state.
 - Show live events and alerts.
 - Show video or sensor feeds.
-- Add mission start, pause, resume, cancel.
+- Add mission start, pause, resume, cancel, reset.
 - Add manual override controls.
 - Add emergency stop control.
 
@@ -53,7 +53,7 @@ Current capabilities:
 
 - Lists mission YAML configs through `GET /missions`.
 - Selects one mission for operator commands.
-- Sends start, pause, resume, and cancel through backend mission endpoints.
+- Sends start, pause, resume, cancel, and reset through backend mission endpoints.
 - Polls `GET /runtime/state` for mission, robot, payload, perception, and safety status.
 - Shows backend and ROS bridge connection status.
 

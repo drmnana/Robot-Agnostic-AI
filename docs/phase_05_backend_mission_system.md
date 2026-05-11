@@ -77,6 +77,7 @@ The mission manager now accepts operator-style mission commands on `/mission/com
 - `pause`
 - `resume`
 - `cancel`
+- `reset`
 
 ## Initial Backend Skeleton
 
@@ -91,6 +92,7 @@ Current endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `POST /missions/{mission_id}/reset`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
@@ -114,6 +116,7 @@ Bridge endpoints:
 - `POST /missions/{mission_id}/pause`
 - `POST /missions/{mission_id}/resume`
 - `POST /missions/{mission_id}/cancel`
+- `POST /missions/{mission_id}/reset`
 - `GET /runtime/state`
 - `GET /runtime/mission`
 - `GET /runtime/robot`
