@@ -4,5 +4,6 @@ string severity
 string source
 string rule
 string command_id
+string operator_id
 bool command_blocked
 string message

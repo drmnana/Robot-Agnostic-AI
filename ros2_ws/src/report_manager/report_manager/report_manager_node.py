@@ -118,6 +118,7 @@ class ReportManagerNode(Node):
         )
 
     def on_robot_command(self, msg: RobotCommand, topic: str) -> None:
+        details = self.parse_json_object(msg.details_json)
         self.robot_commands.append(
             {
                 "stamp": self.stamp_to_dict(msg.stamp),
@@ -128,6 +129,7 @@ class ReportManagerNode(Node):
                 "linear_y": msg.linear_y,
                 "yaw_rate": msg.yaw_rate,
                 "max_speed": msg.max_speed,
+                "operator_id": self.normalize_operator_id(details.get("operator_id")),
                 "details_json": msg.details_json,
             }
         )
@@ -200,6 +202,7 @@ class ReportManagerNode(Node):
                 "source": msg.source,
                 "rule": msg.rule,
                 "command_id": msg.command_id,
+                "operator_id": msg.operator_id,
                 "command_blocked": msg.command_blocked,
                 "message": msg.message,
             }
@@ -322,6 +325,7 @@ class ReportManagerNode(Node):
                     linear_y REAL,
                     yaw_rate REAL,
                     max_speed REAL,
+                    operator_id TEXT,
                     details_json TEXT,
                     FOREIGN KEY(report_id) REFERENCES missions(id)
                 );
@@ -336,6 +340,7 @@ class ReportManagerNode(Node):
                     source TEXT,
                     rule TEXT,
                     command_id TEXT,
+                    operator_id TEXT,
                     command_blocked INTEGER,
                     message TEXT,
                     FOREIGN KEY(report_id) REFERENCES missions(id)
@@ -388,6 +393,8 @@ class ReportManagerNode(Node):
                 """
             )
             self.ensure_column(connection, "safety_events", "command_id", "TEXT")
+            self.ensure_column(connection, "safety_events", "operator_id", "TEXT")
+            self.ensure_column(connection, "robot_commands", "operator_id", "TEXT")
             self.ensure_column(
                 connection,
                 "perception_events",
@@ -479,6 +486,11 @@ class ReportManagerNode(Node):
         return parsed if isinstance(parsed, dict) else {}
 
     @staticmethod
+    def normalize_operator_id(value) -> str:
+        operator_id = str(value or "").strip()
+        return operator_id if operator_id else "anonymous"
+
+    @staticmethod
     def persist_events(connection, report_id: str, report: dict) -> None:
         for event in report.get("mission_events", []):
             stamp = event.get("stamp", {})
@@ -511,8 +523,9 @@ class ReportManagerNode(Node):
                 """
                 INSERT INTO robot_commands (
                     report_id, stamp_sec, stamp_nanosec, command_id, topic,
-                    command_type, linear_x, linear_y, yaw_rate, max_speed, details_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    command_type, linear_x, linear_y, yaw_rate, max_speed,
+                    operator_id, details_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     report_id,
@@ -525,6 +538,7 @@ class ReportManagerNode(Node):
                     command.get("linear_y"),
                     command.get("yaw_rate"),
                     command.get("max_speed"),
+                    command.get("operator_id"),
                     command.get("details_json"),
                 ),
             )
@@ -537,8 +551,8 @@ class ReportManagerNode(Node):
                 """
                 INSERT INTO safety_events (
                     report_id, stamp_sec, stamp_nanosec, event_id, severity,
-                    source, rule, command_id, command_blocked, message
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    source, rule, command_id, operator_id, command_blocked, message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     report_id,
@@ -549,6 +563,7 @@ class ReportManagerNode(Node):
                     event.get("source"),
                     event.get("rule"),
                     event.get("command_id"),
+                    event.get("operator_id"),
                     int(bool(event.get("command_blocked"))),
                     event.get("message"),
                 ),

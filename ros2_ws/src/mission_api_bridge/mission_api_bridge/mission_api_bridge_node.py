@@ -1,3 +1,4 @@
+import json
 import threading
 from typing import Iterable
 
@@ -12,7 +13,7 @@ from core_interfaces.msg import (
     RobotState,
     SafetyEvent,
 )
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 from rclpy.node import Node
 
@@ -21,6 +22,7 @@ class CommandResponse(BaseModel):
     status: str
     mission_id: str
     command_type: str
+    operator_id: str
 
 
 class MissionApiBridgeNode(Node):
@@ -67,16 +69,25 @@ class MissionApiBridgeNode(Node):
             return {"status": "ok", "service": "mission-api-bridge"}
 
         @self.app.post("/missions/{mission_id}/{command_type}", response_model=CommandResponse)
-        def command_mission(mission_id: str, command_type: str) -> CommandResponse:
+        def command_mission(
+            mission_id: str,
+            command_type: str,
+            operator_id: str | None = Header(default=None, alias="X-ORIMUS-Operator"),
+        ) -> CommandResponse:
             normalized_command = command_type.strip().lower()
             if normalized_command not in {"start", "pause", "resume", "cancel", "reset"}:
                 raise HTTPException(status_code=400, detail="Unsupported mission command")
 
-            self.publish_mission_command(mission_id, normalized_command)
+            self.publish_mission_command(
+                mission_id,
+                normalized_command,
+                normalize_operator_id(operator_id),
+            )
             return CommandResponse(
                 status="accepted",
                 mission_id=mission_id,
                 command_type=normalized_command,
+                operator_id=normalize_operator_id(operator_id),
             )
 
         @self.app.get("/runtime/state")
@@ -107,13 +118,21 @@ class MissionApiBridgeNode(Node):
         def runtime_events() -> dict:
             return self.get_cached_resource("events")
 
-    def publish_mission_command(self, mission_id: str, command_type: str) -> None:
+    def publish_mission_command(
+        self,
+        mission_id: str,
+        command_type: str,
+        operator_id: str,
+    ) -> None:
         command = MissionCommand()
         command.stamp = self.get_clock().now().to_msg()
         command.command_id = f"http_{mission_id}_{command_type}_{command.stamp.sec}"
         command.mission_id = mission_id
         command.command_type = command_type
-        command.details_json = '{"source":"mission_api_bridge"}'
+        command.details_json = json.dumps(
+            {"source": "mission_api_bridge", "operator_id": operator_id},
+            separators=(",", ":"),
+        )
         self.command_pub.publish(command)
         self.get_logger().info(f"Published mission command: {mission_id} {command_type}")
 
@@ -216,6 +235,7 @@ class MissionApiBridgeNode(Node):
             "source": msg.source,
             "rule": msg.rule,
             "command_id": msg.command_id,
+            "operator_id": msg.operator_id,
             "command_blocked": bool(msg.command_blocked),
             "message": msg.message,
             "event_type": msg.rule,
@@ -283,6 +303,11 @@ def time_to_dict(stamp) -> dict:
         "sec": int(stamp.sec),
         "nanosec": int(stamp.nanosec),
     }
+
+
+def normalize_operator_id(value: str | None) -> str:
+    operator_id = (value or "").strip()
+    return operator_id if operator_id else "anonymous"
 
 
 def main(args: Iterable[str] | None = None) -> None:

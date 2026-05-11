@@ -232,6 +232,33 @@ h3 {
   padding: 16px;
 }
 
+.operator-control {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.operator-control input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  background: #191916;
+  color: var(--text);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  text-transform: none;
+}
+
+.operator-control input:focus {
+  outline: 2px solid rgba(80, 183, 173, 0.5);
+  outline-offset: 0;
+}
+
 .command-button {
   display: inline-flex;
   align-items: center;

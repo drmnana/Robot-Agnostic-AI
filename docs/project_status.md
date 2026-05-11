@@ -76,6 +76,7 @@ The project architecture and phase roadmap have been drafted.
 - Added unified dashboard audit timeline and report detail drilldowns.
 - Added JSON-only ORIMUS Evidence Package export with schema v1.0 and export-level SHA-256 hash.
 - Added evidence package verifier with standard exit codes and semantic consistency checks.
+- Added development-mode operator identity propagation from dashboard/backend through ROS commands, safety events, and reports.
 
 ## In Progress
 
@@ -89,7 +90,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Add PDF report export as a separate future ticket after layout and branding decisions.
+6. Add production authentication and authorization design before real deployment.
 
 ## Open Questions
 

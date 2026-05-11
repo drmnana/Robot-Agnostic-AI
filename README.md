@@ -107,6 +107,7 @@ Initial endpoints:
 - `GET /reports/{report_id}`
 
 Mission command endpoints forward operator requests to the ROS-aware mission API bridge.
+Development-mode operator identity is accepted through `X-ORIMUS-Operator`; missing or blank values are recorded as `anonymous`.
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 
@@ -124,6 +125,7 @@ http://localhost:8000/dashboard/
 ```
 
 The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, and browse/filter persisted mission reports from the backend.
+The dashboard includes an operator ID field for development-mode command attribution.
 
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
 Each finalized report is stored with a SHA-256 content hash for audit traceability.

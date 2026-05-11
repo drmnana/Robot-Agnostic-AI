@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -58,6 +59,7 @@ class MissionManagerNode(Node):
         self.completion_marker_path = str(
             self.declare_parameter("completion_marker_path", "").value
         )
+        self.current_operator_id = "anonymous"
 
         self.command_pub = self.create_publisher(
             RobotCommand,
@@ -141,6 +143,7 @@ class MissionManagerNode(Node):
             return
 
         command = msg.command_type.strip().lower()
+        self.current_operator_id = self.operator_from_details(msg.details_json)
 
         if command == "start":
             self.start_mission()
@@ -231,7 +234,7 @@ class MissionManagerNode(Node):
         command.stamp = self.get_clock().now().to_msg()
         command.command_id = f"{self.mission_id}_{reason}_stop_{command.stamp.sec}"
         command.command_type = "stop"
-        command.details_json = f'{{"mission_id":"{self.mission_id}","reason":"{reason}"}}'
+        command.details_json = self.details_json(reason=reason)
         self.command_pub.publish(command)
 
     def advance_step(self) -> None:
@@ -276,7 +279,7 @@ class MissionManagerNode(Node):
         command.linear_y = step.linear_y
         command.yaw_rate = step.yaw_rate
         command.max_speed = step.max_speed
-        command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
+        command.details_json = self.details_json(step=step.name)
 
         self.command_pub.publish(command)
         self.publish_event(
@@ -297,7 +300,7 @@ class MissionManagerNode(Node):
         command.target_y = step.target_y
         command.target_z = step.target_z
         command.duration_sec = step.duration_sec
-        command.details_json = f'{{"mission_id":"{self.mission_id}","step":"{step.name}"}}'
+        command.details_json = self.details_json(step=step.name)
 
         self.payload_command_pub.publish(command)
         self.publish_event(
@@ -322,18 +325,32 @@ class MissionManagerNode(Node):
         event.step_name = step.name if step else ""
         event.target = step.target if step else ""
         event.message = message
-        if step is None:
-            event.details_json = (
-                f'{{"mission_name":"{self.mission_name}",'
-                f'"sector":"{self.mission_sector}"}}'
-            )
-        else:
-            event.details_json = (
-                f'{{"mission_name":"{self.mission_name}",'
-                f'"sector":"{self.mission_sector}",'
-                f'"command_type":"{step.command_type}"}}'
-            )
+        details = {
+            "mission_name": self.mission_name,
+            "sector": self.mission_sector,
+            "operator_id": self.current_operator_id,
+        }
+        if step is not None:
+            details["command_type"] = step.command_type
+        event.details_json = json.dumps(details, separators=(",", ":"))
         self.event_pub.publish(event)
+
+    def details_json(self, **extra_details) -> str:
+        details = {
+            "mission_id": self.mission_id,
+            "operator_id": self.current_operator_id,
+        }
+        details.update(extra_details)
+        return json.dumps(details, separators=(",", ":"))
+
+    @staticmethod
+    def operator_from_details(details_json: str) -> str:
+        try:
+            details = json.loads(details_json)
+        except (TypeError, json.JSONDecodeError):
+            return "anonymous"
+        operator_id = str(details.get("operator_id", "")).strip()
+        return operator_id if operator_id else "anonymous"
 
     def load_mission_steps(self) -> list[MissionStep]:
         if not self.mission_config_path:

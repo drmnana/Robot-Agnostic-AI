@@ -344,6 +344,26 @@ ORIMUS should provide a JSON evidence package verifier with standard exit codes 
 Reason:
 Audit and compliance workflows need machine-readable verification results. Semantic checks catch internally inconsistent packages even when hashes are recomputed.
 
+### 034 - Add Development-Mode Operator Attribution
+
+Status: Accepted
+
+Decision:
+Mission commands should carry a development-mode operator identity from dashboard/backend through the ROS command path into mission reports and safety events. Missing or blank values are recorded explicitly as `anonymous`.
+
+Reason:
+The audit trail needs to show who issued a command, including which actions were unattributed. This is attribution only, not authentication.
+
+### 035 - Defer Production Authentication
+
+Status: Accepted
+
+Decision:
+The current `X-ORIMUS-Operator` value is self-asserted and trust-based. Production deployment requires a real authentication and authorization design such as JWT, mTLS, or SSO.
+
+Reason:
+Development-mode attribution helps demos and audit structure, but it is not non-repudiable identity.
+
 ## Pending Decisions
 
 - First mission scenario.

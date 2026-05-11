@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -66,11 +66,20 @@ def get_mission(mission_id: str) -> dict:
 
 
 @app.post("/missions/{mission_id}/{command_type}")
-def control_mission(mission_id: str, command_type: str) -> dict:
+def control_mission(
+    mission_id: str,
+    command_type: str,
+    operator_id: Optional[str] = Header(default=None, alias="X-ORIMUS-Operator"),
+) -> dict:
     if command_type not in MISSION_COMMANDS:
         raise HTTPException(status_code=400, detail="Unsupported mission command")
 
-    return send_mission_command(settings, mission_id, command_type)
+    return send_mission_command(
+        settings,
+        mission_id,
+        command_type,
+        normalize_operator_id(operator_id),
+    )
 
 
 @app.get("/runtime/{resource}")
@@ -159,3 +168,8 @@ def read_json_text(path: Path):
     import json
 
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def normalize_operator_id(value: str | None) -> str:
+    operator_id = (value or "").strip()
+    return operator_id if operator_id else "anonymous"

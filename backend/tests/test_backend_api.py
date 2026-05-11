@@ -62,36 +62,42 @@ def test_get_mission():
 def test_control_mission_start(monkeypatch):
     calls = []
 
-    def fake_send_mission_command(settings, mission_id, command_type):
-        calls.append((mission_id, command_type))
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
         return {
             "status": "accepted",
             "mission_id": mission_id,
             "command_type": command_type,
+            "operator_id": operator_id,
         }
 
     monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
 
-    response = client.post("/missions/demo_forward_stop/start")
+    response = client.post(
+        "/missions/demo_forward_stop/start",
+        headers={"X-ORIMUS-Operator": "operator-demo"},
+    )
 
     assert response.status_code == 200
     assert response.json() == {
         "status": "accepted",
         "mission_id": "demo_forward_stop",
         "command_type": "start",
+        "operator_id": "operator-demo",
     }
-    assert calls == [("demo_forward_stop", "start")]
+    assert calls == [("demo_forward_stop", "start", "operator-demo")]
 
 
 def test_control_mission_reset(monkeypatch):
     calls = []
 
-    def fake_send_mission_command(settings, mission_id, command_type):
-        calls.append((mission_id, command_type))
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
         return {
             "status": "accepted",
             "mission_id": mission_id,
             "command_type": command_type,
+            "operator_id": operator_id,
         }
 
     monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
@@ -100,7 +106,8 @@ def test_control_mission_reset(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["command_type"] == "reset"
-    assert calls == [("demo_forward_stop", "reset")]
+    assert response.json()["operator_id"] == "anonymous"
+    assert calls == [("demo_forward_stop", "reset", "anonymous")]
 
 
 def test_control_mission_rejects_unknown_command():
@@ -111,7 +118,7 @@ def test_control_mission_rejects_unknown_command():
 
 
 def test_control_mission_reports_bridge_unavailable(monkeypatch):
-    def fake_send_mission_command(settings, mission_id, command_type):
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
         raise HTTPException(status_code=503, detail="Mission API bridge unavailable")
 
     monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)

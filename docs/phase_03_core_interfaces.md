@@ -62,4 +62,6 @@ This phase is complete when the major components can communicate through documen
 
 Safety events include the affected `command_id` so blocked or modified commands can be traced directly in mission reports.
 
+Safety events also include `operator_id` so safety decisions can be attributed to the operator identity carried by the original command.
+
 Perception events include forward-compatible `evidence_artifact_url` and `evidence_hash` fields for future camera frames, sensor snapshots, or other evidence artifacts.

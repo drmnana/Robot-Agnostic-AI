@@ -110,6 +110,10 @@ The backend forwards live runtime state requests from the ROS-aware mission API 
 The backend reads persisted mission report history from the SQLite audit database.
 The bridge URL is configured through `ORIMUS_MISSION_API_BRIDGE_URL`.
 
+Mission command requests accept `X-ORIMUS-Operator` for development-mode attribution. Missing or blank operator values are recorded explicitly as `anonymous`.
+
+This is not production authentication. The value is self-asserted and trust-based; production deployment will require real authentication such as JWT, mTLS, or SSO.
+
 Mission YAML metadata now includes `sector`, allowing finalized reports to be searched by operating area.
 
 `GET /reports` supports query filters for:

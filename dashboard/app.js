@@ -13,6 +13,7 @@ const elements = {
   lastUpdated: document.querySelector("#last-updated"),
   missionList: document.querySelector("#mission-list"),
   selectedMissionLabel: document.querySelector("#selected-mission-label"),
+  operatorId: document.querySelector("#operator-id"),
   commandMessage: document.querySelector("#command-message"),
   refreshButton: document.querySelector("#refresh-button"),
   reportRefreshButton: document.querySelector("#report-refresh-button"),
@@ -144,8 +145,11 @@ async function sendMissionCommand(command) {
   try {
     const response = await fetchJson(`/missions/${state.selectedMissionId}/${command}`, {
       method: "POST",
+      headers: {
+        "X-ORIMUS-Operator": operatorId(),
+      },
     });
-    elements.commandMessage.textContent = `${response.command_type} accepted for ${response.mission_id}`;
+    elements.commandMessage.textContent = `${response.command_type} accepted for ${response.mission_id} by ${response.operator_id ?? operatorId()}`;
     await refreshRuntime();
     if (["cancel", "reset", "start"].includes(response.command_type)) {
       await refreshLatestReport();
@@ -433,12 +437,15 @@ function buildAuditTimeline(report) {
   const entries = [];
 
   (report?.mission_events ?? []).forEach((event) => {
+    const details = parseJsonObject(event.details_json);
     entries.push({
       stamp: event.stamp,
       category: "mission",
       title: event.event_type ?? "mission_event",
       message: event.message ?? "",
-      meta: [event.step_name, event.target].filter(Boolean).join(" - "),
+      meta: [event.step_name, event.target, `operator ${details.operator_id ?? "anonymous"}`]
+        .filter(Boolean)
+        .join(" - "),
     });
   });
 
@@ -449,7 +456,9 @@ function buildAuditTimeline(report) {
       category: "command",
       title: `${command.command_type ?? "command"} ${command.topic === "robot/command" ? "approved" : "requested"}`,
       message: verdict?.label ?? "No safety verdict recorded",
-      meta: command.command_id ?? "",
+      meta: [command.command_id, `operator ${command.operator_id ?? operatorFromDetails(command.details_json)}`]
+        .filter(Boolean)
+        .join(" - "),
     });
   });
 
@@ -459,7 +468,10 @@ function buildAuditTimeline(report) {
       category: "safety",
       title: event.rule ?? "safety_event",
       message: event.message ?? "",
-      meta: event.command_id ? `command ${event.command_id}` : "No command link",
+      meta: [
+        event.command_id ? `command ${event.command_id}` : "No command link",
+        `operator ${event.operator_id ?? "anonymous"}`,
+      ].join(" - "),
     });
   });
 
@@ -492,13 +504,16 @@ function renderEvidencePanels(report) {
   const commands = (report?.robot_commands ?? []).map((command) => ({
     title: `${command.command_type ?? "command"} (${command.topic ?? "topic"})`,
     message: commandVerdicts.get(command.command_id)?.label ?? "No safety verdict recorded",
-    meta: command.command_id ?? "No command id",
+    meta: [command.command_id ?? "No command id", `operator ${command.operator_id ?? operatorFromDetails(command.details_json)}`].join(" - "),
     category: "command",
   }));
   const safety = (report?.safety_events ?? []).map((event) => ({
     title: event.rule ?? "safety_event",
     message: event.message ?? "",
-    meta: event.command_id ? `Affected command: ${event.command_id}` : "No command link",
+    meta: [
+      event.command_id ? `Affected command: ${event.command_id}` : "No command link",
+      `operator ${event.operator_id ?? "anonymous"}`,
+    ].join(" - "),
     category: "safety",
   }));
   const perception = (report?.perception_events ?? []).map((event) => ({
@@ -642,6 +657,16 @@ function exportSelectedReport() {
   }
 
   window.location.href = `/reports/${encodeURIComponent(state.selectedReportId)}/export`;
+}
+
+function operatorId() {
+  const value = elements.operatorId.value.trim();
+  return value || "anonymous";
+}
+
+function operatorFromDetails(detailsJson) {
+  const details = parseJsonObject(detailsJson);
+  return details.operator_id || "anonymous";
 }
 
 function syncCommandButtons() {

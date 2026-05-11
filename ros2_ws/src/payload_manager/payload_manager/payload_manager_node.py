@@ -1,3 +1,4 @@
+import json
 from typing import Iterable
 
 import rclpy
@@ -43,12 +44,14 @@ class PayloadManagerNode(Node):
     def handle_payload_request(self, msg: PayloadCommand) -> None:
         payload_type = msg.payload_type.strip().lower()
         command_type = msg.command_type.strip().lower()
+        operator_id = self.operator_from_details(msg.details_json)
 
         if payload_type not in self.allowed_payload_types:
             self.publish_safety_event(
                 severity="warning",
                 rule="unknown_payload_type",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=True,
                 message=f"Blocked payload type '{payload_type}'",
             )
@@ -59,6 +62,7 @@ class PayloadManagerNode(Node):
                 severity="warning",
                 rule="unknown_payload_command",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=True,
                 message=f"Blocked payload command '{command_type}'",
             )
@@ -74,6 +78,7 @@ class PayloadManagerNode(Node):
                 severity="info",
                 rule="payload_duration_limit",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=False,
                 message=f"Clamped payload duration to {self.max_duration_sec:.1f}s",
             )
@@ -97,6 +102,7 @@ class PayloadManagerNode(Node):
         severity: str,
         rule: str,
         command_id: str,
+        operator_id: str,
         command_blocked: bool,
         message: str,
     ) -> None:
@@ -108,6 +114,7 @@ class PayloadManagerNode(Node):
         event.source = "payload_manager"
         event.rule = rule
         event.command_id = command_id
+        event.operator_id = operator_id
         event.command_blocked = command_blocked
         event.message = message
         self.safety_pub.publish(event)
@@ -127,6 +134,15 @@ class PayloadManagerNode(Node):
         copied.duration_sec = command.duration_sec
         copied.details_json = command.details_json
         return copied
+
+    @staticmethod
+    def operator_from_details(details_json: str) -> str:
+        try:
+            details = json.loads(details_json)
+        except (TypeError, json.JSONDecodeError):
+            return "anonymous"
+        operator_id = str(details.get("operator_id", "")).strip()
+        return operator_id if operator_id else "anonymous"
 
 
 def main(args: Iterable[str] | None = None) -> None:

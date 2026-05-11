@@ -1,3 +1,4 @@
+import json
 import math
 
 import rclpy
@@ -43,12 +44,14 @@ class MockGo2XNode(Node):
 
     def handle_command(self, msg: RobotCommand) -> None:
         command = msg.command_type.strip().lower()
+        operator_id = self.operator_from_details(msg.details_json)
 
         if self.estop_active and command != "clear_estop":
             self.publish_safety_event(
                 severity="warning",
                 rule="estop_active",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=True,
                 message=f"Blocked command '{command}' because emergency stop is active",
             )
@@ -72,6 +75,7 @@ class MockGo2XNode(Node):
                 severity="critical",
                 rule="manual_estop",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=False,
                 message="Emergency stop activated",
             )
@@ -84,6 +88,7 @@ class MockGo2XNode(Node):
                 severity="warning",
                 rule="unknown_command",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=True,
                 message=f"Unknown robot command '{command}'",
             )
@@ -100,6 +105,7 @@ class MockGo2XNode(Node):
                 severity="info",
                 rule="max_speed_limit",
                 command_id=msg.command_id,
+                operator_id=self.operator_from_details(msg.details_json),
                 command_blocked=False,
                 message="Velocity command scaled to max_speed",
             )
@@ -154,6 +160,7 @@ class MockGo2XNode(Node):
         severity: str,
         rule: str,
         command_id: str,
+        operator_id: str,
         command_blocked: bool,
         message: str,
     ) -> None:
@@ -164,6 +171,7 @@ class MockGo2XNode(Node):
         event.source = "mock_go2x_driver"
         event.rule = rule
         event.command_id = command_id
+        event.operator_id = operator_id
         event.command_blocked = command_blocked
         event.message = message
         self.safety_pub.publish(event)
@@ -176,6 +184,15 @@ class MockGo2XNode(Node):
         while angle < -math.pi:
             angle += 2.0 * math.pi
         return angle
+
+    @staticmethod
+    def operator_from_details(details_json: str) -> str:
+        try:
+            details = json.loads(details_json)
+        except (TypeError, json.JSONDecodeError):
+            return "anonymous"
+        operator_id = str(details.get("operator_id", "")).strip()
+        return operator_id if operator_id else "anonymous"
 
 
 def main(args=None) -> None:

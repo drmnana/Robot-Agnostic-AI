@@ -1,3 +1,4 @@
+import json
 import math
 from typing import Iterable
 
@@ -45,12 +46,14 @@ class SafetyManagerNode(Node):
 
     def handle_command_request(self, msg: RobotCommand) -> None:
         command = msg.command_type.strip().lower()
+        operator_id = self.operator_from_details(msg.details_json)
 
         if command not in self.allowed_commands:
             self.publish_safety_event(
                 severity="warning",
                 rule="unknown_command",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=True,
                 message=f"Blocked unknown command '{command}'",
             )
@@ -61,6 +64,7 @@ class SafetyManagerNode(Node):
                 severity="critical",
                 rule="estop_active",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=True,
                 message=f"Blocked command '{command}' while emergency stop is active",
             )
@@ -75,6 +79,7 @@ class SafetyManagerNode(Node):
                 severity="critical",
                 rule="manual_estop",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=False,
                 message="Emergency stop forwarded and safety gate locked",
             )
@@ -89,6 +94,7 @@ class SafetyManagerNode(Node):
                 severity="info",
                 rule="estop_cleared",
                 command_id=msg.command_id,
+                operator_id=operator_id,
                 command_blocked=False,
                 message="Emergency stop cleared",
             )
@@ -98,11 +104,11 @@ class SafetyManagerNode(Node):
         forwarded.command_type = command
 
         if command == "walk_velocity":
-            self.enforce_velocity_limits(forwarded)
+            self.enforce_velocity_limits(forwarded, operator_id)
 
         self.command_pub.publish(forwarded)
 
-    def enforce_velocity_limits(self, command: RobotCommand) -> None:
+    def enforce_velocity_limits(self, command: RobotCommand, operator_id: str) -> None:
         requested_speed = math.hypot(command.linear_x, command.linear_y)
         limit = self.resolve_speed_limit(command.max_speed)
 
@@ -114,6 +120,7 @@ class SafetyManagerNode(Node):
                 severity="info",
                 rule="max_linear_speed",
                 command_id=command.command_id,
+                operator_id=operator_id,
                 command_blocked=False,
                 message=f"Scaled linear speed to {limit:.2f} m/s",
             )
@@ -128,6 +135,7 @@ class SafetyManagerNode(Node):
                 severity="info",
                 rule="max_yaw_rate",
                 command_id=command.command_id,
+                operator_id=operator_id,
                 command_blocked=False,
                 message=f"Clamped yaw rate to {self.max_yaw_rate:.2f} rad/s",
             )
@@ -144,6 +152,7 @@ class SafetyManagerNode(Node):
         severity: str,
         rule: str,
         command_id: str,
+        operator_id: str,
         command_blocked: bool,
         message: str,
     ) -> None:
@@ -155,6 +164,7 @@ class SafetyManagerNode(Node):
         event.source = "safety_manager"
         event.rule = rule
         event.command_id = command_id
+        event.operator_id = operator_id
         event.command_blocked = command_blocked
         event.message = message
         self.safety_pub.publish(event)
@@ -180,6 +190,15 @@ class SafetyManagerNode(Node):
     @staticmethod
     def clamp(value: float, lower: float, upper: float) -> float:
         return min(max(value, lower), upper)
+
+    @staticmethod
+    def operator_from_details(details_json: str) -> str:
+        try:
+            details = json.loads(details_json)
+        except (TypeError, json.JSONDecodeError):
+            return "anonymous"
+        operator_id = str(details.get("operator_id", "")).strip()
+        return operator_id if operator_id else "anonymous"
 
 
 def main(args: Iterable[str] | None = None) -> None:
