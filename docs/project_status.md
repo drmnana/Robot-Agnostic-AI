@@ -75,6 +75,7 @@ The project architecture and phase roadmap have been drafted.
 - Added command-linked safety events and forward-compatible perception evidence artifact fields.
 - Added unified dashboard audit timeline and report detail drilldowns.
 - Added JSON-only ORIMUS Evidence Package export with schema v1.0 and export-level SHA-256 hash.
+- Added evidence package verifier with standard exit codes and semantic consistency checks.
 
 ## In Progress
 

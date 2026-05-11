@@ -1,12 +1,21 @@
 from pathlib import Path
 import json
 import sqlite3
+import subprocess
+import sys
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import app.main as main_module
-from app.evidence_package import hash_evidence_package
+from app.evidence_package import hash_evidence_package, hash_mission_report
+from app.evidence_verifier import (
+    EXIT_HASH_MISMATCH,
+    EXIT_SCHEMA_MISMATCH,
+    EXIT_SEMANTIC_FAILURE,
+    EXIT_VALID,
+    verify_evidence_package,
+)
 from app.main import app, settings
 
 
@@ -166,7 +175,7 @@ def test_list_reports_from_database(tmp_path: Path):
         assert reports[0]["id"] == "report-002"
         assert reports[1]["id"] == "report-001"
         assert reports[1]["outcome"] == "completed"
-        assert reports[1]["content_hash"] == "abc123"
+        assert reports[1]["content_hash"]
     finally:
         settings.report_database_path = original_database_path
 
@@ -202,7 +211,7 @@ def test_get_report_detail_from_database(tmp_path: Path):
         response = client.get("/reports/report-001")
         assert response.status_code == 200
         assert response.json()["report_id"] == "report-001"
-        assert response.json()["content_hash"] == "abc123"
+        assert response.json()["content_hash"]
     finally:
         settings.report_database_path = original_database_path
 
@@ -221,11 +230,13 @@ def test_export_report_evidence_package_from_database(tmp_path: Path):
         assert package["package_type"] == "orimus_evidence_package"
         assert package["schema_version"] == "1.0"
         assert package["report"]["report_id"] == "report-001"
-        assert package["report"]["content_hash"] == "abc123"
+        assert package["report"]["content_hash"]
         assert package["mission"]["mission_id"] == "demo_forward_stop"
         assert package["mission"]["sector"] == "sector-alpha"
+        assert package["summary"]["perception_event_count"] == 1
         assert package["artifact_manifest"][0]["source_event_id"] == "perception-001"
         assert package["export_hash"] == hash_evidence_package(package)
+        assert verify_evidence_package(package).exit_code == EXIT_VALID
 
         tampered = dict(package)
         tampered["mission"] = {**package["mission"], "sector": "tampered-sector"}
@@ -244,6 +255,101 @@ def test_export_report_not_found(tmp_path: Path):
         settings.report_database_path = original_database_path
 
 
+def test_verify_evidence_package_rejects_hash_mismatch(tmp_path: Path):
+    package = create_evidence_package_for_test(tmp_path)
+    package["mission"]["sector"] = "tampered-sector"
+
+    result = verify_evidence_package(package)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert "export_hash mismatch" in result.errors
+
+
+def test_verify_evidence_package_rejects_schema_mismatch(tmp_path: Path):
+    package = create_evidence_package_for_test(tmp_path)
+    package["schema_version"] = "9.9"
+    package["export_hash"] = hash_evidence_package(package)
+
+    result = verify_evidence_package(package)
+
+    assert result.exit_code == EXIT_SCHEMA_MISMATCH
+    assert result.errors == ["schema_version must be 1.0"]
+
+
+def test_verify_evidence_package_rejects_semantic_failures(tmp_path: Path):
+    package = create_evidence_package_for_test(tmp_path)
+    package["mission_report"]["safety_events"] = [
+        {
+            "stamp": {"sec": 150, "nanosec": 0},
+            "event_id": "safety-missing-command",
+            "rule": "unknown_command",
+            "command_id": "missing-command-id",
+            "command_blocked": True,
+        }
+    ]
+    package["summary"]["robot_command_count"] = 99
+    package["summary"]["safety_event_count"] = 1
+    package["mission_report"]["content_hash"] = hash_mission_report(
+        package["mission_report"]
+    )
+    package["report"]["content_hash"] = package["mission_report"]["content_hash"]
+    package["export_hash"] = hash_evidence_package(package)
+
+    result = verify_evidence_package(package)
+
+    assert result.exit_code == EXIT_SEMANTIC_FAILURE
+    assert "summary.robot_command_count expected 1" in result.errors
+    assert any("references missing command_id" in error for error in result.errors)
+
+
+def test_verify_evidence_package_rejects_non_monotonic_timestamps(tmp_path: Path):
+    package = create_evidence_package_for_test(tmp_path)
+    package["mission_report"]["mission_events"] = [
+        {"stamp": {"sec": 20, "nanosec": 0}},
+        {"stamp": {"sec": 10, "nanosec": 0}},
+    ]
+    package["summary"]["mission_event_count"] = 2
+    package["mission_report"]["content_hash"] = hash_mission_report(
+        package["mission_report"]
+    )
+    package["report"]["content_hash"] = package["mission_report"]["content_hash"]
+    package["export_hash"] = hash_evidence_package(package)
+
+    result = verify_evidence_package(package)
+
+    assert result.exit_code == EXIT_SEMANTIC_FAILURE
+    assert "mission_events timestamps are not monotonic" in result.errors
+
+
+def test_verify_evidence_package_cli_exit_codes(tmp_path: Path):
+    package = create_evidence_package_for_test(tmp_path)
+    package_path = tmp_path / "package.json"
+    package_path.write_text(json.dumps(package), encoding="utf-8")
+
+    valid = subprocess.run(
+        [sys.executable, "scripts/verify_evidence_package.py", str(package_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert valid.returncode == EXIT_VALID
+    assert "VALID" in valid.stdout
+
+    package["schema_version"] = "9.9"
+    package["export_hash"] = hash_evidence_package(package)
+    package_path.write_text(json.dumps(package), encoding="utf-8")
+    invalid = subprocess.run(
+        [sys.executable, "scripts/verify_evidence_package.py", str(package_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert invalid.returncode == EXIT_SCHEMA_MISMATCH
+    assert "schema_version must be 1.0" in invalid.stdout
+
+
 def test_get_report_detail_not_found(tmp_path: Path):
     original_database_path = settings.report_database_path
     settings.report_database_path = create_report_database(tmp_path)
@@ -258,7 +364,6 @@ def create_report_database(tmp_path: Path) -> Path:
     database_path = tmp_path / "orimus.db"
     report_001 = {
         "report_id": "report-001",
-        "content_hash": "abc123",
         "mission": {
             "mission_id": "demo_forward_stop",
             "name": "Demo Forward Stop",
@@ -268,6 +373,15 @@ def create_report_database(tmp_path: Path) -> Path:
         },
         "mission_states": [{"stamp": {"sec": 100, "nanosec": 0}}],
         "mission_events": [],
+        "robot_commands": [
+            {
+                "stamp": {"sec": 120, "nanosec": 0},
+                "command_id": "demo_forward_stop_stand_120",
+                "topic": "robot/command",
+                "command_type": "stand",
+            }
+        ],
+        "safety_events": [],
         "perception_events": [
             {
                 "event_id": "perception-001",
@@ -278,9 +392,9 @@ def create_report_database(tmp_path: Path) -> Path:
             }
         ],
     }
+    report_001["content_hash"] = hash_mission_report(report_001)
     report_002 = {
         "report_id": "report-002",
-        "content_hash": "def456",
         "mission": {
             "mission_id": "control_test",
             "name": "Control Test Mission",
@@ -288,6 +402,7 @@ def create_report_database(tmp_path: Path) -> Path:
             "sector": "sector-bravo",
         },
     }
+    report_002["content_hash"] = hash_mission_report(report_002)
     with sqlite3.connect(database_path) as connection:
         connection.execute(
             """
@@ -361,7 +476,7 @@ def create_report_database(tmp_path: Path) -> Path:
                 0,
                 200,
                 0,
-                "abc123",
+                report_001["content_hash"],
                 json.dumps(report_001),
                 3,
                 2,
@@ -389,7 +504,7 @@ def create_report_database(tmp_path: Path) -> Path:
                 0,
                 300,
                 0,
-                "def456",
+                report_002["content_hash"],
                 json.dumps(report_002),
                 2,
                 1,
@@ -439,3 +554,12 @@ def create_report_database(tmp_path: Path) -> Path:
             ),
         )
     return database_path
+
+
+def create_evidence_package_for_test(tmp_path: Path) -> dict:
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        return client.get("/reports/report-001/export").json()
+    finally:
+        settings.report_database_path = original_database_path

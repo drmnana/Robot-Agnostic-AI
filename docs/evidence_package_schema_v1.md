@@ -27,6 +27,7 @@ Schema versions are stable contracts. Future schema versions may add fields, but
   "export_hash": "sha256-of-package",
   "report": {},
   "mission": {},
+  "summary": {},
   "artifact_manifest": [],
   "mission_report": {}
 }
@@ -52,6 +53,21 @@ Schema versions are stable contracts. Future schema versions may add fields, but
   "outcome": "completed",
   "started_at": {"sec": 0, "nanosec": 0},
   "ended_at": {"sec": 0, "nanosec": 0}
+}
+```
+
+## `summary`
+
+`summary` stores counts used for semantic verification.
+
+```json
+{
+  "mission_state_count": 0,
+  "mission_event_count": 0,
+  "robot_command_count": 0,
+  "safety_event_count": 0,
+  "perception_event_count": 0,
+  "payload_result_count": 0
 }
 ```
 
@@ -86,3 +102,21 @@ To verify `export_hash`:
 4. Serialize the package with sorted keys and compact separators.
 5. Compute SHA-256 over the serialized UTF-8 bytes.
 6. Compare the result to the saved `export_hash`.
+
+## Semantic Verification
+
+A v1.0 verifier should also confirm:
+
+- Mission report `content_hash` matches the embedded `mission_report`.
+- Mission timestamps are monotonic within each timestamped collection.
+- `summary` counts match the corresponding arrays inside `mission_report`.
+- Every `command_id` referenced by a safety event exists in `mission_report.robot_commands`.
+
+## Verifier Exit Codes
+
+The ORIMUS verifier uses standard exit codes for automation:
+
+- `0`: valid package.
+- `1`: hash mismatch.
+- `2`: schema mismatch or unreadable JSON.
+- `3`: semantic failure.

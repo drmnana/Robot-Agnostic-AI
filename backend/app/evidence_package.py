@@ -1,5 +1,6 @@
 import hashlib
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 
 
@@ -27,6 +28,7 @@ def build_evidence_package(report: dict) -> dict:
             "started_at": first_stamp(report.get("mission_states", [])),
             "ended_at": mission.get("stamp"),
         },
+        "summary": build_summary(report),
         "artifact_manifest": build_artifact_manifest(report),
         "mission_report": report,
     }
@@ -39,6 +41,24 @@ def hash_evidence_package(package: dict) -> str:
     hash_input["export_hash"] = ""
     canonical = json.dumps(hash_input, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def hash_mission_report(report: dict) -> str:
+    hash_input = deepcopy(report)
+    hash_input.pop("content_hash", None)
+    canonical = json.dumps(hash_input, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def build_summary(report: dict) -> dict:
+    return {
+        "mission_state_count": len(report.get("mission_states", [])),
+        "mission_event_count": len(report.get("mission_events", [])),
+        "robot_command_count": len(report.get("robot_commands", [])),
+        "safety_event_count": len(report.get("safety_events", [])),
+        "perception_event_count": len(report.get("perception_events", [])),
+        "payload_result_count": len(report.get("payload_results", [])),
+    }
 
 
 def build_artifact_manifest(report: dict) -> list[dict]:

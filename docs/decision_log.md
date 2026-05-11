@@ -334,6 +334,16 @@ Each evidence package should include an `export_hash`, calculated as SHA-256 ove
 Reason:
 The mission report `content_hash` verifies the finalized report, while `export_hash` verifies the downloaded package has not changed after export.
 
+### 033 - Verify Evidence Packages With Hash And Semantic Checks
+
+Status: Accepted
+
+Decision:
+ORIMUS should provide a JSON evidence package verifier with standard exit codes for valid packages, hash mismatches, schema mismatches, and semantic failures.
+
+Reason:
+Audit and compliance workflows need machine-readable verification results. Semantic checks catch internally inconsistent packages even when hashes are recomputed.
+
 ## Pending Decisions
 
 - First mission scenario.

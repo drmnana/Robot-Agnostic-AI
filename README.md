@@ -14,6 +14,7 @@ The project is currently in the planning and foundation stage.
 - [Docker Environment](docs/docker_environment.md)
 - [Safety Assumptions](docs/safety_assumptions.md)
 - [Evidence Package Schema v1.0](docs/evidence_package_schema_v1.md)
+- [Evidence Package Verification](docs/evidence_package_verification.md)
 
 ## Current Phase
 
@@ -128,6 +129,7 @@ Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace
 Each finalized report is stored with a SHA-256 content hash for audit traceability.
 Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
 Selected reports can be exported as JSON evidence packages.
+Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
 
 ## ROS Mission API Bridge
 
