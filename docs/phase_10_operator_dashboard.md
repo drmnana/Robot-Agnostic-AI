@@ -55,6 +55,7 @@ Current capabilities:
 - Selects one mission for operator commands.
 - Captures a development-mode operator ID for command attribution.
 - Sends start, pause, resume, cancel, and reset through backend mission endpoints.
+- Shows backend policy denials when an operator is not allowed to call a mission command API.
 - Polls `GET /runtime/state` for mission, robot, payload, perception, and safety status.
 - Shows a rolling event history from ROS mission, perception, and safety events.
 - Shows mission report history, selected report summary, content hash, and report timeline.

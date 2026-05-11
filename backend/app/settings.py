@@ -9,6 +9,10 @@ class Settings(BaseSettings):
         default=Path("/workspace/configs/missions"),
         alias="ORIMUS_MISSION_CONFIG_DIR",
     )
+    operator_policy_path: Path = Field(
+        default=Path("/workspace/configs/operator_policy.yaml"),
+        alias="ORIMUS_OPERATOR_POLICY_PATH",
+    )
     latest_report_path: Path = Field(
         default=Path("/workspace/reports/latest_mission_report.json"),
         alias="ORIMUS_LATEST_REPORT_PATH",

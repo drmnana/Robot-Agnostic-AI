@@ -77,6 +77,7 @@ The project architecture and phase roadmap have been drafted.
 - Added JSON-only ORIMUS Evidence Package export with schema v1.0 and export-level SHA-256 hash.
 - Added evidence package verifier with standard exit codes and semantic consistency checks.
 - Added development-mode operator identity propagation from dashboard/backend through ROS commands, safety events, and reports.
+- Added operator-to-API mission command policy gate with 403 denials and backend audit logs.
 
 ## In Progress
 
@@ -90,7 +91,7 @@ The project architecture and phase roadmap have been drafted.
 3. Define the first real mission scenario.
 4. Add payload-specific adapter specifications.
 5. Add dashboard/operator control planning.
-6. Add production authentication and authorization design before real deployment.
+6. Decide whether denied backend API commands should persist in mission SQLite audit or a separate backend audit log.
 
 ## Open Questions
 

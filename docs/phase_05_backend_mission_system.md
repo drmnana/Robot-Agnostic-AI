@@ -114,6 +114,10 @@ Mission command requests accept `X-ORIMUS-Operator` for development-mode attribu
 
 This is not production authentication. The value is self-asserted and trust-based; production deployment will require real authentication such as JWT, mTLS, or SSO.
 
+Mission command requests are now checked against `configs/operator_policy.yaml` before forwarding to ROS.
+
+This is operator-to-API authorization. It does not replace, augment, or coordinate with the robot's `safety_manager` or any hardware-level safety constraints. Those are independent layers.
+
 Mission YAML metadata now includes `sector`, allowing finalized reports to be searched by operating area.
 
 `GET /reports` supports query filters for:

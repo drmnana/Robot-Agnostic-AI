@@ -15,6 +15,7 @@ The project is currently in the planning and foundation stage.
 - [Safety Assumptions](docs/safety_assumptions.md)
 - [Evidence Package Schema v1.0](docs/evidence_package_schema_v1.md)
 - [Evidence Package Verification](docs/evidence_package_verification.md)
+- [Operator API Policy](docs/operator_api_policy.md)
 
 ## Current Phase
 
@@ -108,6 +109,7 @@ Initial endpoints:
 
 Mission command endpoints forward operator requests to the ROS-aware mission API bridge.
 Development-mode operator identity is accepted through `X-ORIMUS-Operator`; missing or blank values are recorded as `anonymous`.
+Mission command API calls are gated by `configs/operator_policy.yaml`. This is operator-to-API authorization only and does not replace the ROS `safety_manager`.
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 

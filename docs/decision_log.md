@@ -364,6 +364,26 @@ The current `X-ORIMUS-Operator` value is self-asserted and trust-based. Producti
 Reason:
 Development-mode attribution helps demos and audit structure, but it is not non-repudiable identity.
 
+### 036 - Add Operator-To-API Mission Command Policy
+
+Status: Accepted
+
+Decision:
+Mission command API requests should be checked against a development-mode operator policy before being forwarded to ROS.
+
+Reason:
+Operator attribution answers who issued a command. The policy layer adds the first API governance rule: whether that operator ID is allowed to call that mission command endpoint.
+
+### 037 - Keep API Authorization Separate From Robot Safety
+
+Status: Accepted
+
+Decision:
+The operator policy layer is application-level API authorization only. It does not replace, augment, or coordinate with the ROS `safety_manager` or hardware safety constraints.
+
+Reason:
+API access control and robot execution safety are independent layers. Mixing them would make the system harder to reason about and could create false confidence.
+
 ## Pending Decisions
 
 - First mission scenario.

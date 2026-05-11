@@ -1,0 +1,18 @@
+version: 1
+operators:
+  anonymous:
+    allowed_mission_commands:
+      - pause
+  operator-demo:
+    allowed_mission_commands:
+      - start
+      - pause
+      - resume
+      - reset
+  supervisor-demo:
+    allowed_mission_commands:
+      - start
+      - pause
+      - resume
+      - cancel
+      - reset

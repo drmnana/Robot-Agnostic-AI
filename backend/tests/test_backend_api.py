@@ -102,12 +102,75 @@ def test_control_mission_reset(monkeypatch):
 
     monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
 
-    response = client.post("/missions/demo_forward_stop/reset")
+    response = client.post(
+        "/missions/demo_forward_stop/reset",
+        headers={"X-ORIMUS-Operator": "operator-demo"},
+    )
 
     assert response.status_code == 200
     assert response.json()["command_type"] == "reset"
+    assert response.json()["operator_id"] == "operator-demo"
+    assert calls == [("demo_forward_stop", "reset", "operator-demo")]
+
+
+def test_control_mission_allows_anonymous_pause(monkeypatch):
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
+        return {
+            "status": "accepted",
+            "mission_id": mission_id,
+            "command_type": command_type,
+            "operator_id": operator_id,
+        }
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+
+    response = client.post("/missions/demo_forward_stop/pause")
+
+    assert response.status_code == 200
     assert response.json()["operator_id"] == "anonymous"
-    assert calls == [("demo_forward_stop", "reset", "anonymous")]
+    assert calls == [("demo_forward_stop", "pause", "anonymous")]
+
+
+def test_control_mission_denies_anonymous_start(monkeypatch):
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
+        return {}
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+
+    response = client.post("/missions/demo_forward_stop/start")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "Mission command 'start' denied by operator policy for operator 'anonymous'"
+    )
+    assert calls == []
+
+
+def test_control_mission_denies_operator_without_command_permission(monkeypatch):
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
+        return {}
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+
+    response = client.post(
+        "/missions/demo_forward_stop/cancel",
+        headers={"X-ORIMUS-Operator": "operator-demo"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == (
+        "Mission command 'cancel' denied by operator policy for operator 'operator-demo'"
+    )
+    assert calls == []
 
 
 def test_control_mission_rejects_unknown_command():
@@ -123,7 +186,10 @@ def test_control_mission_reports_bridge_unavailable(monkeypatch):
 
     monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
 
-    response = client.post("/missions/demo_forward_stop/start")
+    response = client.post(
+        "/missions/demo_forward_stop/start",
+        headers={"X-ORIMUS-Operator": "operator-demo"},
+    )
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Mission API bridge unavailable"

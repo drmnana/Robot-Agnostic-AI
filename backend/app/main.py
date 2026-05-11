@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -9,11 +10,13 @@ from fastapi.staticfiles import StaticFiles
 
 from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
+from .operator_policy import is_mission_command_allowed
 from .report_store import get_report, list_reports
 from .settings import Settings
 
 
 settings = Settings()
+logger = logging.getLogger("orimus.backend")
 app = FastAPI(title="ORIMUS Backend", version="0.1.0")
 MISSION_COMMANDS = {"start", "pause", "resume", "cancel", "reset"}
 RUNTIME_RESOURCES = {
@@ -74,11 +77,31 @@ def control_mission(
     if command_type not in MISSION_COMMANDS:
         raise HTTPException(status_code=400, detail="Unsupported mission command")
 
+    normalized_operator_id = normalize_operator_id(operator_id)
+    if not is_mission_command_allowed(
+        settings.operator_policy_path,
+        normalized_operator_id,
+        command_type,
+    ):
+        logger.warning(
+            "Mission command denied by operator policy: operator_id=%s mission_id=%s command_type=%s",
+            normalized_operator_id,
+            mission_id,
+            command_type,
+        )
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                f"Mission command '{command_type}' denied by operator policy "
+                f"for operator '{normalized_operator_id}'"
+            ),
+        )
+
     return send_mission_command(
         settings,
         mission_id,
         command_type,
-        normalize_operator_id(operator_id),
+        normalized_operator_id,
     )
 
 
