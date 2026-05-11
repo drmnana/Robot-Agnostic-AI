@@ -295,6 +295,44 @@
             </section>
           </div>
         </section>
+
+        <section class="panel api-audit-panel">
+          <div class="panel-header">
+            <h2>API Audit</h2>
+            <button id="audit-refresh-button" class="icon-button" type="button" aria-label="Refresh API audit events">
+              <span aria-hidden="true">R</span>
+            </button>
+          </div>
+          <div id="audit-status" class="report-status">No API audit events loaded</div>
+          <div class="audit-filters" aria-label="API audit filters">
+            <label>
+              Operator
+              <input id="audit-filter-operator" type="search" placeholder="operator-demo" />
+            </label>
+            <label>
+              Decision
+              <select id="audit-filter-decision">
+                <option value="">Any</option>
+                <option value="allowed">Allowed</option>
+                <option value="denied">Denied</option>
+              </select>
+            </label>
+            <label>
+              Event Type
+              <input id="audit-filter-event-type" type="search" placeholder="mission_command" />
+            </label>
+            <label>
+              From
+              <input id="audit-filter-date-from" type="date" />
+            </label>
+            <label>
+              To
+              <input id="audit-filter-date-to" type="date" />
+            </label>
+            <button id="audit-filter-clear" class="filter-clear" type="button">Clear</button>
+          </div>
+          <div id="audit-list" class="audit-list"></div>
+        </section>
       </main>
     </div>
 

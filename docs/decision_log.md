@@ -414,6 +414,16 @@ Backend audit events are append-only at the application layer. The public write 
 Reason:
 Audit logs should preserve event history rather than mutate it.
 
+### 041 - Defer API Audit Export And Verifier Parity
+
+Status: Accepted
+
+Decision:
+API Audit should first ship as dashboard list and filter browsing. JSON export and verifier support for backend API audit events are explicitly deferred to a future ticket.
+
+Reason:
+Mission History already has filter, drilldown, export, and verifier workflows. Backend API Audit will eventually need similar review parity, but list and filter browsing is the correct scope for the current operator-dashboard step.
+
 ## Pending Decisions
 
 - First mission scenario.

@@ -89,6 +89,18 @@ Filters:
 - `date_from`
 - `date_to`
 
+## Dashboard
+
+The operator dashboard includes an API Audit panel that reads from `GET /audit/events`.
+
+The panel supports operator, decision, event type, and date filters. Denied attempts use a stronger warning treatment than allowed attempts so they can be spotted while scrolling.
+
+## Deferred Export And Verification
+
+API Audit export and verifier support are deferred.
+
+Mission History already supports filter, drilldown, JSON export, and verifier workflows. API Audit will eventually need similar review parity, but the current scope is dashboard browsing and filtering.
+
 ## Scope
 
 This log records backend API authorization decisions. It does not replace mission reports, evidence packages, ROS safety events, or hardware safety logs.

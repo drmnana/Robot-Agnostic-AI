@@ -43,6 +43,9 @@ def test_dashboard_is_served():
     assert response.status_code == 200
     assert "ORIMUS Operator Dashboard" in response.text
     assert "Mission History" in response.text
+    assert "API Audit" in response.text
+    assert 'id="audit-filter-decision"' in response.text
+    assert 'id="audit-list"' in response.text
 
 
 def test_list_missions():

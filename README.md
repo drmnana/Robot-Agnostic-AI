@@ -129,7 +129,7 @@ Open it at:
 http://localhost:8000/dashboard/
 ```
 
-The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, and browse/filter persisted mission reports from the backend.
+The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, browse/filter persisted mission reports, and review backend API audit events.
 The dashboard includes an operator ID field for development-mode command attribution.
 
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
@@ -137,6 +137,7 @@ Each finalized report is stored with a SHA-256 content hash for audit traceabili
 Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
 Selected reports can be exported as JSON evidence packages.
 Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
+The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.
 
 ## ROS Mission API Bridge
 

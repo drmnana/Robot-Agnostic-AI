@@ -159,7 +159,8 @@ h3 {
   grid-column: span 2;
 }
 
-.report-panel {
+.report-panel,
+.api-audit-panel {
   grid-column: span 2;
 }
 
@@ -367,7 +368,8 @@ strong {
   border-bottom: 1px solid var(--line);
 }
 
-.report-filters {
+.report-filters,
+.audit-filters {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
@@ -375,7 +377,8 @@ strong {
   border-bottom: 1px solid var(--line);
 }
 
-.report-filters label {
+.report-filters label,
+.audit-filters label {
   display: grid;
   gap: 6px;
   min-width: 0;
@@ -386,7 +389,9 @@ strong {
 }
 
 .report-filters input,
-.report-filters select {
+.report-filters select,
+.audit-filters input,
+.audit-filters select {
   width: 100%;
   min-height: 38px;
   border: 1px solid var(--line);
@@ -399,7 +404,9 @@ strong {
 }
 
 .report-filters input:focus,
-.report-filters select:focus {
+.report-filters select:focus,
+.audit-filters input:focus,
+.audit-filters select:focus {
   outline: 2px solid rgba(80, 183, 173, 0.5);
   outline-offset: 0;
 }
@@ -440,6 +447,54 @@ strong {
   gap: 8px;
   padding: 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.audit-list {
+  display: grid;
+  gap: 8px;
+  max-height: 520px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.audit-card {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--green);
+  background: #191916;
+}
+
+.audit-card.denied {
+  border-color: rgba(223, 107, 95, 0.65);
+  border-left-color: var(--red);
+  background: rgba(93, 34, 29, 0.48);
+}
+
+.audit-card-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.decision-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(122, 196, 127, 0.45);
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.decision-pill.denied {
+  border-color: rgba(223, 107, 95, 0.7);
+  background: rgba(223, 107, 95, 0.16);
+  color: #ffb4aa;
 }
 
 .report-grid {
@@ -566,7 +621,8 @@ strong {
 
   .mission-panel,
   .runtime-panel,
-  .report-panel {
+  .report-panel,
+  .api-audit-panel {
     grid-column: span 2;
   }
 }
@@ -591,6 +647,7 @@ strong {
   .report-grid,
   .report-list,
   .report-filters,
+  .audit-filters,
   .report-integrity,
   .report-detail-layout,
   .command-grid {
@@ -599,7 +656,8 @@ strong {
 
   .mission-panel,
   .runtime-panel,
-  .report-panel {
+  .report-panel,
+  .api-audit-panel {
     grid-column: span 1;
   }
 }

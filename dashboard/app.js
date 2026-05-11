@@ -5,6 +5,7 @@ const state = {
   runtime: null,
   latestReport: null,
   reports: [],
+  auditEvents: [],
 };
 
 const elements = {
@@ -71,13 +72,24 @@ const elements = {
   reportPerceptionList: document.querySelector("#report-perception-list"),
   reportPayloadListCount: document.querySelector("#report-payload-list-count"),
   reportPayloadList: document.querySelector("#report-payload-list"),
+  auditRefreshButton: document.querySelector("#audit-refresh-button"),
+  auditStatus: document.querySelector("#audit-status"),
+  auditList: document.querySelector("#audit-list"),
+  auditFilterOperator: document.querySelector("#audit-filter-operator"),
+  auditFilterDecision: document.querySelector("#audit-filter-decision"),
+  auditFilterEventType: document.querySelector("#audit-filter-event-type"),
+  auditFilterDateFrom: document.querySelector("#audit-filter-date-from"),
+  auditFilterDateTo: document.querySelector("#audit-filter-date-to"),
+  auditFilterClear: document.querySelector("#audit-filter-clear"),
 };
 
 elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
+elements.auditRefreshButton.addEventListener("click", () => refreshAuditEvents());
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
 elements.reportFilterClear.addEventListener("click", () => clearReportFilters());
+elements.auditFilterClear.addEventListener("click", () => clearAuditFilters());
 [
   elements.reportFilterOutcome,
   elements.reportFilterDateFrom,
@@ -87,8 +99,18 @@ elements.reportFilterClear.addEventListener("click", () => clearReportFilters())
 ].forEach((control) => {
   control.addEventListener("change", () => refreshLatestReport({ resetSelection: true }));
 });
+[
+  elements.auditFilterDecision,
+  elements.auditFilterDateFrom,
+  elements.auditFilterDateTo,
+].forEach((control) => {
+  control.addEventListener("change", () => refreshAuditEvents());
+});
 [elements.reportFilterMission, elements.reportFilterSector, elements.reportFilterPerception].forEach((control) => {
   control.addEventListener("input", debounce(() => refreshLatestReport({ resetSelection: true }), 350));
+});
+[elements.auditFilterOperator, elements.auditFilterEventType].forEach((control) => {
+  control.addEventListener("input", debounce(() => refreshAuditEvents(), 350));
 });
 elements.commandButtons.forEach((button) => {
   button.addEventListener("click", () => sendMissionCommand(button.dataset.command));
@@ -98,7 +120,7 @@ refreshAll();
 setInterval(refreshRuntime, 2000);
 
 async function refreshAll() {
-  await Promise.all([refreshMissions(), refreshRuntime(), refreshLatestReport()]);
+  await Promise.all([refreshMissions(), refreshRuntime(), refreshLatestReport(), refreshAuditEvents()]);
 }
 
 async function refreshMissions() {
@@ -154,8 +176,10 @@ async function sendMissionCommand(command) {
     if (["cancel", "reset", "start"].includes(response.command_type)) {
       await refreshLatestReport();
     }
+    await refreshAuditEvents();
   } catch (error) {
     elements.commandMessage.textContent = error.message;
+    await refreshAuditEvents();
   } finally {
     syncCommandButtons();
   }
@@ -234,6 +258,39 @@ function clearReportFilters() {
   elements.reportFilterSafety.checked = false;
   elements.reportFilterBlocked.checked = false;
   refreshLatestReport({ resetSelection: true });
+}
+
+async function refreshAuditEvents() {
+  try {
+    const data = await fetchJson(buildAuditListUrl());
+    state.auditEvents = data.events ?? [];
+    renderAuditEvents();
+  } catch (error) {
+    state.auditEvents = [];
+    elements.auditStatus.textContent = error.message;
+    elements.auditList.innerHTML = `<div class="message-line">No API audit events available.</div>`;
+  }
+}
+
+function buildAuditListUrl() {
+  const params = new URLSearchParams();
+  addParam(params, "operator_id", elements.auditFilterOperator.value);
+  addParam(params, "decision", elements.auditFilterDecision.value);
+  addParam(params, "event_type", elements.auditFilterEventType.value);
+  addDateParam(params, "date_from", elements.auditFilterDateFrom.value, false);
+  addDateParam(params, "date_to", elements.auditFilterDateTo.value, true);
+
+  const query = params.toString();
+  return query ? `/audit/events?${query}` : "/audit/events";
+}
+
+function clearAuditFilters() {
+  elements.auditFilterOperator.value = "";
+  elements.auditFilterDecision.value = "";
+  elements.auditFilterEventType.value = "";
+  elements.auditFilterDateFrom.value = "";
+  elements.auditFilterDateTo.value = "";
+  refreshAuditEvents();
 }
 
 function renderMissions() {
@@ -404,6 +461,35 @@ function renderReportList() {
         renderLatestReport();
       });
       return button;
+    }),
+  );
+}
+
+function renderAuditEvents() {
+  const events = state.auditEvents;
+  elements.auditStatus.textContent = `${events.length} API audit events`;
+
+  if (events.length === 0) {
+    elements.auditList.innerHTML = `<div class="empty-event">No API audit events found.</div>`;
+    return;
+  }
+
+  elements.auditList.replaceChildren(
+    ...events.slice(0, 20).map((event) => {
+      const item = document.createElement("article");
+      const decision = event.decision === "denied" ? "denied" : "allowed";
+      item.className = `audit-card ${decision}`;
+      item.innerHTML = `
+        <div class="audit-card-main">
+          <span class="decision-pill ${decision}">${decision === "denied" ? "! denied" : "allowed"}</span>
+          <strong>${escapeHtml(event.command_type ?? event.event_type ?? "api_event")}</strong>
+        </div>
+        <span class="history-meta">${escapeHtml(formatAuditTime(event.created_at_sec))}</span>
+        <span>${escapeHtml(event.operator_id ?? "anonymous")} - ${escapeHtml(event.mission_id ?? "no mission")}</span>
+        <span class="history-detail">${escapeHtml(event.reason ?? "No reason recorded")}</span>
+        <span class="history-detail">${escapeHtml(event.request_path ?? "")}${formatSourceIp(event.source_ip)}</span>
+      `;
+      return item;
     }),
   );
 }
@@ -747,6 +833,17 @@ function formatStamp(stamp) {
   }
 
   return new Date(Number(stamp.sec) * 1000).toLocaleTimeString();
+}
+
+function formatAuditTime(sec) {
+  if (sec === undefined || sec === null || Number.isNaN(Number(sec))) {
+    return "--:--:--";
+  }
+  return new Date(Number(sec) * 1000).toLocaleString();
+}
+
+function formatSourceIp(sourceIp) {
+  return sourceIp ? ` - ${sourceIp}` : "";
 }
 
 function shortenHash(value) {
