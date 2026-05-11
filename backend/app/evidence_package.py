@@ -7,12 +7,12 @@ from datetime import datetime, timezone
 EVIDENCE_PACKAGE_SCHEMA_VERSION = "1.0"
 
 
-def build_evidence_package(report: dict) -> dict:
+def build_evidence_package(report: dict, generated_at: str | None = None) -> dict:
     mission = report.get("mission") or {}
     package = {
         "package_type": "orimus_evidence_package",
         "schema_version": EVIDENCE_PACKAGE_SCHEMA_VERSION,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": generated_at or datetime.now(timezone.utc).isoformat(),
         "export_hash_algorithm": "SHA-256",
         "export_hash": "",
         "report": {

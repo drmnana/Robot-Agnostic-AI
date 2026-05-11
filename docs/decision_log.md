@@ -434,6 +434,16 @@ The evidence artifact registry should use a deliberately generic schema with fre
 Reason:
 Artifact type taxonomy and metadata schema are deferred. They will be defined once real perception sources are integrated.
 
+### 043 - Use Deterministic Evidence Bundles
+
+Status: Accepted
+
+Decision:
+ORIMUS evidence bundles should be deterministic ZIP files with fixed member ordering, fixed ZIP timestamps, artifact-id-based bundled paths, canonical JSON, and a manifest `bundle_hash`.
+
+Reason:
+Audit handoff verification must be reproducible. Original artifact filenames remain metadata only so bundle paths cannot introduce path traversal risk.
+
 ## Pending Decisions
 
 - First mission scenario.

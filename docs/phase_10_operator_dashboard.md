@@ -62,7 +62,7 @@ Current capabilities:
 - Filters mission history by outcome, mission, sector, date range, perception event type, safety-event presence, and blocked command evidence.
 - Shows selected report detail as a unified chronological audit timeline with command verdicts, safety links, perception evidence metadata, payload results, and report hash copy support.
 - Shows artifact links in perception drilldowns when evidence files are present, and cleanly reports that no artifact was captured when absent.
-- Exports the selected mission report as a JSON-only ORIMUS Evidence Package.
+- Exports the selected mission report as a JSON-only ORIMUS Evidence Package or deterministic ZIP evidence bundle.
 - Shows backend API audit events with filters for operator, decision, event type, and date range.
 - Gives denied API attempts a distinct warning treatment so authorization failures stand out during review.
 - Shows backend and ROS bridge connection status.

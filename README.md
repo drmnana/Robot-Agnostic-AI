@@ -15,6 +15,7 @@ The project is currently in the planning and foundation stage.
 - [Safety Assumptions](docs/safety_assumptions.md)
 - [Evidence Package Schema v1.0](docs/evidence_package_schema_v1.md)
 - [Evidence Package Verification](docs/evidence_package_verification.md)
+- [Evidence Bundle Schema v1.0](docs/evidence_bundle_schema_v1.md)
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
@@ -109,6 +110,7 @@ Initial endpoints:
 - `GET /runtime/safety`
 - `GET /runtime/events`
 - `GET /reports`
+- `GET /reports/{report_id}/export-bundle`
 - `GET /reports/{report_id}/export`
 - `GET /reports/latest`
 - `GET /reports/{report_id}`
@@ -123,6 +125,7 @@ Evidence artifact files are stored under `data/artifacts`, indexed in SQLite, an
 
 `GET /reports` supports audit filters for `outcome`, `mission_id`, `sector`, `date_from`, `date_to`, `perception_event_type`, `has_safety_event`, and `command_blocked`.
 `GET /reports/{report_id}/export` returns a JSON-only ORIMUS Evidence Package using schema version `1.0` with an export-level SHA-256 hash.
+`GET /reports/{report_id}/export-bundle` returns a deterministic ZIP evidence bundle containing the evidence package JSON, manifest JSON, and referenced artifact files.
 
 ## Operator Dashboard
 
@@ -141,8 +144,9 @@ Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace
 Each finalized report is stored with a SHA-256 content hash for audit traceability.
 Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
 Report detail views show artifact links when perception events reference stored evidence files, and degrade to "No artifact captured" when no artifact exists.
-Selected reports can be exported as JSON evidence packages.
+Selected reports can be exported as JSON evidence packages or ZIP evidence bundles.
 Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
+Evidence bundles can be verified with `backend/scripts/verify_evidence_bundle.py`.
 The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.
 
 ## ROS Mission API Bridge

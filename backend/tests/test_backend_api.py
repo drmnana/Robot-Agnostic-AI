@@ -4,6 +4,8 @@ import sqlite3
 import subprocess
 import sys
 import inspect
+import zipfile
+from io import BytesIO
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -11,6 +13,12 @@ from fastapi.testclient import TestClient
 import app.main as main_module
 from app.artifact_store import ArtifactStore, hash_file
 from app.backend_audit import BackendAuditStore
+from app.evidence_bundle import (
+    BUNDLE_MANIFEST_PATH,
+    BUNDLE_PACKAGE_PATH,
+    build_evidence_bundle,
+    verify_evidence_bundle,
+)
 from app.evidence_package import hash_evidence_package, hash_mission_report
 from app.evidence_verifier import (
     EXIT_HASH_MISMATCH,
@@ -45,6 +53,7 @@ def test_dashboard_is_served():
     assert "ORIMUS Operator Dashboard" in response.text
     assert "Mission History" in response.text
     assert "API Audit" in response.text
+    assert "Export Bundle" in response.text
     assert 'id="audit-filter-decision"' in response.text
     assert 'id="audit-list"' in response.text
 
@@ -576,6 +585,111 @@ def test_export_report_not_found(tmp_path: Path):
         settings.report_database_path = original_database_path
 
 
+def test_export_report_bundle_roundtrip_and_deterministic(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    original_artifact_root = settings.artifact_root
+    settings.report_database_path = create_report_database(tmp_path)
+    settings.artifact_root = tmp_path / "artifacts"
+    register_test_artifact(settings.report_database_path, settings.artifact_root)
+    try:
+        response = client.get("/reports/report-001/export-bundle")
+        assert response.status_code == 200
+        assert (
+            response.headers["content-disposition"]
+            == 'attachment; filename="orimus-evidence-bundle-report-001.zip"'
+        )
+
+        bundle_path = tmp_path / "bundle.zip"
+        bundle_path.write_bytes(response.content)
+        assert verify_evidence_bundle(bundle_path).exit_code == EXIT_VALID
+
+        artifacts = ArtifactStore(
+            settings.report_database_path,
+            settings.artifact_root,
+        ).list_artifacts(report_id="report-001")
+        report = client.get("/reports/report-001").json()
+        bundle_a, manifest_a = build_evidence_bundle(report, artifacts)
+        bundle_b, manifest_b = build_evidence_bundle(report, artifacts)
+
+        assert bundle_a == bundle_b
+        assert manifest_a["bundle_hash"] == manifest_b["bundle_hash"]
+    finally:
+        settings.report_database_path = original_database_path
+        settings.artifact_root = original_artifact_root
+
+
+def test_verify_evidence_bundle_rejects_tampered_evidence_json(tmp_path: Path):
+    bundle_path = create_evidence_bundle_for_test(tmp_path)
+    tampered_path = tmp_path / "tampered-evidence.zip"
+
+    def tamper(name: str, content: bytes) -> bytes:
+        if name != BUNDLE_PACKAGE_PATH:
+            return content
+        package = json.loads(content)
+        package["mission"]["sector"] = "tampered-sector"
+        return json.dumps(package, sort_keys=True).encode("utf-8")
+
+    rewrite_bundle(bundle_path, tampered_path, tamper)
+
+    result = verify_evidence_bundle(tampered_path)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert "evidence_package_hash mismatch" in result.errors
+
+
+def test_verify_evidence_bundle_rejects_tampered_manifest(tmp_path: Path):
+    bundle_path = create_evidence_bundle_for_test(tmp_path)
+    tampered_path = tmp_path / "tampered-manifest.zip"
+
+    def tamper(name: str, content: bytes) -> bytes:
+        if name != BUNDLE_MANIFEST_PATH:
+            return content
+        manifest = json.loads(content)
+        manifest["artifact_count"] = 99
+        return json.dumps(manifest, sort_keys=True).encode("utf-8")
+
+    rewrite_bundle(bundle_path, tampered_path, tamper)
+
+    result = verify_evidence_bundle(tampered_path)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert "bundle_hash mismatch" in result.errors
+
+
+def test_verify_evidence_bundle_rejects_missing_artifact_file(tmp_path: Path):
+    bundle_path = create_evidence_bundle_for_test(tmp_path)
+    missing_path = tmp_path / "missing-artifact.zip"
+
+    rewrite_bundle(
+        bundle_path,
+        missing_path,
+        lambda _name, content: content,
+        skip_prefix="artifacts/",
+    )
+
+    result = verify_evidence_bundle(missing_path)
+
+    assert result.exit_code == EXIT_SEMANTIC_FAILURE
+    assert any("missing artifact file" in error for error in result.errors)
+
+
+def test_verify_evidence_bundle_rejects_tampered_artifact_bytes(tmp_path: Path):
+    bundle_path = create_evidence_bundle_for_test(tmp_path)
+    tampered_path = tmp_path / "tampered-artifact.zip"
+
+    def tamper(name: str, content: bytes) -> bytes:
+        if name.startswith("artifacts/"):
+            return b"tampered" + content[8:]
+        return content
+
+    rewrite_bundle(bundle_path, tampered_path, tamper)
+
+    result = verify_evidence_bundle(tampered_path)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert any("hash mismatch" in error for error in result.errors)
+
+
 def test_verify_evidence_package_rejects_hash_mismatch(tmp_path: Path):
     package = create_evidence_package_for_test(tmp_path)
     package["mission"]["sector"] = "tampered-sector"
@@ -884,3 +998,58 @@ def create_evidence_package_for_test(tmp_path: Path) -> dict:
         return client.get("/reports/report-001/export").json()
     finally:
         settings.report_database_path = original_database_path
+
+
+def create_evidence_bundle_for_test(tmp_path: Path) -> Path:
+    original_database_path = settings.report_database_path
+    original_artifact_root = settings.artifact_root
+    settings.report_database_path = create_report_database(tmp_path)
+    settings.artifact_root = tmp_path / "artifacts"
+    register_test_artifact(settings.report_database_path, settings.artifact_root)
+    try:
+        response = client.get("/reports/report-001/export-bundle")
+        assert response.status_code == 200
+        bundle_path = tmp_path / "bundle.zip"
+        bundle_path.write_bytes(response.content)
+        return bundle_path
+    finally:
+        settings.report_database_path = original_database_path
+        settings.artifact_root = original_artifact_root
+
+
+def register_test_artifact(database_path: Path, artifact_root: Path) -> dict:
+    artifact_path = artifact_root / "artifact-001.txt"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_bytes(b"mock-payload-stub".ljust(1024, b" "))
+    return ArtifactStore(database_path, artifact_root).register_artifact(
+        artifact_id="artifact-001",
+        mission_id="demo_forward_stop",
+        report_id="report-001",
+        source="mock_payload",
+        artifact_type="mock-payload-stub",
+        file_path=artifact_path,
+        created_at=123.0,
+        metadata={"note": "opaque"},
+    )
+
+
+def rewrite_bundle(
+    source_path: Path,
+    target_path: Path,
+    transform,
+    skip_prefix: str | None = None,
+) -> None:
+    with zipfile.ZipFile(source_path, "r") as source:
+        entries = []
+        for name in source.namelist():
+            if skip_prefix and name.startswith(skip_prefix):
+                continue
+            entries.append((name, transform(name, source.read(name))))
+
+    archive = BytesIO()
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as target:
+        for name, content in sorted(entries, key=lambda item: item[0]):
+            info = zipfile.ZipInfo(name, (1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            target.writestr(info, content)
+    target_path.write_bytes(archive.getvalue())

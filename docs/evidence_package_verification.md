@@ -32,3 +32,15 @@ The verifier checks:
 - Every safety-event `command_id` resolves to a real robot command.
 
 PDF verification is intentionally out of scope for this step.
+
+## Evidence Bundle Verification
+
+ZIP evidence bundles are verified with:
+
+```powershell
+docker compose run --rm backend python backend/scripts/verify_evidence_bundle.py path/to/bundle.zip
+```
+
+The bundle verifier uses the same exit code contract.
+
+It validates the manifest hash, embedded evidence package hash, embedded evidence package semantics, every artifact file hash, and whether all expected artifact files are present.

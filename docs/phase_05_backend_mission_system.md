@@ -105,6 +105,7 @@ Current endpoints:
 - `GET /runtime/safety`
 - `GET /runtime/events`
 - `GET /reports`
+- `GET /reports/{report_id}/export-bundle`
 - `GET /reports/{report_id}/export`
 - `GET /reports/latest`
 - `GET /reports/{report_id}`
@@ -140,6 +141,7 @@ Mission YAML metadata now includes `sector`, allowing finalized reports to be se
 - `command_blocked`
 
 `GET /reports/{report_id}/export` returns an ORIMUS Evidence Package JSON document using schema version `1.0`.
+`GET /reports/{report_id}/export-bundle` returns a deterministic ZIP evidence bundle containing the evidence package, manifest, and artifact files.
 
 ## ROS-Aware Mission API Bridge
 

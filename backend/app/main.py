@@ -4,7 +4,7 @@ from typing import Optional
 
 import yaml
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -14,6 +14,7 @@ from .artifact_store import (
     ArtifactStore,
 )
 from .backend_audit import BackendAuditStore
+from .evidence_bundle import build_evidence_bundle
 from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .operator_policy import is_mission_command_allowed
@@ -245,6 +246,26 @@ def export_report(report_id: str):
     filename = f"orimus-evidence-{report_id}.json"
     return JSONResponse(
         content=package,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/reports/{report_id}/export-bundle")
+def export_report_bundle(report_id: str):
+    report = get_report(settings.report_database_path, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Mission report not found")
+
+    artifacts = artifact_store().list_artifacts(report_id=report_id)
+    try:
+        bundle_bytes, _manifest = build_evidence_bundle(report, artifacts)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=f"Artifact file not found: {error}")
+
+    filename = f"orimus-evidence-bundle-{report_id}.zip"
+    return Response(
+        content=bundle_bytes,
+        media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
