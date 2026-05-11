@@ -234,6 +234,16 @@ The ROS mission API bridge should keep a bounded rolling event history from miss
 Reason:
 Operators need situational awareness over time, not only the latest state snapshot.
 
+### 023 - Show Latest Mission Report In The Dashboard
+
+Status: Accepted
+
+Decision:
+The operator dashboard should summarize the latest JSON mission report exposed by the backend.
+
+Reason:
+Operators need an after-action review view that summarizes mission outcome, event counts, payload results, perception events, and safety events.
+
 ## Pending Decisions
 
 - First mission scenario.

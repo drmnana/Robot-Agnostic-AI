@@ -114,7 +114,7 @@ Open it at:
 http://localhost:8000/dashboard/
 ```
 
-The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, and show mission event history from the backend.
+The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, and summarize the latest mission report from the backend.
 
 ## ROS Mission API Bridge
 

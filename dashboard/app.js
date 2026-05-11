@@ -2,6 +2,7 @@ const state = {
   missions: [],
   selectedMissionId: null,
   runtime: null,
+  latestReport: null,
 };
 
 const elements = {
@@ -12,6 +13,7 @@ const elements = {
   selectedMissionLabel: document.querySelector("#selected-mission-label"),
   commandMessage: document.querySelector("#command-message"),
   refreshButton: document.querySelector("#refresh-button"),
+  reportRefreshButton: document.querySelector("#report-refresh-button"),
   commandButtons: document.querySelectorAll("[data-command]"),
   missionStatePill: document.querySelector("#mission-state-pill"),
   missionState: document.querySelector("#mission-state"),
@@ -33,9 +35,18 @@ const elements = {
   safetyEvent: document.querySelector("#safety-event"),
   eventCount: document.querySelector("#event-count"),
   eventHistory: document.querySelector("#event-history"),
+  reportStatus: document.querySelector("#report-status"),
+  reportMission: document.querySelector("#report-mission"),
+  reportState: document.querySelector("#report-state"),
+  reportMissionEvents: document.querySelector("#report-mission-events"),
+  reportPayloadResults: document.querySelector("#report-payload-results"),
+  reportPerceptionEvents: document.querySelector("#report-perception-events"),
+  reportSafetyEvents: document.querySelector("#report-safety-events"),
+  reportTimeline: document.querySelector("#report-timeline"),
 };
 
 elements.refreshButton.addEventListener("click", () => refreshAll());
+elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
 elements.commandButtons.forEach((button) => {
   button.addEventListener("click", () => sendMissionCommand(button.dataset.command));
 });
@@ -44,7 +55,7 @@ refreshAll();
 setInterval(refreshRuntime, 2000);
 
 async function refreshAll() {
-  await Promise.all([refreshMissions(), refreshRuntime()]);
+  await Promise.all([refreshMissions(), refreshRuntime(), refreshLatestReport()]);
 }
 
 async function refreshMissions() {
@@ -94,10 +105,23 @@ async function sendMissionCommand(command) {
     });
     elements.commandMessage.textContent = `${response.command_type} accepted for ${response.mission_id}`;
     await refreshRuntime();
+    if (["cancel", "reset", "start"].includes(response.command_type)) {
+      await refreshLatestReport();
+    }
   } catch (error) {
     elements.commandMessage.textContent = error.message;
   } finally {
     syncCommandButtons();
+  }
+}
+
+async function refreshLatestReport() {
+  try {
+    state.latestReport = await fetchJson("/reports/latest");
+    renderLatestReport();
+  } catch (error) {
+    state.latestReport = null;
+    renderReportUnavailable(error.message);
   }
 }
 
@@ -157,12 +181,12 @@ function renderRuntime() {
 
   elements.payloadType.textContent = payload?.payload_type ?? "No data";
   elements.payloadState.textContent = payload?.state ?? "No data";
-  elements.payloadHealth.textContent = formatPercent(payload?.health);
+  elements.payloadHealth.textContent = formatRatioPercent(payload?.health);
   elements.payloadMessage.textContent = payload?.message ?? "No data";
   setStatus(elements.payloadActive, payload?.active ? "Active" : "Idle", payload?.active ? "ok" : "warn");
 
   elements.perceptionEvent.textContent = perception
-    ? `${perception.event_type} from ${perception.source} (${formatPercent(perception.confidence)})`
+    ? `${perception.event_type} from ${perception.source} (${formatRatioPercent(perception.confidence)})`
     : "No data";
   elements.safetyEvent.textContent = safety
     ? `${safety.severity}: ${safety.message}`
@@ -184,8 +208,58 @@ function renderEventHistory(events) {
       const item = document.createElement("li");
       item.className = `history-item ${event.category ?? "event"}`;
       item.innerHTML = `
-        <span class="history-meta">${escapeHtml(event.category ?? "event")} · ${formatStamp(event.stamp)}</span>
+        <span class="history-meta">${escapeHtml(event.category ?? "event")} - ${formatStamp(event.stamp)}</span>
         <strong>${escapeHtml(event.event_type ?? event.rule ?? "event")}</strong>
+        <span>${escapeHtml(event.message ?? "")}</span>
+      `;
+      return item;
+    }),
+  );
+}
+
+function renderLatestReport() {
+  const report = state.latestReport;
+  const mission = report?.mission;
+  const missionEvents = report?.mission_events ?? [];
+  const payloadResults = report?.payload_results ?? [];
+  const perceptionEvents = report?.perception_events ?? [];
+  const safetyEvents = report?.safety_events ?? [];
+
+  elements.reportStatus.textContent = "Report loaded";
+  elements.reportMission.textContent = mission?.name ?? mission?.mission_id ?? "No data";
+  elements.reportState.textContent = mission?.state ?? "No data";
+  elements.reportMissionEvents.textContent = String(missionEvents.length);
+  elements.reportPayloadResults.textContent = String(payloadResults.length);
+  elements.reportPerceptionEvents.textContent = String(perceptionEvents.length);
+  elements.reportSafetyEvents.textContent = String(safetyEvents.length);
+  renderReportTimeline(missionEvents);
+}
+
+function renderReportUnavailable(message) {
+  elements.reportStatus.textContent = message || "Mission report not found";
+  elements.reportMission.textContent = "No data";
+  elements.reportState.textContent = "No data";
+  elements.reportMissionEvents.textContent = "0";
+  elements.reportPayloadResults.textContent = "0";
+  elements.reportPerceptionEvents.textContent = "0";
+  elements.reportSafetyEvents.textContent = "0";
+  elements.reportTimeline.innerHTML = `<li class="empty-event">No report yet</li>`;
+}
+
+function renderReportTimeline(missionEvents) {
+  const recentEvents = [...missionEvents].slice(-10).reverse();
+  if (recentEvents.length === 0) {
+    elements.reportTimeline.innerHTML = `<li class="empty-event">No report events</li>`;
+    return;
+  }
+
+  elements.reportTimeline.replaceChildren(
+    ...recentEvents.map((event) => {
+      const item = document.createElement("li");
+      item.className = "history-item mission";
+      item.innerHTML = `
+        <span class="history-meta">report - ${formatStamp(event.stamp)}</span>
+        <strong>${escapeHtml(event.event_type ?? "event")}</strong>
         <span>${escapeHtml(event.message ?? "")}</span>
       `;
       return item;
@@ -242,6 +316,13 @@ function formatPercent(value) {
     return "No data";
   }
   return `${Math.round(Number(value))}%`;
+}
+
+function formatRatioPercent(value) {
+  if (value === undefined || value === null || Number.isNaN(Number(value))) {
+    return "No data";
+  }
+  return `${Math.round(Number(value) * 100)}%`;
 }
 
 function formatPose(pose) {

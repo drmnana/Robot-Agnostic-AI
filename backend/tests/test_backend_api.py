@@ -28,6 +28,7 @@ def test_dashboard_is_served():
 
     assert response.status_code == 200
     assert "ORIMUS Operator Dashboard" in response.text
+    assert "Latest Report" in response.text
 
 
 def test_list_missions():
