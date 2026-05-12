@@ -168,6 +168,25 @@ Status codes:
 - `503`: bridge unavailable.
 - `504`: bridge request timed out.
 
+### `GET /runtime/stream`
+
+Purpose: read-only Server-Sent Events stream for live dashboard runtime updates.
+
+Policy: `none`.
+
+Event types:
+
+- `runtime_state`
+- `readiness`
+- `heartbeat`
+- `runtime_error`
+
+Response: `text/event-stream`.
+
+Status codes:
+
+- `200`: stream opened.
+
 ## Reports
 
 ### `GET /reports`

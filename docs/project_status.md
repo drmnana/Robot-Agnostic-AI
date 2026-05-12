@@ -74,6 +74,7 @@ Do not finalize these without CTO guidance:
 - API Audit Package Schema v1.0.
 - API Audit export and verifier.
 - Human-readable PDF report export.
+- Read-only SSE live runtime stream with polling fallback.
 - Mission History panel.
 - Report filters.
 - Report timeline.
@@ -119,11 +120,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Add WebSocket or SSE live event streaming.
-2. Add report/PDF layout branding polish.
+1. Add report/PDF layout branding polish.
+2. Add API Audit export verifier bundle parity.
 
 ## Recommended Next Step
 
-Create a **Live Event Streaming** ticket.
+Create a **Report/PDF Layout Branding Polish** ticket.
 
-This will reduce dashboard polling and prepare the operator UI for real-time mission monitoring without changing robot or payload contracts.
+This will improve the human-readable outputs now that the underlying report, severity, and export contracts are stable.

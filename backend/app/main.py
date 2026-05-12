@@ -1,10 +1,11 @@
 import logging
+import asyncio
 from pathlib import Path
 from typing import Optional
 
 import yaml
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -25,6 +26,12 @@ from .readiness import build_readiness
 from .replay import build_replay_frames
 from .report_store import get_report, list_reports
 from .settings import Settings
+from .sse import (
+    SSE_HEARTBEAT_INTERVAL_SEC,
+    SSE_RUNTIME_INTERVAL_SEC,
+    format_sse,
+    heartbeat_payload,
+)
 
 
 settings = Settings()
@@ -231,6 +238,39 @@ def download_artifact(artifact_id: str):
         artifact_path,
         media_type="application/octet-stream",
         filename=artifact_path.name,
+    )
+
+
+@app.get("/runtime/stream")
+async def stream_runtime():
+    async def event_generator():
+        last_heartbeat = 0.0
+        while True:
+            try:
+                runtime_state = annotate_runtime_resource(
+                    "state",
+                    get_runtime_resource(settings, "state"),
+                )
+                yield format_sse("runtime_state", runtime_state)
+            except Exception as error:
+                logger.warning("Runtime SSE state fetch failed: %s", error)
+                yield format_sse("runtime_error", {"message": str(error)})
+
+            now = asyncio.get_running_loop().time()
+            if now - last_heartbeat >= SSE_HEARTBEAT_INTERVAL_SEC:
+                last_heartbeat = now
+                yield format_sse("readiness", build_readiness(settings))
+                yield format_sse("heartbeat", heartbeat_payload())
+
+            await asyncio.sleep(SSE_RUNTIME_INTERVAL_SEC)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

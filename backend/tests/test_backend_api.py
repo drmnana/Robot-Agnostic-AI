@@ -7,6 +7,7 @@ import sys
 import inspect
 import zipfile
 import io
+import asyncio
 from io import BytesIO
 
 from fastapi import HTTPException
@@ -52,6 +53,7 @@ from app.mission_schema import (
 )
 from app.readiness import ReadinessCheck, clear_readiness_cache
 from app.scenario_manifest import find_scenario, load_scenario_manifest
+from app.sse import SSE_HEARTBEAT_INTERVAL_SEC, format_sse
 from scripts.check_scenario_result import evaluate_report
 
 
@@ -247,6 +249,11 @@ def test_dashboard_artifact_link_markup_is_available():
     assert "aria-label=\"Severity" in text
     assert "severityForSafetyEvent" in text
     assert "[!]" in text
+    assert "new EventSource(\"/runtime/stream\")" in text
+    assert "activatePollingFallback(\"SSE disconnected\")" in text
+    assert "activatePollingFallback(\"SSE heartbeat missed\")" in text
+    assert "scheduleStreamRetry()" in text
+    assert "stopPollingFallback()" in text
 
 
 def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
@@ -276,6 +283,18 @@ def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
         "audit-list",
     ]:
         assert f'id="{element_id}"' in html_text
+
+
+def test_dashboard_sse_failover_path_is_active_not_passive():
+    app_js = Path(__file__).resolve().parents[2] / "dashboard" / "app.js"
+    text = app_js.read_text(encoding="utf-8")
+
+    assert "source.addEventListener(\"error\"" in text
+    assert "window.setTimeout(() => {\n    activatePollingFallback(\"SSE heartbeat missed\")" in text
+    assert "state.runtimePollTimer = window.setInterval(refreshRuntime, 2000)" in text
+    assert "state.streamRetryTimer = window.setTimeout(() => {" in text
+    assert "startRuntimeStream();" in text
+    assert "window.clearInterval(state.runtimePollTimer)" in text
 
 
 def test_mission_schema_file_exists_and_matches_model():
@@ -1091,6 +1110,20 @@ def test_get_runtime_state(monkeypatch):
     assert response.json()["mission"]["state"] == "running"
     assert response.json()["events"][0]["severity"] == "critical"
     assert calls == ["state"]
+
+
+def test_runtime_stream_sse_contract():
+    response = asyncio.run(main_module.stream_runtime())
+
+    assert response.media_type == "text/event-stream"
+    assert response.headers["cache-control"] == "no-cache"
+
+
+def test_sse_format_and_heartbeat_interval_contract():
+    payload = format_sse("heartbeat", {"interval_sec": SSE_HEARTBEAT_INTERVAL_SEC})
+
+    assert SSE_HEARTBEAT_INTERVAL_SEC == 20
+    assert payload == 'event: heartbeat\ndata: {"interval_sec":20}\n\n'
 
 
 def test_get_runtime_rejects_unknown_resource():

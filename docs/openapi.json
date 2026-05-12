@@ -1107,6 +1107,22 @@
         "summary": "Get Report Replay"
       }
     },
+    "/runtime/stream": {
+      "get": {
+        "operationId": "stream_runtime_runtime_stream_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stream Runtime"
+      }
+    },
     "/runtime/{resource}": {
       "get": {
         "operationId": "get_runtime_runtime__resource__get",

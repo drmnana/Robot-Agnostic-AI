@@ -12,11 +12,18 @@ const state = {
   replayIndex: 0,
   replayPlaying: false,
   replayTimer: null,
+  runtimePollTimer: null,
+  readinessPollTimer: null,
+  streamRetryTimer: null,
+  streamHeartbeatTimer: null,
+  streamConnected: false,
+  eventSource: null,
 };
 
 const elements = {
   backendStatus: document.querySelector("#backend-status"),
   bridgeStatus: document.querySelector("#bridge-status"),
+  streamStatus: document.querySelector("#stream-status"),
   readinessStatus: document.querySelector("#readiness-status"),
   lastUpdated: document.querySelector("#last-updated"),
   missionList: document.querySelector("#mission-list"),
@@ -157,8 +164,7 @@ elements.commandButtons.forEach((button) => {
 
 activateTab(tabFromUrl(), false);
 refreshAll();
-setInterval(refreshRuntime, 2000);
-setInterval(refreshReadiness, 20000);
+startRuntimeStream();
 window.addEventListener("popstate", () => activateTab(tabFromUrl(), false));
 
 async function refreshAll() {
@@ -195,6 +201,104 @@ async function refreshRuntime() {
     elements.lastUpdated.textContent = new Date().toLocaleTimeString();
     syncCommandButtons();
   }
+}
+
+function startRuntimeStream() {
+  if (!("EventSource" in window)) {
+    activatePollingFallback("EventSource unavailable");
+    return;
+  }
+  if (state.eventSource) {
+    state.eventSource.close();
+  }
+
+  const source = new EventSource("/runtime/stream");
+  state.eventSource = source;
+  source.addEventListener("open", () => {
+    state.streamConnected = true;
+    setStatus(elements.streamStatus, "Stream Live", "ok");
+    stopPollingFallback();
+    resetStreamHeartbeatWatchdog();
+  });
+  source.addEventListener("runtime_state", (event) => {
+    try {
+      state.runtime = JSON.parse(event.data);
+      setStatus(elements.backendStatus, "Backend", "ok");
+      const bridgeConnected = state.runtime?.bridge?.connected === true;
+      setStatus(elements.bridgeStatus, "ROS Bridge", bridgeConnected ? "ok" : "warn");
+      renderRuntime();
+      elements.lastUpdated.textContent = new Date().toLocaleTimeString();
+      syncCommandButtons();
+    } catch (error) {
+      elements.commandMessage.textContent = error.message;
+    }
+  });
+  source.addEventListener("heartbeat", () => {
+    resetStreamHeartbeatWatchdog();
+  });
+  source.addEventListener("readiness", (event) => {
+    try {
+      state.readiness = JSON.parse(event.data);
+      renderReadiness();
+    } catch (error) {
+      elements.readinessSummary.textContent = error.message;
+    }
+  });
+  source.addEventListener("runtime_error", (event) => {
+    setStatus(elements.streamStatus, "Stream Degraded", "warn");
+    elements.commandMessage.textContent = event.data;
+  });
+  source.addEventListener("error", () => {
+    activatePollingFallback("SSE disconnected");
+    scheduleStreamRetry();
+  });
+}
+
+function resetStreamHeartbeatWatchdog() {
+  window.clearTimeout(state.streamHeartbeatTimer);
+  state.streamHeartbeatTimer = window.setTimeout(() => {
+    activatePollingFallback("SSE heartbeat missed");
+    scheduleStreamRetry();
+  }, 45000);
+}
+
+function activatePollingFallback(reason) {
+  state.streamConnected = false;
+  setStatus(elements.streamStatus, "Stream Fallback", "warn");
+  if (reason) {
+    elements.commandMessage.textContent = reason;
+  }
+  if (!state.runtimePollTimer) {
+    state.runtimePollTimer = window.setInterval(refreshRuntime, 2000);
+  }
+  if (!state.readinessPollTimer) {
+    state.readinessPollTimer = window.setInterval(refreshReadiness, 20000);
+  }
+}
+
+function stopPollingFallback() {
+  if (state.runtimePollTimer) {
+    window.clearInterval(state.runtimePollTimer);
+    state.runtimePollTimer = null;
+  }
+  if (state.readinessPollTimer) {
+    window.clearInterval(state.readinessPollTimer);
+    state.readinessPollTimer = null;
+  }
+}
+
+function scheduleStreamRetry() {
+  if (state.eventSource) {
+    state.eventSource.close();
+    state.eventSource = null;
+  }
+  if (state.streamRetryTimer) {
+    return;
+  }
+  state.streamRetryTimer = window.setTimeout(() => {
+    state.streamRetryTimer = null;
+    startRuntimeStream();
+  }, 15000);
 }
 
 async function refreshReadiness(options = {}) {

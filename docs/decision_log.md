@@ -556,6 +556,16 @@ Mission reports should be exportable as human-readable PDF summaries, while JSON
 Reason:
 PDF is useful for operators, briefings, and offline review, but it should not become a parallel source of truth. Including the JSON Evidence Package SHA-256 hash on the cover disclosure and every page footer keeps the PDF tied to the verifiable record.
 
+### 055 - Use Read-Only SSE For Live Dashboard Updates
+
+Status: Accepted
+
+Decision:
+The dashboard should consume live runtime updates from `GET /runtime/stream` using Server-Sent Events, with polling fallback on disconnect or missed heartbeat.
+
+Reason:
+ORIMUS needs real-time operator awareness, but it should not introduce a second command path. SSE is read-only, browser-native, and simpler than WebSocket for runtime state delivery. Known browser per-origin connection limits apply; if multi-tab usage becomes a problem, a future SharedWorker coordinator can multiplex one stream across tabs.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

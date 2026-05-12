@@ -22,6 +22,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [API Audit Package Schema v1.0](docs/api_audit_package_schema_v1.md)
 - [Event Severity Semantics](docs/event_severity_semantics.md)
 - [PDF Report Export](docs/pdf_report_export.md)
+- [Live Event Streaming](docs/live_event_streaming.md)
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Scenario Test Harness](docs/scenario_test_harness.md)
@@ -148,6 +149,7 @@ Current endpoints:
 - `GET /runtime/perception`
 - `GET /runtime/safety`
 - `GET /runtime/events`
+- `GET /runtime/stream`
 - `GET /reports`
 - `GET /reports/{report_id}/export-bundle`
 - `GET /reports/{report_id}/export`
@@ -183,6 +185,7 @@ http://localhost:8000/dashboard/
 
 The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, browse/filter persisted mission reports, and review backend API audit events.
 The dashboard is organized into URL-addressable operator tabs for mission operations, mission history, API audit, and system readiness.
+The dashboard uses read-only SSE live streaming for runtime updates and falls back to polling on stream loss.
 The dashboard includes an operator ID field for development-mode command attribution.
 
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
