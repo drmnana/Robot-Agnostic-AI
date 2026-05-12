@@ -78,6 +78,7 @@ Do not finalize these without CTO guidance:
 - Human-readable PDF report export.
 - Read-only SSE live runtime stream with polling fallback.
 - Docker-first getting-started and troubleshooting docs with explicit `--soft` and `--hard` local restart modes.
+- Dashboard demo operator walkthrough with fast path, failure-mode demos, and mock-vs-deferred framing.
 - Mission History panel.
 - Report filters.
 - Report timeline.
@@ -128,6 +129,6 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Recommended Next Step
 
-Create a **Dashboard Demo Script And Operator Walkthrough** ticket.
+Pause for CTO review preparation.
 
-This would make the current simulation/audit stack easy to demonstrate without freezing real robot or real payload architecture.
+The mock-system demo path is now documented. The next high-value move is to review the demo with the CTO and collect guidance on real robot platform integration and real payload integration before defining those contracts.

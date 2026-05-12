@@ -468,6 +468,32 @@ def test_troubleshooting_is_linked_and_validated_by_existing_checks():
     assert "docker compose run --rm backend bash scripts/verify_project.sh" in troubleshooting
 
 
+def test_demo_operator_walkthrough_is_linked_and_covers_failure_modes():
+    repo_root = Path(__file__).resolve().parents[2]
+    readme = (repo_root / "README.md").read_text(encoding="utf-8")
+    getting_started = (repo_root / "docs" / "getting_started.md").read_text(encoding="utf-8")
+    walkthrough = (repo_root / "docs" / "demo_operator_walkthrough.md").read_text(encoding="utf-8")
+
+    assert "[Demo Operator Walkthrough](docs/demo_operator_walkthrough.md)" in readme
+    assert "[Demo Operator Walkthrough](demo_operator_walkthrough.md)" in getting_started
+    assert "## Scope Of This Demo" in walkthrough
+    assert "## Five-Minute Fast Path" in walkthrough
+    assert "## Comprehensive Walkthrough" in walkthrough
+    assert "robot platform: `mock_go2x_driver`" in walkthrough
+    assert "payload/perception: `mock_inspection_camera`" in walkthrough
+    assert "real robot platform adapters: deferred for CTO review" in walkthrough
+    assert "real payload adapters and artifact metadata: deferred for CTO review" in walkthrough
+    assert "Failure Mode: Policy Denial" in walkthrough
+    assert "Failure Mode: Safety Arbitration" in walkthrough
+    assert "Failure Mode: Degraded ROS Bridge" in walkthrough
+    assert "Failure Mode: Verifier Catches Tampering" in walkthrough
+    assert "scripts/run_scenario_check.sh artifact_inspection" in walkthrough
+    assert "scripts/run_scenario_check.sh policy_denial_demo" in walkthrough
+    assert "scripts/run_scenario_check.sh safety_speed_limit" in walkthrough
+    assert "verify_evidence_package.py" in walkthrough
+    assert "verify_audit_bundle.py" in walkthrough
+
+
 def test_restart_script_defines_soft_and_hard_modes_without_broad_delete():
     script = Path(__file__).resolve().parents[2] / "scripts" / "orimus_restart.ps1"
     text = script.read_text(encoding="utf-8")

@@ -87,6 +87,7 @@ If the ROS mission API bridge is not running, the dashboard may show the runtime
 
 ## 7. Where To Go Next
 
+- [Demo Operator Walkthrough](demo_operator_walkthrough.md)
 - [Troubleshooting](troubleshooting.md)
 - [Verification](verification.md)
 - [Dashboard Operator Workflow](dashboard_operator_workflow.md)

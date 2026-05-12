@@ -7,6 +7,7 @@ The project has a working simulation-first vertical slice with mission execution
 ## Project Documents
 
 - [Getting Started](docs/getting_started.md)
+- [Demo Operator Walkthrough](docs/demo_operator_walkthrough.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Architecture Reference](docs/architecture_reference.md)
 - [Current Architecture Snapshot](docs/current_architecture_snapshot.md)
