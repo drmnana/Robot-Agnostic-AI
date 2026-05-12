@@ -494,6 +494,16 @@ The backend should expose `GET /healthz` as a dependency-free liveness endpoint 
 Reason:
 Deployment orchestrators and operator pre-flight workflows ask different questions. Liveness proves the process can answer. Readiness proves the backend can validate missions, reach SQLite, write evidence/report paths, parse policy, and assess ROS bridge availability without overloading repeated dashboard polling.
 
+### 049 - Keep Backend API Contract Human And Machine Readable
+
+Status: Accepted
+
+Decision:
+The backend contract should be documented in Markdown for humans and committed as `docs/openapi.json` for tooling. Tests should fail if the committed OpenAPI artifact diverges from the live FastAPI spec.
+
+Reason:
+ORIMUS now has enough backend surface that undocumented drift would slow dashboard work, CTO review, and future integrations. Keeping Markdown, OpenAPI JSON, and live `/docs` aligned gives reviewers and tools the same contract from different entry points.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

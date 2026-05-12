@@ -78,6 +78,8 @@ Do not finalize these without CTO guidance:
 - Mission replay viewer.
 - Backend liveness and readiness endpoints.
 - Persistent dashboard readiness indicator.
+- Backend API contract documentation.
+- Committed OpenAPI artifact with drift test.
 
 ## Completed Audit, Evidence, And Replay
 
@@ -112,12 +114,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 ## Work We Can Do Before CTO Review
 
 1. Improve dashboard usability and navigation.
-2. Write backend API contract documentation.
-3. Add CI-ready verification commands.
-4. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
+2. Add CI-ready verification commands.
+3. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
 
 ## Recommended Next Step
 
-Create a **Backend API Contract Documentation** ticket.
+Create a **CI-Ready Verification Commands** ticket.
 
-This will make the growing backend surface easier to review, test, and hand to future contributors.
+This will turn the existing tests, schema checks, scenario harness, and evidence verifiers into one repeatable pre-commit/pre-demo checklist.

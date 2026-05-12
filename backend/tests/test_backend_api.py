@@ -226,6 +226,20 @@ def test_mission_schema_file_exists_and_matches_model():
     )
 
 
+def test_committed_openapi_spec_matches_live_app():
+    openapi_path = Path(__file__).resolve().parents[2] / "docs" / "openapi.json"
+
+    assert openapi_path.exists()
+    assert json.loads(openapi_path.read_text(encoding="utf-8")) == app.openapi()
+
+
+def test_api_spec_regeneration_script_is_available():
+    script = Path(__file__).resolve().parents[1] / "scripts" / "regenerate_api_spec.py"
+
+    assert script.exists()
+    assert "app.openapi()" in script.read_text(encoding="utf-8")
+
+
 def test_all_configured_missions_validate():
     mission_dir = Path(__file__).resolve().parents[2] / "configs" / "missions"
 

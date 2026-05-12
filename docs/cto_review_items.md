@@ -95,7 +95,6 @@ The following should not be finalized until real platform and payload choices ar
 ## Work That Can Continue Without CTO
 
 - Dashboard usability improvements
-- Backend API documentation
 - Audit/export/replay hardening
 - Mock autonomy planner skeleton
 - CI and repeatable verification scripts

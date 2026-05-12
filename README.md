@@ -23,6 +23,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Scenario Test Harness](docs/scenario_test_harness.md)
 - [Backend Health And Readiness](docs/backend_health_readiness.md)
+- [Backend API Contract](docs/backend_api_contract.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
