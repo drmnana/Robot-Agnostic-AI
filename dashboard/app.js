@@ -6,6 +6,7 @@ const state = {
   latestReport: null,
   reports: [],
   auditEvents: [],
+  readiness: null,
   replayFrames: [],
   replayIndex: 0,
   replayPlaying: false,
@@ -15,6 +16,7 @@ const state = {
 const elements = {
   backendStatus: document.querySelector("#backend-status"),
   bridgeStatus: document.querySelector("#bridge-status"),
+  readinessStatus: document.querySelector("#readiness-status"),
   lastUpdated: document.querySelector("#last-updated"),
   missionList: document.querySelector("#mission-list"),
   selectedMissionLabel: document.querySelector("#selected-mission-label"),
@@ -22,6 +24,7 @@ const elements = {
   commandMessage: document.querySelector("#command-message"),
   refreshButton: document.querySelector("#refresh-button"),
   reportRefreshButton: document.querySelector("#report-refresh-button"),
+  readinessRefreshButton: document.querySelector("#readiness-refresh-button"),
   commandButtons: document.querySelectorAll("[data-command]"),
   missionStatePill: document.querySelector("#mission-state-pill"),
   missionState: document.querySelector("#mission-state"),
@@ -43,6 +46,8 @@ const elements = {
   safetyEvent: document.querySelector("#safety-event"),
   eventCount: document.querySelector("#event-count"),
   eventHistory: document.querySelector("#event-history"),
+  readinessSummary: document.querySelector("#readiness-summary"),
+  readinessList: document.querySelector("#readiness-list"),
   reportStatus: document.querySelector("#report-status"),
   reportList: document.querySelector("#report-list"),
   reportFilterOutcome: document.querySelector("#report-filter-outcome"),
@@ -98,6 +103,7 @@ const elements = {
 
 elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
+elements.readinessRefreshButton.addEventListener("click", () => refreshReadiness({ fresh: true }));
 elements.auditRefreshButton.addEventListener("click", () => refreshAuditEvents());
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
@@ -138,9 +144,10 @@ elements.commandButtons.forEach((button) => {
 
 refreshAll();
 setInterval(refreshRuntime, 2000);
+setInterval(refreshReadiness, 20000);
 
 async function refreshAll() {
-  await Promise.all([refreshMissions(), refreshRuntime(), refreshLatestReport(), refreshAuditEvents()]);
+  await Promise.all([refreshMissions(), refreshRuntime(), refreshReadiness(), refreshLatestReport(), refreshAuditEvents()]);
 }
 
 async function refreshMissions() {
@@ -172,6 +179,19 @@ async function refreshRuntime() {
   } finally {
     elements.lastUpdated.textContent = new Date().toLocaleTimeString();
     syncCommandButtons();
+  }
+}
+
+async function refreshReadiness(options = {}) {
+  try {
+    const suffix = options.fresh ? "?fresh=true" : "";
+    state.readiness = await fetchJson(`/readiness${suffix}`);
+    renderReadiness();
+  } catch (error) {
+    state.readiness = null;
+    setStatus(elements.readinessStatus, "Readiness", "error");
+    elements.readinessSummary.textContent = error.message;
+    elements.readinessList.innerHTML = "";
   }
 }
 
@@ -400,6 +420,35 @@ function renderEventHistory(events) {
         <span class="history-meta">${escapeHtml(event.category ?? "event")} - ${formatStamp(event.stamp)}</span>
         <strong>${escapeHtml(event.event_type ?? event.rule ?? "event")}</strong>
         <span>${escapeHtml(event.message ?? "")}</span>
+      `;
+      return item;
+    }),
+  );
+}
+
+function renderReadiness() {
+  const readiness = state.readiness;
+  const status = readiness?.status ?? "unknown";
+  const checks = readiness?.checks ?? [];
+  const problemChecks = checks.filter((check) => check.status !== "ready");
+  const statusClass = readinessStatusClass(status);
+
+  setStatus(elements.readinessStatus, `Readiness ${status.replace("_", " ")}`, statusClass);
+  elements.readinessSummary.textContent = `${checks.length} checks - ${status.replace("_", " ")}${readiness?.cached ? " - cached" : ""}`;
+
+  if (problemChecks.length === 0) {
+    elements.readinessList.innerHTML = `<li class="empty-event">All checks ready</li>`;
+    return;
+  }
+
+  elements.readinessList.replaceChildren(
+    ...problemChecks.map((check) => {
+      const item = document.createElement("li");
+      item.className = `readiness-item ${readinessStatusClass(check.status)}`;
+      item.innerHTML = `
+        <span class="history-meta">${escapeHtml(check.severity)} - ${escapeHtml(check.status)}</span>
+        <strong>${escapeHtml(check.name)}</strong>
+        <span>${escapeHtml(check.message)}</span>
       `;
       return item;
     }),
@@ -991,6 +1040,19 @@ function missionStateClass(value) {
     return "warn";
   }
   if (["canceled", "failed", "error"].includes(value)) {
+    return "error";
+  }
+  return "pending";
+}
+
+function readinessStatusClass(value) {
+  if (value === "ready") {
+    return "ok";
+  }
+  if (value === "degraded") {
+    return "warn";
+  }
+  if (value === "not_ready") {
     return "error";
   }
   return "pending";

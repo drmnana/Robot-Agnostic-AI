@@ -22,6 +22,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Scenario Test Harness](docs/scenario_test_harness.md)
+- [Backend Health And Readiness](docs/backend_health_readiness.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -114,6 +115,8 @@ The backend service is located in `backend/`.
 Current endpoints:
 
 - `GET /health`
+- `GET /healthz`
+- `GET /readiness`
 - `GET /missions`
 - `GET /missions/{mission_id}`
 - `POST /missions/{mission_id}/start`
@@ -146,6 +149,8 @@ Allowed and denied protected API calls are recorded in the append-only backend a
 Runtime endpoints forward live state reads from the ROS-aware mission API bridge.
 The bridge URL is configured with `ORIMUS_MISSION_API_BRIDGE_URL`.
 Evidence artifact files are stored under `data/artifacts`, indexed in SQLite, and served through hash-checked artifact endpoints.
+`GET /healthz` is a lightweight backend liveness endpoint.
+`GET /readiness` validates mission YAML, SQLite, artifact/report writability, operator policy parsing, and ROS bridge availability. Expensive readiness checks are cached briefly and can be forced with `?fresh=true`.
 
 `GET /reports` supports audit filters for `outcome`, `mission_id`, `sector`, `date_from`, `date_to`, `perception_event_type`, `has_safety_event`, and `command_blocked`.
 `GET /reports/{report_id}/export` returns a JSON-only ORIMUS Evidence Package using schema version `1.0` with an export-level SHA-256 hash.
@@ -174,6 +179,7 @@ Evidence packages can be verified with `backend/scripts/verify_evidence_package.
 Evidence bundles can be verified with `backend/scripts/verify_evidence_bundle.py`.
 The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.
 The Mission Replay panel can play, scrub, speed up, and URL-address a selected report's chronological event stream.
+The dashboard header keeps a persistent readiness indicator and polls backend readiness automatically.
 
 ## ROS Mission API Bridge
 

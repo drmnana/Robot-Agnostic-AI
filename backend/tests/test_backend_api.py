@@ -12,6 +12,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import app.main as main_module
+import app.readiness as readiness_module
 from app.artifact_store import ArtifactStore, hash_file
 from app.backend_audit import BackendAuditStore
 from app.evidence_bundle import (
@@ -34,6 +35,7 @@ from app.mission_schema import (
     validate_mission_directory,
     validate_mission_file,
 )
+from app.readiness import ReadinessCheck, clear_readiness_cache
 from app.scenario_manifest import find_scenario, load_scenario_manifest
 from scripts.check_scenario_result import evaluate_report
 
@@ -45,6 +47,136 @@ def test_health():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+def test_liveness_returns_alive():
+    response = client.get("/healthz")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "alive",
+        "service": "orimus-backend",
+    }
+
+
+def test_readiness_returns_ready_when_dependencies_are_available(tmp_path: Path, monkeypatch):
+    original_paths = snapshot_readiness_settings()
+    try:
+        configure_readiness_paths(tmp_path)
+        write_valid_mission(tmp_path / "missions")
+        write_operator_policy(tmp_path / "operator_policy.yaml")
+        monkeypatch.setattr(
+            readiness_module,
+            "check_ros_bridge",
+            lambda _url: ReadinessCheck("ros_bridge", "ready", "optional", "ok"),
+        )
+        clear_readiness_cache()
+
+        response = client.get("/readiness?fresh=true")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "ready"
+        assert body["cached"] is False
+        assert {check["name"] for check in body["checks"]}.issuperset(
+            {"backend_process", "mission_yaml_validation", "sqlite_database", "ros_bridge"}
+        )
+    finally:
+        restore_readiness_settings(original_paths)
+        clear_readiness_cache()
+
+
+def test_readiness_degrades_when_ros_bridge_is_unavailable(tmp_path: Path, monkeypatch):
+    original_paths = snapshot_readiness_settings()
+    try:
+        configure_readiness_paths(tmp_path)
+        write_valid_mission(tmp_path / "missions")
+        write_operator_policy(tmp_path / "operator_policy.yaml")
+        monkeypatch.setattr(
+            readiness_module,
+            "check_ros_bridge",
+            lambda _url: ReadinessCheck("ros_bridge", "degraded", "optional", "offline"),
+        )
+        clear_readiness_cache()
+
+        response = client.get("/readiness?fresh=true")
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "degraded"
+    finally:
+        restore_readiness_settings(original_paths)
+        clear_readiness_cache()
+
+
+def test_readiness_reports_required_failures(tmp_path: Path, monkeypatch):
+    original_paths = snapshot_readiness_settings()
+    try:
+        configure_readiness_paths(tmp_path)
+        settings.artifact_root = tmp_path / "artifact_root_file"
+        settings.artifact_root.write_text("not a directory", encoding="utf-8")
+        settings.latest_report_path = tmp_path / "report_parent_file" / "latest.json"
+        settings.latest_report_path.parent.write_text("not a directory", encoding="utf-8")
+        settings.report_database_path = tmp_path / "database_parent_file" / "orimus.db"
+        settings.report_database_path.parent.write_text("not a directory", encoding="utf-8")
+        (settings.mission_config_dir / "bad.yaml").write_text("mission_id: bad\n", encoding="utf-8")
+        monkeypatch.setattr(
+            readiness_module,
+            "check_ros_bridge",
+            lambda _url: ReadinessCheck("ros_bridge", "ready", "optional", "ok"),
+        )
+        clear_readiness_cache()
+
+        response = client.get("/readiness?fresh=true")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["status"] == "not_ready"
+        failed = {check["name"] for check in body["checks"] if check["status"] == "not_ready"}
+        assert {
+            "mission_yaml_validation",
+            "sqlite_database",
+            "artifact_root",
+            "latest_report_parent",
+        }.issubset(failed)
+    finally:
+        restore_readiness_settings(original_paths)
+        clear_readiness_cache()
+
+
+def test_readiness_cache_reuses_expensive_checks_and_fresh_bypasses(tmp_path: Path, monkeypatch):
+    original_paths = snapshot_readiness_settings()
+    validate_calls = {"count": 0}
+    real_validate = readiness_module.validate_mission_directory
+
+    def counting_validate(path: Path):
+        validate_calls["count"] += 1
+        return real_validate(path)
+
+    try:
+        configure_readiness_paths(tmp_path)
+        write_valid_mission(tmp_path / "missions")
+        write_operator_policy(tmp_path / "operator_policy.yaml")
+        monkeypatch.setattr(readiness_module, "validate_mission_directory", counting_validate)
+        monkeypatch.setattr(
+            readiness_module,
+            "check_ros_bridge",
+            lambda _url: ReadinessCheck("ros_bridge", "ready", "optional", "ok"),
+        )
+        clear_readiness_cache()
+
+        first = client.get("/readiness?fresh=true").json()
+        (settings.mission_config_dir / "bad.yaml").write_text("mission_id: bad\n", encoding="utf-8")
+        cached = client.get("/readiness").json()
+        fresh = client.get("/readiness?fresh=true").json()
+
+        assert first["status"] == "ready"
+        assert cached["status"] == "ready"
+        assert cached["cached"] is True
+        assert fresh["status"] == "not_ready"
+        assert validate_calls["count"] == 2
+    finally:
+        restore_readiness_settings(original_paths)
+        clear_readiness_cache()
 
 
 def test_root_redirects_to_dashboard():
@@ -63,6 +195,9 @@ def test_dashboard_is_served():
     assert "API Audit" in response.text
     assert "Export Bundle" in response.text
     assert "Mission Replay" in response.text
+    assert "Readiness" in response.text
+    assert 'id="readiness-status"' in response.text
+    assert 'id="readiness-list"' in response.text
     assert 'id="replay-speed"' in response.text
     assert 'id="replay-slider"' in response.text
     assert 'id="audit-filter-decision"' in response.text
@@ -78,6 +213,8 @@ def test_dashboard_artifact_link_markup_is_available():
     assert "replayIntervalMs" in text
     assert 'params.get("frame")' in text
     assert "highlightLinkedRecord" in text
+    assert "setInterval(refreshReadiness, 20000)" in text
+    assert "fresh=true" in text
 
 
 def test_mission_schema_file_exists_and_matches_model():
@@ -1253,6 +1390,72 @@ def create_evidence_package_for_test(tmp_path: Path) -> dict:
         return client.get("/reports/report-001/export").json()
     finally:
         settings.report_database_path = original_database_path
+
+
+def snapshot_readiness_settings() -> dict:
+    return {
+        "mission_config_dir": settings.mission_config_dir,
+        "operator_policy_path": settings.operator_policy_path,
+        "latest_report_path": settings.latest_report_path,
+        "report_database_path": settings.report_database_path,
+        "artifact_root": settings.artifact_root,
+        "mission_api_bridge_url": settings.mission_api_bridge_url,
+    }
+
+
+def restore_readiness_settings(snapshot: dict) -> None:
+    settings.mission_config_dir = snapshot["mission_config_dir"]
+    settings.operator_policy_path = snapshot["operator_policy_path"]
+    settings.latest_report_path = snapshot["latest_report_path"]
+    settings.report_database_path = snapshot["report_database_path"]
+    settings.artifact_root = snapshot["artifact_root"]
+    settings.mission_api_bridge_url = snapshot["mission_api_bridge_url"]
+
+
+def configure_readiness_paths(tmp_path: Path) -> None:
+    settings.mission_config_dir = tmp_path / "missions"
+    settings.mission_config_dir.mkdir(parents=True, exist_ok=True)
+    settings.operator_policy_path = tmp_path / "operator_policy.yaml"
+    settings.latest_report_path = tmp_path / "reports" / "latest_mission_report.json"
+    settings.report_database_path = tmp_path / "data" / "orimus.db"
+    settings.artifact_root = tmp_path / "data" / "artifacts"
+    settings.mission_api_bridge_url = "http://example.invalid:8010"
+    settings.latest_report_path.parent.mkdir(parents=True, exist_ok=True)
+    settings.report_database_path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def write_valid_mission(mission_dir: Path) -> None:
+    mission_dir.mkdir(parents=True, exist_ok=True)
+    (mission_dir / "ready.yaml").write_text(
+        """
+mission_id: ready
+name: Ready Mission
+sector: test-sector
+steps:
+  - name: walk
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 1.0
+    linear_x: 0.1
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.2
+""",
+        encoding="utf-8",
+    )
+
+
+def write_operator_policy(policy_path: Path) -> None:
+    policy_path.write_text(
+        """
+operators:
+  operator-demo:
+    allowed_mission_commands:
+      - start
+      - pause
+""",
+        encoding="utf-8",
+    )
 
 
 def create_evidence_bundle_for_test(tmp_path: Path) -> Path:

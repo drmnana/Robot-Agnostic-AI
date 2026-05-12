@@ -164,6 +164,10 @@ h3 {
   grid-column: span 2;
 }
 
+.readiness-panel {
+  grid-column: span 1;
+}
+
 .mission-list,
 .command-panel,
 .runtime-map,
@@ -648,6 +652,7 @@ strong {
 }
 
 .history-item,
+.readiness-item,
 .empty-event {
   display: grid;
   gap: 6px;
@@ -674,6 +679,18 @@ strong {
 
 .history-item.payload {
   border-left-color: var(--steel);
+}
+
+.readiness-item.ok {
+  border-left-color: var(--green);
+}
+
+.readiness-item.warn {
+  border-left-color: var(--amber);
+}
+
+.readiness-item.error {
+  border-left-color: var(--red);
 }
 
 .history-meta,

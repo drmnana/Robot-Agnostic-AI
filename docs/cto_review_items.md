@@ -96,7 +96,6 @@ The following should not be finalized until real platform and payload choices ar
 
 - Dashboard usability improvements
 - Backend API documentation
-- Backend health and readiness checks
 - Audit/export/replay hardening
 - Mock autonomy planner skeleton
 - CI and repeatable verification scripts

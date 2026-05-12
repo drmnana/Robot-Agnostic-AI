@@ -484,6 +484,16 @@ Simulation scenario checks should be driven by a versioned manifest at `configs/
 Reason:
 The scenario library should be a repeatable pre-flight tool before demos and commits. Versioning the manifest now makes future expectation migrations explicit.
 
+### 048 - Split Backend Liveness From Readiness
+
+Status: Accepted
+
+Decision:
+The backend should expose `GET /healthz` as a dependency-free liveness endpoint and `GET /readiness` as a dependency-validating readiness endpoint with short caching for expensive checks and `?fresh=true` for forced refreshes.
+
+Reason:
+Deployment orchestrators and operator pre-flight workflows ask different questions. Liveness proves the process can answer. Readiness proves the backend can validate missions, reach SQLite, write evidence/report paths, parse policy, and assess ROS bridge availability without overloading repeated dashboard polling.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

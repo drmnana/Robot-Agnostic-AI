@@ -76,6 +76,8 @@ Do not finalize these without CTO guidance:
 - Report timeline.
 - Evidence drilldowns.
 - Mission replay viewer.
+- Backend liveness and readiness endpoints.
+- Persistent dashboard readiness indicator.
 
 ## Completed Audit, Evidence, And Replay
 
@@ -111,12 +113,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 1. Improve dashboard usability and navigation.
 2. Write backend API contract documentation.
-3. Add health checks for database, artifact root, reports, and ROS bridge.
-4. Add CI-ready verification commands.
-5. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
+3. Add CI-ready verification commands.
+4. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
 
 ## Recommended Next Step
 
-Create a **Backend Health And Readiness Checks** ticket.
+Create a **Backend API Contract Documentation** ticket.
 
-This will make demo readiness visible before operators run missions.
+This will make the growing backend surface easier to review, test, and hand to future contributors.

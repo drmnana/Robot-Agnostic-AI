@@ -18,6 +18,7 @@ from .evidence_bundle import build_evidence_bundle
 from .evidence_package import build_evidence_package
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .operator_policy import is_mission_command_allowed
+from .readiness import build_readiness
 from .replay import build_replay_frames
 from .report_store import get_report, list_reports
 from .settings import Settings
@@ -53,6 +54,19 @@ def health() -> dict:
         "status": "ok",
         "service": "orimus-backend",
     }
+
+
+@app.get("/healthz")
+def healthz() -> dict:
+    return {
+        "status": "alive",
+        "service": "orimus-backend",
+    }
+
+
+@app.get("/readiness")
+def readiness(fresh: bool = Query(default=False)) -> dict:
+    return build_readiness(settings, fresh=fresh)
 
 
 @app.get("/missions")
