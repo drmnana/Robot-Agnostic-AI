@@ -20,6 +20,13 @@ from app.audit_package import (
     hash_api_audit_package,
     verify_api_audit_package,
 )
+from app.audit_bundle import (
+    API_AUDIT_BUNDLE_MANIFEST_PATH,
+    API_AUDIT_BUNDLE_PACKAGE_PATH,
+    build_api_audit_bundle,
+    hash_api_audit_bundle_manifest,
+    verify_api_audit_bundle,
+)
 from app.artifact_store import ArtifactStore, hash_file
 from app.backend_audit import BackendAuditStore
 from app.evidence_bundle import (
@@ -232,6 +239,7 @@ def test_dashboard_is_served():
     assert 'id="audit-filter-decision"' in response.text
     assert 'id="audit-list"' in response.text
     assert 'id="audit-export-json"' in response.text
+    assert 'id="audit-export-bundle"' in response.text
 
 
 def test_dashboard_artifact_link_markup_is_available():
@@ -279,6 +287,7 @@ def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
         "replay-slider",
         "audit-refresh-button",
         "audit-export-json",
+        "audit-export-bundle",
         "audit-filter-decision",
         "audit-list",
     ]:
@@ -1026,6 +1035,175 @@ def test_api_audit_package_cli_exit_codes_and_help(tmp_path: Path):
     assert "not a mission Evidence Package" in help_result.stdout
     assert invalid.returncode == EXIT_HASH_MISMATCH
     assert unreadable.returncode == EXIT_SCHEMA_MISMATCH
+
+
+def test_export_api_audit_bundle_roundtrip_and_deterministic(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = tmp_path / "orimus.db"
+    try:
+        store = BackendAuditStore(settings.report_database_path)
+        store.record_event(
+            event_type="mission_command",
+            decision="allowed",
+            operator_id="operator-demo",
+            mission_id="demo_forward_stop",
+            command_type="start",
+            reason="operator_policy",
+            request_path="/missions/demo_forward_stop/start",
+            source_ip="127.0.0.1",
+        )
+        store.record_event(
+            event_type="mission_command",
+            decision="denied",
+            operator_id="anonymous",
+            mission_id="policy_denial_demo",
+            command_type="cancel",
+            reason="operator_policy",
+            request_path="/missions/policy_denial_demo/cancel",
+            source_ip="127.0.0.1",
+        )
+
+        response = client.get("/audit/events/export-bundle?decision=denied")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+        assert (
+            response.headers["content-disposition"]
+            == 'attachment; filename="orimus-api-audit-bundle.zip"'
+        )
+        bundle_path = tmp_path / "audit-bundle.zip"
+        bundle_path.write_bytes(response.content)
+        assert verify_api_audit_bundle(bundle_path).exit_code == EXIT_VALID
+
+        with zipfile.ZipFile(bundle_path, "r") as bundle:
+            assert bundle.namelist() == sorted(
+                [API_AUDIT_BUNDLE_MANIFEST_PATH, API_AUDIT_BUNDLE_PACKAGE_PATH]
+            )
+            package = json.loads(bundle.read(API_AUDIT_BUNDLE_PACKAGE_PATH))
+            manifest = json.loads(bundle.read(API_AUDIT_BUNDLE_MANIFEST_PATH))
+
+        assert package["filters"] == {"decision": "denied"}
+        assert package["summary"]["event_count"] == 1
+        assert manifest["event_count"] == 1
+        assert manifest["api_audit_package_hash"] == hash_api_audit_package(package)
+
+        events = store.list_events(decision="denied")
+        bundle_a, manifest_a = build_api_audit_bundle(events, {"decision": "denied"})
+        bundle_b, manifest_b = build_api_audit_bundle(events, {"decision": "denied"})
+        assert bundle_a == bundle_b
+        assert manifest_a["bundle_hash"] == manifest_b["bundle_hash"]
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_verify_api_audit_bundle_rejects_tampered_package(tmp_path: Path):
+    bundle_path = create_api_audit_bundle_for_test(tmp_path)
+    tampered_path = tmp_path / "tampered-audit-bundle.zip"
+
+    def tamper(name: str, content: bytes) -> bytes:
+        if name == API_AUDIT_BUNDLE_PACKAGE_PATH:
+            package = json.loads(content)
+            package["events"][0]["decision"] = "denied"
+            return json.dumps(package, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return content
+
+    rewrite_bundle(bundle_path, tampered_path, tamper)
+
+    result = verify_api_audit_bundle(tampered_path)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert "api_audit_package_hash mismatch" in result.errors
+
+
+def test_verify_api_audit_bundle_rejects_tampered_manifest(tmp_path: Path):
+    bundle_path = create_api_audit_bundle_for_test(tmp_path)
+    tampered_path = tmp_path / "tampered-manifest.zip"
+
+    def tamper(name: str, content: bytes) -> bytes:
+        if name == API_AUDIT_BUNDLE_MANIFEST_PATH:
+            manifest = json.loads(content)
+            manifest["event_count"] = 99
+            return json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return content
+
+    rewrite_bundle(bundle_path, tampered_path, tamper)
+
+    result = verify_api_audit_bundle(tampered_path)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert "bundle_hash mismatch" in result.errors
+
+
+def test_verify_api_audit_bundle_rejects_missing_package_file(tmp_path: Path):
+    bundle_path = create_api_audit_bundle_for_test(tmp_path)
+    missing_path = tmp_path / "missing-package.zip"
+
+    rewrite_bundle(
+        bundle_path,
+        missing_path,
+        lambda _name, content: content,
+        skip_prefix=API_AUDIT_BUNDLE_PACKAGE_PATH,
+    )
+
+    result = verify_api_audit_bundle(missing_path)
+
+    assert result.exit_code == EXIT_SCHEMA_MISMATCH
+    assert "bundle must contain manifest.json and api_audit_package.json" in result.errors
+
+
+def test_verify_api_audit_bundle_rejects_semantic_mismatch(tmp_path: Path):
+    bundle_path = create_api_audit_bundle_for_test(tmp_path)
+    semantic_path = tmp_path / "semantic-audit-bundle.zip"
+
+    def tamper(name: str, content: bytes) -> bytes:
+        if name == API_AUDIT_BUNDLE_MANIFEST_PATH:
+            manifest = json.loads(content)
+            manifest["filters"] = {"decision": "denied"}
+            manifest["bundle_hash"] = hash_api_audit_bundle_manifest(manifest)
+            return json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return content
+
+    rewrite_bundle(bundle_path, semantic_path, tamper)
+
+    result = verify_api_audit_bundle(semantic_path)
+
+    assert result.exit_code == EXIT_SEMANTIC_FAILURE
+    assert "manifest filters do not match package filters" in result.errors
+
+
+def test_api_audit_bundle_cli_exit_codes_and_help(tmp_path: Path):
+    bundle_path = create_api_audit_bundle_for_test(tmp_path)
+
+    valid = subprocess.run(
+        [sys.executable, "scripts/verify_audit_bundle.py", str(bundle_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    help_result = subprocess.run(
+        [sys.executable, "scripts/verify_audit_bundle.py", "--help"],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    evidence_bundle_path = create_evidence_bundle_for_test(tmp_path)
+    wrong_bundle = subprocess.run(
+        [sys.executable, "scripts/verify_audit_bundle.py", str(evidence_bundle_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert valid.returncode == EXIT_VALID
+    assert "VALID: ORIMUS API audit bundle verified" in valid.stdout
+    assert help_result.returncode == EXIT_VALID
+    assert "API Audit Bundle" in help_result.stdout
+    assert "not a mission Evidence Bundle" in help_result.stdout
+    assert wrong_bundle.returncode == EXIT_SCHEMA_MISMATCH
+    assert "this verifier is for ORIMUS API Audit Bundle ZIP" in wrong_bundle.stdout
 
 
 def test_backend_audit_store_public_write_surface_is_append_only():
@@ -1900,6 +2078,16 @@ def api_audit_event(event_id: str, created_at_sec: float, decision: str) -> dict
         "source_ip": "127.0.0.1",
         "retention_class": "standard",
     }
+
+
+def create_api_audit_bundle_for_test(tmp_path: Path) -> Path:
+    bundle_bytes, _manifest = build_api_audit_bundle(
+        [api_audit_event("event-001", 1.0, "allowed")],
+        {"operator_id": "operator-demo"},
+    )
+    bundle_path = tmp_path / "api-audit-bundle.zip"
+    bundle_path.write_bytes(bundle_bytes)
+    return bundle_path
 
 
 def run_verify_project_fake(pattern: str, *args: str) -> subprocess.CompletedProcess:

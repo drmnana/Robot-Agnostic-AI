@@ -73,6 +73,8 @@ Do not finalize these without CTO guidance:
 - API Audit dashboard panel.
 - API Audit Package Schema v1.0.
 - API Audit export and verifier.
+- API Audit Bundle Schema v1.0.
+- API Audit bundle export and verifier.
 - Human-readable PDF report export.
 - Read-only SSE live runtime stream with polling fallback.
 - Docker-first getting-started and troubleshooting docs with explicit `--soft` and `--hard` local restart modes.
@@ -122,10 +124,10 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 ## Work We Can Do Before CTO Review
 
 1. Keep local demo/run reliability sharp as the project grows.
-2. Add API Audit export verifier bundle parity.
+2. Continue dashboard/operator workflow refinement that does not define real robot or payload contracts.
 
 ## Recommended Next Step
 
-Create an **API Audit Bundle Export** ticket.
+Create a **Dashboard Demo Script And Operator Walkthrough** ticket.
 
-This brings backend authorization audit exports closer to the mission evidence bundle workflow without defining real robot or real payload contracts.
+This would make the current simulation/audit stack easy to demonstrate without freezing real robot or real payload architecture.

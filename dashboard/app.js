@@ -101,6 +101,7 @@ const elements = {
   replayFrame: document.querySelector("#replay-frame"),
   auditRefreshButton: document.querySelector("#audit-refresh-button"),
   auditExportJson: document.querySelector("#audit-export-json"),
+  auditExportBundle: document.querySelector("#audit-export-bundle"),
   auditStatus: document.querySelector("#audit-status"),
   auditList: document.querySelector("#audit-list"),
   auditFilterOperator: document.querySelector("#audit-filter-operator"),
@@ -124,6 +125,7 @@ elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport
 elements.readinessRefreshButton.addEventListener("click", () => refreshReadiness({ fresh: true }));
 elements.auditRefreshButton.addEventListener("click", () => refreshAuditEvents());
 elements.auditExportJson.addEventListener("click", () => exportAuditEvents());
+elements.auditExportBundle.addEventListener("click", () => exportAuditEventsBundle());
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
 elements.reportExportBundle.addEventListener("click", () => exportSelectedReportBundle());
@@ -460,6 +462,11 @@ function clearAuditFilters() {
 function exportAuditEvents() {
   const query = buildAuditQueryString();
   window.location.href = query ? `/audit/events/export?${query}` : "/audit/events/export";
+}
+
+function exportAuditEventsBundle() {
+  const query = buildAuditQueryString();
+  window.location.href = query ? `/audit/events/export-bundle?${query}` : "/audit/events/export-bundle";
 }
 
 function tabFromUrl() {

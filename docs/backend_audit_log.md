@@ -111,6 +111,18 @@ Verify it with:
 docker compose run --rm backend python backend/scripts/verify_audit_package.py path/to/audit-package.json
 ```
 
+ZIP handoff bundles are exported from:
+
+```text
+GET /audit/events/export-bundle
+```
+
+Verify them with:
+
+```powershell
+docker compose run --rm backend python backend/scripts/verify_audit_bundle.py path/to/audit-bundle.zip
+```
+
 ## Scope
 
 This log records backend API authorization decisions. It does not replace mission reports, evidence packages, ROS safety events, or hardware safety logs.

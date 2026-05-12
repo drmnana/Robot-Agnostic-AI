@@ -584,6 +584,16 @@ ORIMUS local operations should distinguish recovery restarts from clean demo res
 Reason:
 An ambiguous reset command could accidentally destroy audit history during recovery from a service error. Explicit soft and hard modes make the operational intent visible before anything is restarted or wiped.
 
+### 057 - Add API Audit Bundles As A Separate Handoff Format
+
+Status: Accepted
+
+Decision:
+Backend API authorization audit events should be exportable as deterministic ZIP API Audit Bundles containing `api_audit_package.json` and `manifest.json`.
+
+Reason:
+Mission evidence already has a ZIP handoff format. API authorization audit needs similar transfer integrity, but it remains a separate schema family because it answers a different question: which operators attempted which protected backend actions, and what authorization decision was made.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

@@ -69,3 +69,5 @@ Exit codes match the ORIMUS verifier family:
 - `3`: semantic failure
 
 This verifier is only for ORIMUS API Audit Package JSON. Mission Evidence Packages must be checked with `backend/scripts/verify_evidence_package.py`.
+
+For ZIP handoff workflows, use [API Audit Bundle Schema v1.0](api_audit_bundle_schema_v1.md).

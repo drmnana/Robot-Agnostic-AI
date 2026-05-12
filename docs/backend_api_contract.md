@@ -417,6 +417,26 @@ Status codes:
 
 - `200`: audit package returned.
 
+### `GET /audit/events/export-bundle`
+
+Purpose: export filtered backend authorization audit events as a deterministic ORIMUS API Audit Bundle ZIP file.
+
+Policy: `none` for current development dashboard export.
+
+Query params:
+
+- `operator_id`
+- `decision`: `allowed` or `denied`
+- `event_type`
+- `date_from`: Unix seconds
+- `date_to`: Unix seconds
+
+Response: `application/zip` API Audit Bundle Schema v1.0 containing `api_audit_package.json` and `manifest.json`.
+
+Status codes:
+
+- `200`: audit bundle returned.
+
 ## Deferred / Not Yet Stable
 
 These contract areas are intentionally marked as likely to evolve:

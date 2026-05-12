@@ -14,6 +14,7 @@ from .artifact_store import (
     ArtifactNotFoundError,
     ArtifactStore,
 )
+from .audit_bundle import build_api_audit_bundle
 from .audit_package import build_api_audit_package
 from .backend_audit import BackendAuditStore
 from .evidence_bundle import build_evidence_bundle
@@ -197,6 +198,30 @@ def export_audit_events(
     return JSONResponse(
         content=package,
         headers={"Content-Disposition": 'attachment; filename="orimus-api-audit-package.json"'},
+    )
+
+
+@app.get("/audit/events/export-bundle")
+def export_audit_events_bundle(
+    operator_id: Optional[str] = None,
+    decision: Optional[str] = None,
+    event_type: Optional[str] = None,
+    date_from: Optional[float] = None,
+    date_to: Optional[float] = None,
+):
+    filters = {
+        "operator_id": operator_id,
+        "decision": decision,
+        "event_type": event_type,
+        "date_from": date_from,
+        "date_to": date_to,
+    }
+    events = audit_store().list_events(**filters)
+    bundle_bytes, _manifest = build_api_audit_bundle(events, filters)
+    return Response(
+        content=bundle_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="orimus-api-audit-bundle.zip"'},
     )
 
 
