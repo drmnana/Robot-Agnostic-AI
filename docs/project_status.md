@@ -80,6 +80,7 @@ Do not finalize these without CTO guidance:
 - Persistent dashboard readiness indicator.
 - Backend API contract documentation.
 - Committed OpenAPI artifact with drift test.
+- CI-ready local verification command.
 
 ## Completed Audit, Evidence, And Replay
 
@@ -114,11 +115,10 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 ## Work We Can Do Before CTO Review
 
 1. Improve dashboard usability and navigation.
-2. Add CI-ready verification commands.
-3. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
+2. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
 
 ## Recommended Next Step
 
-Create a **CI-Ready Verification Commands** ticket.
+Create a **Simulation-Only Autonomy Planner Skeleton** ticket.
 
-This will turn the existing tests, schema checks, scenario harness, and evidence verifiers into one repeatable pre-commit/pre-demo checklist.
+This will start the AI/autonomy layer without touching real robot hardware or bypassing the safety and mission-command path.

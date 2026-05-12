@@ -24,6 +24,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Scenario Test Harness](docs/scenario_test_harness.md)
 - [Backend Health And Readiness](docs/backend_health_readiness.md)
 - [Backend API Contract](docs/backend_api_contract.md)
+- [Verification](docs/verification.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -112,6 +113,12 @@ docker compose run --rm ros2-dev bash -lc "cd ros2_ws && source install/setup.ba
 ## Backend
 
 The backend service is located in `backend/`.
+
+Run the main verification command with:
+
+```powershell
+docker compose run --rm backend bash scripts/verify_project.sh
+```
 
 Current endpoints:
 

@@ -504,6 +504,16 @@ The backend contract should be documented in Markdown for humans and committed a
 Reason:
 ORIMUS now has enough backend surface that undocumented drift would slow dashboard work, CTO review, and future integrations. Keeping Markdown, OpenAPI JSON, and live `/docs` aligned gives reviewers and tools the same contract from different entry points.
 
+### 050 - Add A Single Local Verification Command
+
+Status: Accepted
+
+Decision:
+ORIMUS should provide `scripts/verify_project.sh` as the primary Docker-first local verification command, with fail-fast default behavior and `--all` summary mode.
+
+Reason:
+The project now has enough tests, schemas, generated specs, and verifier workflows that a single confidence button is safer than asking contributors to remember many commands. Fail-fast supports quick pre-commit and CI-style checks, while `--all` supports debugging by collecting every failure with per-check timing.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

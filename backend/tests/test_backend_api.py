@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import os
 import sqlite3
 import subprocess
 import sys
@@ -305,6 +306,33 @@ def test_scenario_runner_all_mode_summary_can_pass_and_fail(tmp_path: Path):
     assert "--all" in text
     assert "SUMMARY: ${passed} passed, ${failed} failed" in text
     assert "FAILED: ${failed_ids[*]}" in text
+
+
+def test_project_verification_script_exits_zero_when_checks_pass():
+    result = run_verify_project_fake("pass")
+
+    assert result.returncode == 0
+    assert "[PASS] fake one" in result.stdout
+    assert "SUMMARY: 2 passed, 0 failed" in result.stdout
+
+
+def test_project_verification_script_fail_fast_stops_on_first_failure():
+    result = run_verify_project_fake("fail-first")
+
+    assert result.returncode == 1
+    assert "[FAIL] fake one" in result.stdout
+    assert "fake two" not in result.stdout
+    assert "SUMMARY: 0 passed, 1 failed" in result.stdout
+
+
+def test_project_verification_script_all_mode_runs_every_check():
+    result = run_verify_project_fake("fail-second", "--all")
+
+    assert result.returncode == 1
+    assert "[PASS] fake one" in result.stdout
+    assert "[FAIL] fake two" in result.stdout
+    assert "[PASS] fake three" in result.stdout
+    assert "SUMMARY: 2 passed, 1 failed" in result.stdout
 
 
 def test_mission_validation_rejects_missing_required_fields(tmp_path: Path):
@@ -1469,6 +1497,21 @@ operators:
       - pause
 """,
         encoding="utf-8",
+    )
+
+
+def run_verify_project_fake(pattern: str, *args: str) -> subprocess.CompletedProcess:
+    script = Path(__file__).resolve().parents[2] / "scripts" / "verify_project.sh"
+    env = os.environ.copy()
+    env["ORIMUS_VERIFY_FAKE_CHECKS"] = "1"
+    env["ORIMUS_VERIFY_FAKE_PATTERN"] = pattern
+    return subprocess.run(
+        ["bash", str(script), *args],
+        cwd=Path(__file__).resolve().parents[2],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
     )
 
 

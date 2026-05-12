@@ -97,4 +97,3 @@ The following should not be finalized until real platform and payload choices ar
 - Dashboard usability improvements
 - Audit/export/replay hardening
 - Mock autonomy planner skeleton
-- CI and repeatable verification scripts
