@@ -94,8 +94,6 @@ The following should not be finalized until real platform and payload choices ar
 
 ## Work That Can Continue Without CTO
 
-- Simulation scenario library
-- Mission YAML validation
 - Scenario test harness
 - Dashboard usability improvements
 - Backend API documentation

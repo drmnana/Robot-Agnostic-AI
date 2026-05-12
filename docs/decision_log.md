@@ -464,6 +464,16 @@ Real robot platform integration and real payload integration should be treated a
 Reason:
 The simulation-first software spine can continue advancing, but hardware adapter boundaries, real payload schemas, safety limits, and deployment assumptions should be reviewed before they are finalized.
 
+### 046 - Validate Mission YAML Against A Shared Schema
+
+Status: Accepted
+
+Decision:
+Mission YAML files should be validated against a shared schema file at `configs/mission_schema.json`, backed by the Pydantic model in `backend/app/mission_schema.py`.
+
+Reason:
+The mission contract should be readable by contributors and enforced automatically by tests, not hidden in mission manager parsing code or only checked by manual CLI usage.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

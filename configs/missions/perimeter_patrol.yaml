@@ -1,0 +1,46 @@
+mission_id: perimeter_patrol
+name: Simulated Perimeter Patrol
+sector: training-yard-perimeter
+description: Simulated patrol loop for exercising repeated robot motion steps.
+steps:
+  - name: stand
+    target: robot
+    command_type: stand
+    duration_sec: 1.0
+
+  - name: patrol_leg_north
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 2.0
+    linear_x: 0.25
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.5
+
+  - name: turn_east
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 1.0
+    linear_x: 0.0
+    linear_y: 0.0
+    yaw_rate: 0.4
+    max_speed: 0.5
+
+  - name: patrol_leg_east
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 2.0
+    linear_x: 0.22
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.5
+
+  - name: stop
+    target: robot
+    command_type: stop
+    duration_sec: 1.0
+
+  - name: sit
+    target: robot
+    command_type: sit
+    duration_sec: 1.0

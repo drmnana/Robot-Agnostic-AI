@@ -51,8 +51,10 @@ Do not finalize these without CTO guidance:
 ## Completed Mission Features
 
 - YAML mission configuration.
+- Mission YAML schema file and validator.
 - Mission steps targeting robot or payload.
 - Demo mission with mock inspection scan.
+- Simulated mission scenario library.
 - Mission command flow: start, pause, resume, cancel, reset.
 - Mission events.
 - Rolling runtime event history.
@@ -106,17 +108,15 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Build a simulated mission scenario library.
-2. Add mission YAML schema validation.
-3. Add scenario test harness scripts.
-4. Improve dashboard usability and navigation.
-5. Write backend API contract documentation.
-6. Add health checks for database, artifact root, reports, and ROS bridge.
-7. Add CI-ready verification commands.
-8. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
+1. Add scenario test harness scripts.
+2. Improve dashboard usability and navigation.
+3. Write backend API contract documentation.
+4. Add health checks for database, artifact root, reports, and ROS bridge.
+5. Add CI-ready verification commands.
+6. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
 
 ## Recommended Next Step
 
-Create a **Simulation Scenario Library + Mission YAML Validation** ticket.
+Create a **Scenario Test Harness** ticket.
 
-This strengthens the existing software spine without making CTO-dependent hardware choices.
+This will make the new scenario library repeatable with one-command checks.

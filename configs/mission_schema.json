@@ -1,0 +1,182 @@
+{
+  "$defs": {
+    "MissionStep": {
+      "additionalProperties": true,
+      "properties": {
+        "command_type": {
+          "minLength": 1,
+          "title": "Command Type",
+          "type": "string"
+        },
+        "duration_sec": {
+          "exclusiveMinimum": 0,
+          "title": "Duration Sec",
+          "type": "number"
+        },
+        "linear_x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linear X"
+        },
+        "linear_y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Linear Y"
+        },
+        "max_speed": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Speed"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "payload_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payload Id"
+        },
+        "payload_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payload Type"
+        },
+        "target": {
+          "enum": [
+            "robot",
+            "payload"
+          ],
+          "title": "Target",
+          "type": "string"
+        },
+        "target_x": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target X"
+        },
+        "target_y": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Y"
+        },
+        "target_z": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Z"
+        },
+        "yaw_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Yaw Rate"
+        }
+      },
+      "required": [
+        "name",
+        "target",
+        "command_type",
+        "duration_sec"
+      ],
+      "title": "MissionStep",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "properties": {
+    "mission_id": {
+      "minLength": 1,
+      "title": "Mission Id",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "sector": {
+      "minLength": 1,
+      "title": "Sector",
+      "type": "string"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/MissionStep"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "mission_id",
+    "name",
+    "sector",
+    "steps"
+  ],
+  "title": "MissionConfig",
+  "type": "object"
+}

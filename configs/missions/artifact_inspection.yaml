@@ -1,0 +1,38 @@
+mission_id: artifact_inspection
+name: Simulated Artifact Inspection
+sector: training-yard-alpha
+description: Simulated payload inspection that should produce a mock evidence artifact.
+steps:
+  - name: stand
+    target: robot
+    command_type: stand
+    duration_sec: 1.0
+
+  - name: approach_inspection_point
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 2.0
+    linear_x: 0.2
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.5
+
+  - name: scan_target_area
+    target: payload
+    payload_id: inspection_camera_001
+    payload_type: mock_inspection_camera
+    command_type: scan
+    duration_sec: 1.0
+    target_x: 5.0
+    target_y: 1.5
+    target_z: 0.0
+
+  - name: stop
+    target: robot
+    command_type: stop
+    duration_sec: 1.0
+
+  - name: sit
+    target: robot
+    command_type: sit
+    duration_sec: 1.0

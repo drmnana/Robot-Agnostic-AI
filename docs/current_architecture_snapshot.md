@@ -190,8 +190,6 @@ flowchart LR
 
 The next safe work area is improving repeatability:
 
-- scenario library
-- mission YAML validation
 - scenario test harness
 - backend API docs
 - dashboard usability polish

@@ -1,0 +1,28 @@
+mission_id: safety_speed_limit
+name: Simulated Safety Speed Limit
+sector: training-yard-safety
+description: Simulated mission that requests motion above the safety limit so clamping can be observed.
+steps:
+  - name: stand
+    target: robot
+    command_type: stand
+    duration_sec: 1.0
+
+  - name: request_fast_walk
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 2.0
+    linear_x: 1.2
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 1.2
+
+  - name: stop
+    target: robot
+    command_type: stop
+    duration_sec: 1.0
+
+  - name: sit
+    target: robot
+    command_type: sit
+    duration_sec: 1.0

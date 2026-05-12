@@ -20,6 +20,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Evidence Bundle Schema v1.0](docs/evidence_bundle_schema_v1.md)
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
+- [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -31,8 +32,6 @@ Real robot platform integration and real payload integration are deferred for CT
 
 ## Immediate Goals
 
-- Expand simulation scenario coverage.
-- Add mission YAML validation.
 - Add repeatable scenario test harnesses.
 - Improve dashboard review workflows.
 - Keep real robot and real payload decisions ready for CTO review.
@@ -80,14 +79,26 @@ Initial packages:
 ## Mission Configs
 
 Mission YAML files live in `configs/missions/`.
+The mission YAML contract is defined in `configs/mission_schema.json`.
 
-The first configurable mission is:
+Current simulation scenarios include:
 
 - `configs/missions/demo_forward_stop.yaml`
 - `configs/missions/control_test.yaml`
+- `configs/missions/perimeter_patrol.yaml`
+- `configs/missions/artifact_inspection.yaml`
+- `configs/missions/safety_speed_limit.yaml`
+- `configs/missions/pause_resume_training.yaml`
+- `configs/missions/policy_denial_demo.yaml`
 
 Mission steps can target either `robot` or `payload`.
 Mission YAML metadata includes a `sector` field so reports can be filtered by operating area.
+
+Validate mission configs with:
+
+```powershell
+docker compose run --rm backend python backend/scripts/validate_missions.py
+```
 
 ## Backend
 

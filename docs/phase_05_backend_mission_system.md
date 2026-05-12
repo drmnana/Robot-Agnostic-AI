@@ -52,11 +52,19 @@ stand -> walk_forward -> stop -> sit
 
 The mission steps are now loaded from YAML config files in `configs/missions/`.
 
+Mission YAML is validated against:
+
+```text
+configs/mission_schema.json
+```
+
 The first config is:
 
 ```text
 configs/missions/demo_forward_stop.yaml
 ```
+
+Additional simulated scenarios live in the same directory and are described in `docs/simulation_scenario_library.md`.
 
 This is not the final backend mission system. It is the first vertical slice proving that mission logic can load a mission definition and send requested commands through the safety manager to the mock robot.
 

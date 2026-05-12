@@ -28,6 +28,11 @@ from app.evidence_verifier import (
     verify_evidence_package,
 )
 from app.main import app, settings
+from app.mission_schema import (
+    mission_schema_json,
+    validate_mission_directory,
+    validate_mission_file,
+)
 
 
 client = TestClient(app)
@@ -70,6 +75,94 @@ def test_dashboard_artifact_link_markup_is_available():
     assert "replayIntervalMs" in text
     assert 'params.get("frame")' in text
     assert "highlightLinkedRecord" in text
+
+
+def test_mission_schema_file_exists_and_matches_model():
+    schema_path = Path(__file__).resolve().parents[2] / "configs" / "mission_schema.json"
+
+    assert schema_path.exists()
+    assert json.loads(schema_path.read_text(encoding="utf-8")) == json.loads(
+        mission_schema_json()
+    )
+
+
+def test_all_configured_missions_validate():
+    mission_dir = Path(__file__).resolve().parents[2] / "configs" / "missions"
+
+    missions = validate_mission_directory(mission_dir)
+
+    mission_ids = {mission.mission_id for mission in missions}
+    assert {
+        "demo_forward_stop",
+        "control_test",
+        "perimeter_patrol",
+        "artifact_inspection",
+        "safety_speed_limit",
+        "pause_resume_training",
+        "policy_denial_demo",
+    }.issubset(mission_ids)
+
+
+def test_mission_validation_rejects_missing_required_fields(tmp_path: Path):
+    mission_file = tmp_path / "bad.yaml"
+    mission_file.write_text("mission_id: bad\nsteps: []\n", encoding="utf-8")
+
+    try:
+        validate_mission_file(mission_file)
+    except ValueError as error:
+        assert "name" in str(error)
+        assert "sector" in str(error)
+    else:
+        raise AssertionError("Mission validation should have failed")
+
+
+def test_mission_validation_rejects_unsupported_target(tmp_path: Path):
+    mission_file = tmp_path / "bad.yaml"
+    mission_file.write_text(
+        """
+mission_id: bad_target
+name: Bad Target
+sector: test
+steps:
+  - name: bad_step
+    target: drone
+    command_type: fly
+    duration_sec: 1.0
+""",
+        encoding="utf-8",
+    )
+
+    try:
+        validate_mission_file(mission_file)
+    except ValueError as error:
+        assert "target" in str(error)
+    else:
+        raise AssertionError("Mission validation should have failed")
+
+
+def test_mission_validation_rejects_payload_step_missing_payload_fields(tmp_path: Path):
+    mission_file = tmp_path / "bad.yaml"
+    mission_file.write_text(
+        """
+mission_id: bad_payload
+name: Bad Payload
+sector: test
+steps:
+  - name: scan
+    target: payload
+    command_type: scan
+    duration_sec: 1.0
+""",
+        encoding="utf-8",
+    )
+
+    try:
+        validate_mission_file(mission_file)
+    except ValueError as error:
+        assert "payload_id" in str(error)
+        assert "payload_type" in str(error)
+    else:
+        raise AssertionError("Mission validation should have failed")
 
 
 def test_list_missions():
@@ -280,6 +373,35 @@ def test_denied_mission_command_is_logged_to_backend_audit(tmp_path: Path, monke
         assert events[0]["operator_id"] == "anonymous"
         assert events[0]["decision"] == "denied"
         assert events[0]["command_type"] == "start"
+        assert events[0]["reason"] == "operator_policy"
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_policy_denial_demo_anonymous_cancel_is_denied_and_logged(
+    tmp_path: Path,
+    monkeypatch,
+):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = tmp_path / "orimus.db"
+    calls = []
+
+    def fake_send_mission_command(settings, mission_id, command_type, operator_id):
+        calls.append((mission_id, command_type, operator_id))
+        return {}
+
+    monkeypatch.setattr(main_module, "send_mission_command", fake_send_mission_command)
+    try:
+        response = client.post("/missions/policy_denial_demo/cancel")
+        assert response.status_code == 403
+        assert calls == []
+
+        events = client.get(
+            "/audit/events?operator_id=anonymous&decision=denied"
+        ).json()["events"]
+        assert len(events) == 1
+        assert events[0]["mission_id"] == "policy_denial_demo"
+        assert events[0]["command_type"] == "cancel"
         assert events[0]["reason"] == "operator_policy"
     finally:
         settings.report_database_path = original_database_path

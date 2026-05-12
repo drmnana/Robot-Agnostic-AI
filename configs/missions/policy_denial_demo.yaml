@@ -1,0 +1,23 @@
+mission_id: policy_denial_demo
+name: Simulated Policy Denial Demo
+sector: training-yard-governance
+description: Backend governance scenario; anonymous cancel should be denied and logged before ROS forwarding.
+steps:
+  - name: stand
+    target: robot
+    command_type: stand
+    duration_sec: 1.0
+
+  - name: governance_wait
+    target: robot
+    command_type: walk_velocity
+    duration_sec: 6.0
+    linear_x: 0.12
+    linear_y: 0.0
+    yaw_rate: 0.0
+    max_speed: 0.5
+
+  - name: stop
+    target: robot
+    command_type: stop
+    duration_sec: 1.0
