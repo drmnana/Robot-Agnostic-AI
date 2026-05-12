@@ -75,6 +75,7 @@ Do not finalize these without CTO guidance:
 - API Audit export and verifier.
 - Human-readable PDF report export.
 - Read-only SSE live runtime stream with polling fallback.
+- Docker-first getting-started and troubleshooting docs with explicit `--soft` and `--hard` local restart modes.
 - Mission History panel.
 - Report filters.
 - Report timeline.
@@ -120,11 +121,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Add report/PDF layout branding polish.
+1. Keep local demo/run reliability sharp as the project grows.
 2. Add API Audit export verifier bundle parity.
 
 ## Recommended Next Step
 
-Create a **Report/PDF Layout Branding Polish** ticket.
+Create an **API Audit Bundle Export** ticket.
 
-This will improve the human-readable outputs now that the underlying report, severity, and export contracts are stable.
+This brings backend authorization audit exports closer to the mission evidence bundle workflow without defining real robot or real payload contracts.

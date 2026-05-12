@@ -6,6 +6,8 @@ The project has a working simulation-first vertical slice with mission execution
 
 ## Project Documents
 
+- [Getting Started](docs/getting_started.md)
+- [Troubleshooting](docs/troubleshooting.md)
 - [Architecture Reference](docs/architecture_reference.md)
 - [Current Architecture Snapshot](docs/current_architecture_snapshot.md)
 - [CTO Review Items](docs/cto_review_items.md)
@@ -61,6 +63,8 @@ Real robot platform integration and real payload integration are deferred for CT
 - Docker validation: `hello-world` container ran successfully
 
 ## Development Container
+
+For a full first-run walkthrough, start with [Getting Started](docs/getting_started.md).
 
 The first development container uses ROS 2 Humble on Ubuntu 22.04 with Cyclone DDS selected for Unitree-oriented compatibility.
 
@@ -124,6 +128,16 @@ Run the main verification command with:
 ```powershell
 docker compose run --rm backend bash scripts/verify_project.sh
 ```
+
+This is the primary ORIMUS confidence button. It should pass before commits and before demos.
+
+Restart local services with an explicit mode:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/orimus_restart.ps1 --soft
+```
+
+Use `--soft` to preserve mission history, artifacts, and audit data. Use `--hard` only for clean demo prep because it deletes local demo SQLite/artifact state. See [Getting Started](docs/getting_started.md) and [Troubleshooting](docs/troubleshooting.md).
 
 Current endpoints:
 

@@ -566,6 +566,24 @@ The dashboard should consume live runtime updates from `GET /runtime/stream` usi
 Reason:
 ORIMUS needs real-time operator awareness, but it should not introduce a second command path. SSE is read-only, browser-native, and simpler than WebSocket for runtime state delivery. Known browser per-origin connection limits apply; if multi-tab usage becomes a problem, a future SharedWorker coordinator can multiplex one stream across tabs.
 
+### 056 - Separate Soft And Hard Local Restart Modes
+
+Status: Accepted
+
+Decision:
+ORIMUS local operations should distinguish recovery restarts from clean demo resets.
+
+`scripts/orimus_restart.ps1 --soft` restarts Docker Compose services while preserving mission history, evidence artifacts, and backend audit data.
+
+`scripts/orimus_restart.ps1 --hard` intentionally wipes only local demo persistence paths before restarting:
+
+- `data/orimus.db`
+- `data/artifacts`
+- `reports/latest_mission_report.json`
+
+Reason:
+An ambiguous reset command could accidentally destroy audit history during recovery from a service error. Explicit soft and hard modes make the operational intent visible before anything is restarted or wiped.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

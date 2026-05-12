@@ -4,6 +4,8 @@ ORIMUS uses Docker-first verification so the host machine stays clean and Window
 
 ## Confidence Button
 
+`scripts/verify_project.sh` is the single ORIMUS confidence button for normal local development.
+
 Run the main project verification command from PowerShell:
 
 ```powershell

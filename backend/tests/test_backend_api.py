@@ -434,6 +434,64 @@ def test_project_verification_script_all_mode_runs_every_check():
     assert "SUMMARY: 2 passed, 1 failed" in result.stdout
 
 
+def test_getting_started_is_the_primary_entrypoint():
+    repo_root = Path(__file__).resolve().parents[2]
+    readme = (repo_root / "README.md").read_text(encoding="utf-8")
+    getting_started = (repo_root / "docs" / "getting_started.md").read_text(encoding="utf-8")
+
+    assert "[Getting Started](docs/getting_started.md)" in readme
+    assert "docker compose up -d --build backend ros2-dev" in getting_started
+    assert "docker compose run --rm backend bash scripts/verify_project.sh" in getting_started
+    assert "This is the main ORIMUS confidence button" in getting_started
+    assert "http://localhost:8000/dashboard/" in getting_started
+
+
+def test_troubleshooting_is_linked_and_validated_by_existing_checks():
+    repo_root = Path(__file__).resolve().parents[2]
+    readme = (repo_root / "README.md").read_text(encoding="utf-8")
+    troubleshooting = (repo_root / "docs" / "troubleshooting.md").read_text(encoding="utf-8")
+
+    assert "[Troubleshooting](docs/troubleshooting.md)" in readme
+    assert "Docker Is Not Running" in troubleshooting
+    assert "Dashboard Opens But Runtime Is Degraded" in troubleshooting
+    assert "Mission YAML Or Config Is Invalid" in troubleshooting
+    assert "Validated check:" in troubleshooting
+    assert "docker compose run --rm backend bash scripts/verify_project.sh" in troubleshooting
+
+
+def test_restart_script_defines_soft_and_hard_modes_without_broad_delete():
+    script = Path(__file__).resolve().parents[2] / "scripts" / "orimus_restart.ps1"
+    text = script.read_text(encoding="utf-8")
+
+    assert '"--soft"' in text
+    assert '"--hard"' in text
+    assert "preserving mission history, artifacts, and audit data" in text
+    assert '"data\\orimus.db"' in text
+    assert '"data\\artifacts"' in text
+    assert '"reports\\latest_mission_report.json"' in text
+    assert "Remove-Item -LiteralPath $target -Recurse -Force" in text
+    assert "Remove-Item -Recurse -Force ." not in text
+    assert "docker compose up -d --build backend ros2-dev" in text
+
+
+def test_restart_modes_are_documented():
+    repo_root = Path(__file__).resolve().parents[2]
+    docs = "\n".join(
+        [
+            (repo_root / "README.md").read_text(encoding="utf-8"),
+            (repo_root / "docs" / "getting_started.md").read_text(encoding="utf-8"),
+            (repo_root / "docs" / "troubleshooting.md").read_text(encoding="utf-8"),
+        ]
+    )
+
+    assert "scripts/orimus_restart.ps1 --soft" in docs
+    assert "scripts/orimus_restart.ps1 --hard" in docs
+    assert "preserve mission history" in docs
+    assert "clean demo" in docs
+    assert "data/orimus.db" in docs
+    assert "data/artifacts" in docs
+
+
 def test_mission_validation_rejects_missing_required_fields(tmp_path: Path):
     mission_file = tmp_path / "bad.yaml"
     mission_file.write_text("mission_id: bad\nsteps: []\n", encoding="utf-8")
