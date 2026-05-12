@@ -454,9 +454,21 @@ Mission History should include replay frames that are filterable, speed-controll
 Reason:
 Reviewers need a narrative way to inspect mission history and share exact moments without losing the forensic drilldown links back to commands, safety events, and artifacts.
 
+### 045 - Pin CTO-Deferred Integration Decisions
+
+Status: Accepted
+
+Decision:
+Real robot platform integration and real payload integration should be treated as prominent CTO review items. The repository should link directly to those deferred decisions from the README and current architecture snapshot.
+
+Reason:
+The simulation-first software spine can continue advancing, but hardware adapter boundaries, real payload schemas, safety limits, and deployment assumptions should be reviewed before they are finalized.
+
 ## Pending Decisions
 
-- First mission scenario.
-- First payload or sensor.
-- GitHub repository name.
-- Docker runtime strategy on Windows, likely Docker Desktop with WSL2 backend.
+- Real robot platform adapter design.
+- Real payload adapter design.
+- Hardware emergency stop and manual override model.
+- Real artifact metadata taxonomy.
+- Real perception model selection.
+- Production authentication strategy.

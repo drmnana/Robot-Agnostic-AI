@@ -44,14 +44,15 @@ The backend, ROS 2 interfaces, simulation, and mock adapters should come before 
 
 ## Current Priority
 
-The first priority is not to write robot movement code.
+The current priority is improving repeatability without committing to CTO-dependent hardware choices.
 
-The first priority is to define the project foundation:
+The simulation-first vertical slice is working. The next safe work should focus on:
 
-- What the system must do
-- What the system must never do
-- What robot platform we support first
-- What payload we support first
-- What development environment we use
-- What safety rules exist from day one
+- simulated mission scenario library
+- mission YAML validation
+- scenario test harnesses
+- dashboard/operator workflow polish
+- backend API documentation
+- health checks and CI-ready verification
 
+Real robot platform integration and real payload integration are deferred for CTO review.
