@@ -55,6 +55,7 @@ Do not finalize these without CTO guidance:
 - Mission steps targeting robot or payload.
 - Demo mission with mock inspection scan.
 - Simulated mission scenario library.
+- Scenario test harness with single-scenario and run-all modes.
 - Mission command flow: start, pause, resume, cancel, reset.
 - Mission events.
 - Rolling runtime event history.
@@ -108,15 +109,14 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Add scenario test harness scripts.
-2. Improve dashboard usability and navigation.
-3. Write backend API contract documentation.
-4. Add health checks for database, artifact root, reports, and ROS bridge.
-5. Add CI-ready verification commands.
-6. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
+1. Improve dashboard usability and navigation.
+2. Write backend API contract documentation.
+3. Add health checks for database, artifact root, reports, and ROS bridge.
+4. Add CI-ready verification commands.
+5. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
 
 ## Recommended Next Step
 
-Create a **Scenario Test Harness** ticket.
+Create a **Backend Health And Readiness Checks** ticket.
 
-This will make the new scenario library repeatable with one-command checks.
+This will make demo readiness visible before operators run missions.

@@ -48,7 +48,6 @@ The current priority is improving repeatability without committing to CTO-depend
 
 The simulation-first vertical slice is working. The next safe work should focus on:
 
-- scenario test harnesses
 - dashboard/operator workflow polish
 - backend API documentation
 - health checks and CI-ready verification

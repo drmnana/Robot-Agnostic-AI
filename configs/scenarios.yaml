@@ -1,0 +1,70 @@
+version: 1
+scenarios:
+  - id: demo_forward_stop
+    mission_path: /workspace/configs/missions/demo_forward_stop.yaml
+    timeout_sec: 18
+    expected:
+      outcome: completed
+      min_mission_events: 5
+      min_robot_commands: 4
+      min_payload_results: 1
+      min_perception_events: 1
+      artifact_required: true
+      safety_event_required: false
+
+  - id: artifact_inspection
+    mission_path: /workspace/configs/missions/artifact_inspection.yaml
+    timeout_sec: 16
+    expected:
+      outcome: completed
+      min_mission_events: 5
+      min_robot_commands: 4
+      min_payload_results: 1
+      min_perception_events: 1
+      artifact_required: true
+      safety_event_required: false
+
+  - id: perimeter_patrol
+    mission_path: /workspace/configs/missions/perimeter_patrol.yaml
+    timeout_sec: 16
+    expected:
+      outcome: completed
+      min_mission_events: 6
+      min_robot_commands: 6
+      min_payload_results: 0
+      min_perception_events: 0
+      artifact_required: false
+      safety_event_required: false
+
+  - id: safety_speed_limit
+    mission_path: /workspace/configs/missions/safety_speed_limit.yaml
+    timeout_sec: 14
+    expected:
+      outcome: completed
+      min_mission_events: 4
+      min_robot_commands: 4
+      min_payload_results: 0
+      min_perception_events: 0
+      artifact_required: false
+      safety_event_required: true
+
+  - id: pause_resume_training
+    mission_path: /workspace/configs/missions/pause_resume_training.yaml
+    timeout_sec: 18
+    expected:
+      outcome: completed
+      min_mission_events: 5
+      min_robot_commands: 5
+      min_payload_results: 0
+      min_perception_events: 0
+      artifact_required: false
+      safety_event_required: false
+
+  - id: policy_denial_demo
+    mission_path: /workspace/configs/missions/policy_denial_demo.yaml
+    timeout_sec: 12
+    expected:
+      backend_policy_denial:
+        operator_id: anonymous
+        command_type: cancel
+        status_code: 403

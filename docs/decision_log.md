@@ -474,6 +474,16 @@ Mission YAML files should be validated against a shared schema file at `configs/
 Reason:
 The mission contract should be readable by contributors and enforced automatically by tests, not hidden in mission manager parsing code or only checked by manual CLI usage.
 
+### 047 - Add Versioned Scenario Harness
+
+Status: Accepted
+
+Decision:
+Simulation scenario checks should be driven by a versioned manifest at `configs/scenarios.yaml` and runnable one scenario at a time or in `--all` mode.
+
+Reason:
+The scenario library should be a repeatable pre-flight tool before demos and commits. Versioning the manifest now makes future expectation migrations explicit.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

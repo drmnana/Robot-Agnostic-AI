@@ -5,6 +5,7 @@ import subprocess
 import sys
 import inspect
 import zipfile
+import io
 from io import BytesIO
 
 from fastapi import HTTPException
@@ -33,6 +34,8 @@ from app.mission_schema import (
     validate_mission_directory,
     validate_mission_file,
 )
+from app.scenario_manifest import find_scenario, load_scenario_manifest
+from scripts.check_scenario_result import evaluate_report
 
 
 client = TestClient(app)
@@ -101,6 +104,56 @@ def test_all_configured_missions_validate():
         "pause_resume_training",
         "policy_denial_demo",
     }.issubset(mission_ids)
+
+
+def test_scenario_manifest_parses_and_is_versioned():
+    manifest_path = Path(__file__).resolve().parents[2] / "configs" / "scenarios.yaml"
+
+    manifest = load_scenario_manifest(manifest_path)
+
+    assert manifest.version == 1
+    assert find_scenario(manifest, "artifact_inspection").expected.artifact_required
+    assert find_scenario(manifest, "policy_denial_demo").is_backend_policy_scenario
+
+
+def test_scenario_manifest_rejects_unknown_scenario():
+    manifest_path = Path(__file__).resolve().parents[2] / "configs" / "scenarios.yaml"
+    manifest = load_scenario_manifest(manifest_path)
+
+    try:
+        find_scenario(manifest, "missing_scenario")
+    except ValueError as error:
+        assert "unknown scenario" in str(error)
+    else:
+        raise AssertionError("Unknown scenario should have failed")
+
+
+def test_scenario_result_checker_reports_specific_mismatch(tmp_path: Path):
+    manifest_path = Path(__file__).resolve().parents[2] / "configs" / "scenarios.yaml"
+    scenario = find_scenario(load_scenario_manifest(manifest_path), "artifact_inspection")
+    report = {
+        "report_id": "report-debug-001",
+        "mission": {"state": "completed"},
+        "mission_events": [],
+        "robot_commands": [],
+        "payload_results": [],
+        "perception_events": [],
+        "safety_events": [],
+    }
+
+    failures = evaluate_report(scenario, report)
+
+    assert any("min_mission_events expected >= 5, observed 0" in failure for failure in failures)
+    assert all("see report report-debug-001" in failure for failure in failures)
+
+
+def test_scenario_runner_all_mode_summary_can_pass_and_fail(tmp_path: Path):
+    script = Path(__file__).resolve().parents[2] / "ros2_ws" / "scripts" / "run_scenario_check.sh"
+    text = script.read_text(encoding="utf-8")
+
+    assert "--all" in text
+    assert "SUMMARY: ${passed} passed, ${failed} failed" in text
+    assert "FAILED: ${failed_ids[*]}" in text
 
 
 def test_mission_validation_rejects_missing_required_fields(tmp_path: Path):

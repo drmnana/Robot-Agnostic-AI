@@ -21,6 +21,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
+- [Scenario Test Harness](docs/scenario_test_harness.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -98,6 +99,12 @@ Validate mission configs with:
 
 ```powershell
 docker compose run --rm backend python backend/scripts/validate_missions.py
+```
+
+Run all scenario checks with:
+
+```powershell
+docker compose run --rm ros2-dev bash -lc "cd ros2_ws && source install/setup.bash && scripts/run_scenario_check.sh --all"
 ```
 
 ## Backend

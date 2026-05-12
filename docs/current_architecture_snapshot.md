@@ -190,6 +190,6 @@ flowchart LR
 
 The next safe work area is improving repeatability:
 
-- scenario test harness
 - backend API docs
 - dashboard usability polish
+- backend health and readiness checks
