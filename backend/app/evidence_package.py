@@ -12,7 +12,7 @@ def build_evidence_package(report: dict, generated_at: str | None = None) -> dic
     package = {
         "package_type": "orimus_evidence_package",
         "schema_version": EVIDENCE_PACKAGE_SCHEMA_VERSION,
-        "generated_at": generated_at or datetime.now(timezone.utc).isoformat(),
+        "generated_at": generated_at or stable_package_timestamp(report),
         "export_hash_algorithm": "SHA-256",
         "export_hash": "",
         "report": {
@@ -83,6 +83,14 @@ def first_stamp(items: list[dict]) -> dict | None:
     if not items:
         return None
     return items[0].get("stamp")
+
+
+def stable_package_timestamp(report: dict) -> str:
+    stamp = (report.get("mission") or {}).get("stamp") or first_stamp(report.get("mission_states", []))
+    if isinstance(stamp, dict) and stamp.get("sec") is not None:
+        seconds = float(stamp.get("sec") or 0) + float(stamp.get("nanosec") or 0) / 1_000_000_000
+        return datetime.fromtimestamp(seconds, timezone.utc).isoformat()
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def extract_sector(report: dict) -> str:

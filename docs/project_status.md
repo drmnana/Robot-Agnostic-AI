@@ -73,6 +73,7 @@ Do not finalize these without CTO guidance:
 - API Audit dashboard panel.
 - API Audit Package Schema v1.0.
 - API Audit export and verifier.
+- Human-readable PDF report export.
 - Mission History panel.
 - Report filters.
 - Report timeline.
@@ -118,11 +119,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Add PDF report export.
-2. Add WebSocket or SSE live event streaming.
+1. Add WebSocket or SSE live event streaming.
+2. Add report/PDF layout branding polish.
 
 ## Recommended Next Step
 
-Create a **PDF Report Export** ticket.
+Create a **Live Event Streaming** ticket.
 
-This will add a human-readable report sibling to the existing JSON evidence package without changing the underlying audit data model.
+This will reduce dashboard polling and prepare the operator UI for real-time mission monitoring without changing robot or payload contracts.

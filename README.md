@@ -21,6 +21,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
 - [API Audit Package Schema v1.0](docs/api_audit_package_schema_v1.md)
 - [Event Severity Semantics](docs/event_severity_semantics.md)
+- [PDF Report Export](docs/pdf_report_export.md)
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Scenario Test Harness](docs/scenario_test_harness.md)
@@ -150,6 +151,7 @@ Current endpoints:
 - `GET /reports`
 - `GET /reports/{report_id}/export-bundle`
 - `GET /reports/{report_id}/export`
+- `GET /reports/{report_id}/export-pdf`
 - `GET /reports/{report_id}/replay`
 - `GET /reports/latest`
 - `GET /reports/{report_id}`
@@ -188,6 +190,7 @@ Each finalized report is stored with a SHA-256 content hash for audit traceabili
 Report detail views show a unified chronological audit timeline, command safety verdicts, safety-event command links, perception evidence metadata, payload results, and report integrity fields.
 Report detail views show artifact links when perception events reference stored evidence files, and degrade to "No artifact captured" when no artifact exists.
 Selected reports can be exported as JSON evidence packages or ZIP evidence bundles.
+Selected reports can also be exported as human-readable PDF summaries; JSON evidence packages remain the authoritative machine-readable records.
 Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
 Evidence bundles can be verified with `backend/scripts/verify_evidence_bundle.py`.
 The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.

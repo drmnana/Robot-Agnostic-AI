@@ -32,6 +32,7 @@ This map records the pre-reorganization dashboard surface and where each item no
 | Copy report hash | Mission History | one tab click or `?tab=history` |
 | Export JSON | Mission History | one tab click or `?tab=history` |
 | Export Bundle | Mission History | one tab click or `?tab=history` |
+| Export PDF | Mission History | one tab click or `?tab=history` |
 | Mission Replay | Mission History | one tab click or `?tab=history` |
 | Audit Timeline | Mission History | one tab click or `?tab=history` |
 | Commands / Safety / Perception / Payload detail panels | Mission History | one tab click or `?tab=history` |

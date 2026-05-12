@@ -73,6 +73,7 @@ const elements = {
   reportCopyHash: document.querySelector("#report-copy-hash"),
   reportExportJson: document.querySelector("#report-export-json"),
   reportExportBundle: document.querySelector("#report-export-bundle"),
+  reportExportPdf: document.querySelector("#report-export-pdf"),
   reportTimelineCount: document.querySelector("#report-timeline-count"),
   reportTimeline: document.querySelector("#report-timeline"),
   reportCommandCount: document.querySelector("#report-command-count"),
@@ -119,6 +120,7 @@ elements.auditExportJson.addEventListener("click", () => exportAuditEvents());
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
 elements.reportExportBundle.addEventListener("click", () => exportSelectedReportBundle());
+elements.reportExportPdf.addEventListener("click", () => exportSelectedReportPdf());
 elements.replayPlay.addEventListener("click", () => toggleReplayPlayback());
 elements.replayPrev.addEventListener("click", () => setReplayFrame(state.replayIndex - 1, true));
 elements.replayNext.addEventListener("click", () => setReplayFrame(state.replayIndex + 1, true));
@@ -1058,6 +1060,15 @@ function exportSelectedReportBundle() {
   }
 
   window.location.href = `/reports/${encodeURIComponent(state.selectedReportId)}/export-bundle`;
+}
+
+function exportSelectedReportPdf() {
+  if (!state.selectedReportId) {
+    elements.reportStatus.textContent = "Select a report to export";
+    return;
+  }
+
+  window.location.href = `/reports/${encodeURIComponent(state.selectedReportId)}/export-pdf`;
 }
 
 function operatorId() {

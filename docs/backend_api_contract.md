@@ -259,6 +259,23 @@ Status codes:
 - `200`: bundle returned.
 - `404`: report or referenced artifact file not found.
 
+### `GET /reports/{report_id}/export-pdf`
+
+Purpose: export a human-readable PDF summary for a mission report.
+
+Policy: `none`.
+
+Path params:
+
+- `report_id`
+
+Response: `application/pdf` mission report summary. The PDF includes the JSON Evidence Package SHA-256 hash in the first-page disclosure and every page footer.
+
+Status codes:
+
+- `200`: PDF returned.
+- `404`: report not found.
+
 ### `GET /reports/{report_id}/replay`
 
 Purpose: return normalized chronological replay frames for mission review.

@@ -546,6 +546,16 @@ ORIMUS should use one canonical event severity vocabulary: `info`, `notice`, `wa
 Reason:
 Operators need to scan live events, readiness, replay, reports, and audit records consistently. A shared severity contract prevents each surface from inventing its own meaning, and non-color labels keep the interface accessible and reviewable.
 
+### 054 - Add PDF Report As Presentation Export
+
+Status: Accepted
+
+Decision:
+Mission reports should be exportable as human-readable PDF summaries, while JSON Evidence Packages and ZIP Evidence Bundles remain the authoritative machine-readable audit artifacts.
+
+Reason:
+PDF is useful for operators, briefings, and offline review, but it should not become a parallel source of truth. Including the JSON Evidence Package SHA-256 hash on the cover disclosure and every page footer keeps the PDF tied to the verifiable record.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

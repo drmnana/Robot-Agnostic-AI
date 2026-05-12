@@ -211,6 +211,7 @@ def test_dashboard_is_served():
     assert "Mission History" in response.text
     assert "API Audit" in response.text
     assert "Export Bundle" in response.text
+    assert "Export PDF" in response.text
     assert "Mission Replay" in response.text
     assert "Readiness" in response.text
     assert 'data-tab-link="ops"' in response.text
@@ -225,6 +226,7 @@ def test_dashboard_is_served():
     assert 'id="readiness-list"' in response.text
     assert 'id="replay-speed"' in response.text
     assert 'id="replay-slider"' in response.text
+    assert 'id="report-export-pdf"' in response.text
     assert 'id="audit-filter-decision"' in response.text
     assert 'id="audit-list"' in response.text
     assert 'id="audit-export-json"' in response.text
@@ -265,6 +267,7 @@ def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
         "report-refresh-button",
         "report-export-json",
         "report-export-bundle",
+        "report-export-pdf",
         "replay-play",
         "replay-slider",
         "audit-refresh-button",
@@ -1292,6 +1295,43 @@ def test_export_report_bundle_roundtrip_and_deterministic(tmp_path: Path):
     finally:
         settings.report_database_path = original_database_path
         settings.artifact_root = original_artifact_root
+
+
+def test_export_report_pdf_contains_disclosure_hash_and_footer(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        evidence_package = client.get("/reports/report-001/export").json()
+        response = client.get("/reports/report-001/export-pdf")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/pdf"
+        assert (
+            response.headers["content-disposition"]
+            == 'attachment; filename="orimus-mission-report-report-001.pdf"'
+        )
+        pdf_text = response.content.decode("latin-1")
+        page_count = pdf_text.count("/Type /Page ")
+        export_hash = evidence_package["export_hash"]
+        assert response.content.startswith(b"%PDF-1.4")
+        assert "This PDF is a human-readable summary" in pdf_text
+        assert "verify_evidence_package.py" in pdf_text
+        assert export_hash in pdf_text
+        assert pdf_text.count(f"Evidence Package SHA-256: {export_hash}") == page_count
+        assert "Page 1 of" in pdf_text
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_export_report_pdf_not_found(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = create_report_database(tmp_path)
+    try:
+        response = client.get("/reports/missing-report/export-pdf")
+
+        assert response.status_code == 404
+    finally:
+        settings.report_database_path = original_database_path
 
 
 def test_verify_evidence_bundle_rejects_tampered_evidence_json(tmp_path: Path):

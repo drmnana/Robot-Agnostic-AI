@@ -20,6 +20,7 @@ from .evidence_package import build_evidence_package
 from .event_severity import annotate_runtime_resource
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .operator_policy import is_mission_command_allowed
+from .pdf_report import build_report_pdf
 from .readiness import build_readiness
 from .replay import build_replay_frames
 from .report_store import get_report, list_reports
@@ -306,6 +307,22 @@ def export_report_bundle(report_id: str):
     return Response(
         content=bundle_bytes,
         media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/reports/{report_id}/export-pdf")
+def export_report_pdf(report_id: str):
+    report = get_report(settings.report_database_path, report_id)
+    if report is None:
+        raise HTTPException(status_code=404, detail="Mission report not found")
+
+    package = build_evidence_package(report)
+    pdf_bytes = build_report_pdf(report, package)
+    filename = f"orimus-mission-report-{report_id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
