@@ -1,4 +1,5 @@
 const state = {
+  activeTab: "ops",
   missions: [],
   selectedMissionId: null,
   selectedReportId: null,
@@ -99,8 +100,16 @@ const elements = {
   auditFilterDateFrom: document.querySelector("#audit-filter-date-from"),
   auditFilterDateTo: document.querySelector("#audit-filter-date-to"),
   auditFilterClear: document.querySelector("#audit-filter-clear"),
+  tabLinks: document.querySelectorAll("[data-tab-link]"),
+  tabPanels: document.querySelectorAll("[data-tab-panel]"),
 };
 
+elements.tabLinks.forEach((link) => {
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    activateTab(link.dataset.tabLink, true);
+  });
+});
 elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
 elements.readinessRefreshButton.addEventListener("click", () => refreshReadiness({ fresh: true }));
@@ -142,9 +151,11 @@ elements.commandButtons.forEach((button) => {
   button.addEventListener("click", () => sendMissionCommand(button.dataset.command));
 });
 
+activateTab(tabFromUrl(), false);
 refreshAll();
 setInterval(refreshRuntime, 2000);
 setInterval(refreshReadiness, 20000);
+window.addEventListener("popstate", () => activateTab(tabFromUrl(), false));
 
 async function refreshAll() {
   await Promise.all([refreshMissions(), refreshRuntime(), refreshReadiness(), refreshLatestReport(), refreshAuditEvents()]);
@@ -332,6 +343,32 @@ function clearAuditFilters() {
   elements.auditFilterDateFrom.value = "";
   elements.auditFilterDateTo.value = "";
   refreshAuditEvents();
+}
+
+function tabFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get("tab") ?? "ops";
+  return ["ops", "history", "audit", "readiness"].includes(tab) ? tab : "ops";
+}
+
+function activateTab(tab, updateUrl) {
+  const nextTab = ["ops", "history", "audit", "readiness"].includes(tab) ? tab : "ops";
+  state.activeTab = nextTab;
+
+  elements.tabLinks.forEach((link) => {
+    const active = link.dataset.tabLink === nextTab;
+    link.classList.toggle("active", active);
+    link.setAttribute("aria-current", active ? "page" : "false");
+  });
+  elements.tabPanels.forEach((panel) => {
+    panel.hidden = panel.dataset.tabPanel !== nextTab;
+  });
+
+  if (updateUrl) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", nextTab);
+    window.history.pushState({}, "", url);
+  }
 }
 
 function renderMissions() {

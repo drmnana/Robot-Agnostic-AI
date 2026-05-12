@@ -81,6 +81,7 @@ Do not finalize these without CTO guidance:
 - Backend API contract documentation.
 - Committed OpenAPI artifact with drift test.
 - CI-ready local verification command.
+- URL-addressable dashboard operator tabs.
 
 ## Completed Audit, Evidence, And Replay
 
@@ -114,11 +115,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Improve dashboard usability and navigation.
-2. Add an autonomy planner skeleton that only operates in simulation and still routes through safety gates.
+1. Add API Audit export and verifier parity.
+2. Add PDF report export.
 
 ## Recommended Next Step
 
-Create a **Simulation-Only Autonomy Planner Skeleton** ticket.
+Create an **API Audit Export And Verifier** ticket.
 
-This will start the AI/autonomy layer without touching real robot hardware or bypassing the safety and mission-command path.
+This will close the known parity gap between mission evidence exports and backend authorization audit exports while staying away from CTO-deferred autonomy and hardware contracts.

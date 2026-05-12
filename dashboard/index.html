@@ -21,7 +21,15 @@
         </div>
       </header>
 
+      <nav class="dashboard-tabs" aria-label="Dashboard sections">
+        <a href="?tab=ops" class="tab-link" data-tab-link="ops">Mission Ops</a>
+        <a href="?tab=history" class="tab-link" data-tab-link="history">Mission History</a>
+        <a href="?tab=audit" class="tab-link" data-tab-link="audit">API Audit</a>
+        <a href="?tab=readiness" class="tab-link" data-tab-link="readiness">System Readiness</a>
+      </nav>
+
       <main class="dashboard-grid">
+        <div class="tab-panel ops-tab" data-tab-panel="ops">
         <section class="panel mission-panel">
           <div class="panel-header">
             <h2>Missions</h2>
@@ -64,17 +72,6 @@
             </button>
           </div>
           <div id="command-message" class="message-line" role="status"></div>
-        </section>
-
-        <section class="panel readiness-panel">
-          <div class="panel-header">
-            <h2>Readiness</h2>
-            <button id="readiness-refresh-button" class="icon-button" type="button" aria-label="Refresh readiness checks">
-              <span aria-hidden="true">R</span>
-            </button>
-          </div>
-          <div id="readiness-summary" class="report-status">Readiness not checked</div>
-          <ol id="readiness-list" class="detail-list"></ol>
         </section>
 
         <section class="panel runtime-panel">
@@ -172,7 +169,9 @@
           </div>
           <ol id="event-history" class="event-history"></ol>
         </section>
+        </div>
 
+        <div class="tab-panel history-tab" data-tab-panel="history" hidden>
         <section class="panel report-panel">
           <div class="panel-header">
             <h2>Mission History</h2>
@@ -338,7 +337,9 @@
             </section>
           </div>
         </section>
+        </div>
 
+        <div class="tab-panel audit-tab" data-tab-panel="audit" hidden>
         <section class="panel api-audit-panel">
           <div class="panel-header">
             <h2>API Audit</h2>
@@ -376,6 +377,20 @@
           </div>
           <div id="audit-list" class="audit-list"></div>
         </section>
+        </div>
+
+        <div class="tab-panel readiness-tab" data-tab-panel="readiness" hidden>
+        <section class="panel readiness-panel">
+          <div class="panel-header">
+            <h2>Readiness</h2>
+            <button id="readiness-refresh-button" class="icon-button" type="button" aria-label="Refresh readiness checks">
+              <span aria-hidden="true">R</span>
+            </button>
+          </div>
+          <div id="readiness-summary" class="report-status">Readiness not checked</div>
+          <ol id="readiness-list" class="detail-list"></ol>
+        </section>
+        </div>
       </main>
     </div>
 

@@ -514,6 +514,16 @@ ORIMUS should provide `scripts/verify_project.sh` as the primary Docker-first lo
 Reason:
 The project now has enough tests, schemas, generated specs, and verifier workflows that a single confidence button is safer than asking contributors to remember many commands. Fail-fast supports quick pre-commit and CI-style checks, while `--all` supports debugging by collecting every failure with per-check timing.
 
+### 051 - Organize Dashboard By URL-Addressable Operator Tabs
+
+Status: Accepted
+
+Decision:
+The dashboard should group existing operator surfaces into URL-addressable tabs for Mission Ops, Mission History, API Audit, and System Readiness.
+
+Reason:
+The dashboard now contains enough operational, audit, replay, evidence, and readiness surfaces that a single dense grid is harder to scan. URL-addressable tabs preserve shareable operator context while keeping every existing action reachable in equal-or-fewer clicks.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

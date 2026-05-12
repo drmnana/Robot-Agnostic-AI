@@ -197,6 +197,14 @@ def test_dashboard_is_served():
     assert "Export Bundle" in response.text
     assert "Mission Replay" in response.text
     assert "Readiness" in response.text
+    assert 'data-tab-link="ops"' in response.text
+    assert 'data-tab-link="history"' in response.text
+    assert 'data-tab-link="audit"' in response.text
+    assert 'data-tab-link="readiness"' in response.text
+    assert 'data-tab-panel="ops"' in response.text
+    assert 'data-tab-panel="history"' in response.text
+    assert 'data-tab-panel="audit"' in response.text
+    assert 'data-tab-panel="readiness"' in response.text
     assert 'id="readiness-status"' in response.text
     assert 'id="readiness-list"' in response.text
     assert 'id="replay-speed"' in response.text
@@ -216,6 +224,33 @@ def test_dashboard_artifact_link_markup_is_available():
     assert "highlightLinkedRecord" in text
     assert "setInterval(refreshReadiness, 20000)" in text
     assert "fresh=true" in text
+
+
+def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
+    app_js = Path(__file__).resolve().parents[2] / "dashboard" / "app.js"
+    index_html = Path(__file__).resolve().parents[2] / "dashboard" / "index.html"
+    js_text = app_js.read_text(encoding="utf-8")
+    html_text = index_html.read_text(encoding="utf-8")
+
+    assert 'params.get("tab")' in js_text
+    assert 'url.searchParams.set("tab", nextTab)' in js_text
+    assert 'window.addEventListener("popstate"' in js_text
+    assert 'activateTab(tabFromUrl(), false)' in js_text
+    for element_id in [
+        "mission-list",
+        "operator-id",
+        "refresh-button",
+        "readiness-refresh-button",
+        "report-refresh-button",
+        "report-export-json",
+        "report-export-bundle",
+        "replay-play",
+        "replay-slider",
+        "audit-refresh-button",
+        "audit-filter-decision",
+        "audit-list",
+    ]:
+        assert f'id="{element_id}"' in html_text
 
 
 def test_mission_schema_file_exists_and_matches_model():

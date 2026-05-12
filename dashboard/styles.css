@@ -127,11 +127,46 @@ h3 {
   color: var(--red);
 }
 
+.dashboard-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.tab-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  background: #191916;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.tab-link:hover,
+.tab-link.active {
+  border-color: rgba(80, 183, 173, 0.65);
+  color: var(--text);
+}
+
 .dashboard-grid {
+  padding-top: 18px;
+}
+
+.tab-panel {
   display: grid;
   grid-template-columns: minmax(240px, 0.8fr) minmax(360px, 1.35fr) minmax(280px, 1fr);
   gap: 16px;
-  padding-top: 18px;
+}
+
+.tab-panel[hidden] {
+  display: none;
 }
 
 .panel {
@@ -162,6 +197,18 @@ h3 {
 .report-panel,
 .api-audit-panel {
   grid-column: span 2;
+}
+
+.history-tab,
+.audit-tab,
+.readiness-tab {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.history-tab .report-panel,
+.audit-tab .api-audit-panel,
+.readiness-tab .readiness-panel {
+  grid-column: span 1;
 }
 
 .readiness-panel {
@@ -717,7 +764,7 @@ strong {
 }
 
 @media (max-width: 1020px) {
-  .dashboard-grid {
+  .tab-panel {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -743,7 +790,7 @@ strong {
     justify-content: flex-start;
   }
 
-  .dashboard-grid,
+  .tab-panel,
   .runtime-map,
   .metric-grid,
   .report-grid,

@@ -25,6 +25,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Backend Health And Readiness](docs/backend_health_readiness.md)
 - [Backend API Contract](docs/backend_api_contract.md)
 - [Verification](docs/verification.md)
+- [Dashboard Operator Workflow](docs/dashboard_operator_workflow.md)
 - [Operator API Policy](docs/operator_api_policy.md)
 - [Backend Audit Log](docs/backend_audit_log.md)
 
@@ -176,6 +177,7 @@ http://localhost:8000/dashboard/
 ```
 
 The dashboard can list missions, send mission commands, reset missions for repeated demos, display live runtime state, show mission event history, browse/filter persisted mission reports, and review backend API audit events.
+The dashboard is organized into URL-addressable operator tabs for mission operations, mission history, API audit, and system readiness.
 The dashboard includes an operator ID field for development-mode command attribution.
 
 Mission reports are persisted to SQLite at `data/orimus.db` inside the workspace mount.
