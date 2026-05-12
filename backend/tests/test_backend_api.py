@@ -14,6 +14,11 @@ from fastapi.testclient import TestClient
 
 import app.main as main_module
 import app.readiness as readiness_module
+from app.audit_package import (
+    build_api_audit_package,
+    hash_api_audit_package,
+    verify_api_audit_package,
+)
 from app.artifact_store import ArtifactStore, hash_file
 from app.backend_audit import BackendAuditStore
 from app.evidence_bundle import (
@@ -211,6 +216,7 @@ def test_dashboard_is_served():
     assert 'id="replay-slider"' in response.text
     assert 'id="audit-filter-decision"' in response.text
     assert 'id="audit-list"' in response.text
+    assert 'id="audit-export-json"' in response.text
 
 
 def test_dashboard_artifact_link_markup_is_available():
@@ -247,6 +253,7 @@ def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
         "replay-play",
         "replay-slider",
         "audit-refresh-button",
+        "audit-export-json",
         "audit-filter-decision",
         "audit-list",
     ]:
@@ -736,6 +743,172 @@ def test_backend_audit_source_ip_toggle_off(tmp_path: Path, monkeypatch):
     finally:
         settings.report_database_path = original_database_path
         settings.log_source_ip = original_log_source_ip
+
+
+def test_export_api_audit_package_filters_and_hashes(tmp_path: Path):
+    original_database_path = settings.report_database_path
+    settings.report_database_path = tmp_path / "orimus.db"
+    try:
+        store = BackendAuditStore(settings.report_database_path)
+        store.record_event(
+            event_type="mission_command",
+            decision="allowed",
+            operator_id="operator-demo",
+            mission_id="demo_forward_stop",
+            command_type="start",
+            reason="operator_policy",
+            request_path="/missions/demo_forward_stop/start",
+            source_ip="127.0.0.1",
+        )
+        store.record_event(
+            event_type="mission_command",
+            decision="denied",
+            operator_id="anonymous",
+            mission_id="policy_denial_demo",
+            command_type="cancel",
+            reason="operator_policy",
+            request_path="/missions/policy_denial_demo/cancel",
+            source_ip="127.0.0.1",
+        )
+
+        response = client.get("/audit/events/export?decision=denied")
+
+        assert response.status_code == 200
+        package = response.json()
+        assert package["package_type"] == "orimus_api_audit_package"
+        assert package["schema_version"] == "1.0"
+        assert package["filters"] == {"decision": "denied"}
+        assert package["summary"]["event_count"] == 1
+        assert package["summary"]["denied_count"] == 1
+        assert package["summary"]["allowed_count"] == 0
+        assert package["events"][0]["operator_id"] == "anonymous"
+        assert package["export_hash"] == hash_api_audit_package(package)
+        assert verify_api_audit_package(package).exit_code == EXIT_VALID
+    finally:
+        settings.report_database_path = original_database_path
+
+
+def test_api_audit_package_verifier_rejects_hash_mismatch():
+    package = build_api_audit_package([api_audit_event("event-001", 1.0, "allowed")], {})
+    package["events"][0]["decision"] = "denied"
+
+    result = verify_api_audit_package(package)
+
+    assert result.exit_code == EXIT_HASH_MISMATCH
+    assert "export_hash mismatch" in result.errors
+
+
+def test_api_audit_package_verifier_rejects_schema_mismatch():
+    package = build_api_audit_package([api_audit_event("event-001", 1.0, "allowed")], {})
+    package["schema_version"] = "9.9"
+    package["export_hash"] = hash_api_audit_package(package)
+
+    result = verify_api_audit_package(package)
+
+    assert result.exit_code == EXIT_SCHEMA_MISMATCH
+    assert "schema_version must be 1.0" in result.errors
+
+
+def test_api_audit_package_verifier_rejects_semantic_failure():
+    package = build_api_audit_package(
+        [
+            api_audit_event("event-001", 2.0, "allowed"),
+            api_audit_event("event-002", 1.0, "denied"),
+        ],
+        {},
+    )
+    package["events"] = list(reversed(package["events"]))
+    package["summary"]["event_count"] = 99
+    package["export_hash"] = hash_api_audit_package(package)
+
+    result = verify_api_audit_package(package)
+
+    assert result.exit_code == EXIT_SEMANTIC_FAILURE
+    assert "summary.event_count expected 2" in result.errors
+    assert "events timestamps are not monotonic" in result.errors
+
+
+def test_api_audit_package_verifier_rejects_invalid_decision():
+    package = build_api_audit_package([api_audit_event("event-001", 1.0, "maybe")], {})
+    package["export_hash"] = hash_api_audit_package(package)
+
+    result = verify_api_audit_package(package)
+
+    assert result.exit_code == EXIT_SEMANTIC_FAILURE
+    assert "events[0].decision must be allowed or denied" in result.errors
+
+
+def test_api_audit_verifier_rejects_mission_evidence_package(tmp_path: Path):
+    evidence_package = create_evidence_package_for_test(tmp_path)
+
+    result = verify_api_audit_package(evidence_package)
+
+    assert result.exit_code == EXIT_SCHEMA_MISMATCH
+    assert "this verifier is for ORIMUS API Audit Package JSON" in result.errors[0]
+
+
+def test_api_audit_cli_rejects_mission_evidence_package(tmp_path: Path):
+    evidence_package = create_evidence_package_for_test(tmp_path)
+    evidence_path = tmp_path / "evidence-package.json"
+    evidence_path.write_text(json.dumps(evidence_package), encoding="utf-8")
+
+    result = subprocess.run(
+        [sys.executable, "scripts/verify_audit_package.py", str(evidence_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == EXIT_SCHEMA_MISMATCH
+    assert "this verifier is for ORIMUS API Audit Package JSON" in result.stdout
+
+
+def test_api_audit_package_cli_exit_codes_and_help(tmp_path: Path):
+    package_path = tmp_path / "audit-package.json"
+    package = build_api_audit_package([api_audit_event("event-001", 1.0, "allowed")], {})
+    package_path.write_text(json.dumps(package), encoding="utf-8")
+
+    valid = subprocess.run(
+        [sys.executable, "scripts/verify_audit_package.py", str(package_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    help_result = subprocess.run(
+        [sys.executable, "scripts/verify_audit_package.py", "--help"],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    package["export_hash"] = "bad"
+    package_path.write_text(json.dumps(package), encoding="utf-8")
+    invalid = subprocess.run(
+        [sys.executable, "scripts/verify_audit_package.py", str(package_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    bad_json_path = tmp_path / "bad.json"
+    bad_json_path.write_text("{", encoding="utf-8")
+    unreadable = subprocess.run(
+        [sys.executable, "scripts/verify_audit_package.py", str(bad_json_path)],
+        cwd=Path(__file__).resolve().parents[1],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert valid.returncode == EXIT_VALID
+    assert "VALID: ORIMUS API audit package verified" in valid.stdout
+    assert help_result.returncode == EXIT_VALID
+    assert "API Audit Package" in help_result.stdout
+    assert "not a mission Evidence Package" in help_result.stdout
+    assert invalid.returncode == EXIT_HASH_MISMATCH
+    assert unreadable.returncode == EXIT_SCHEMA_MISMATCH
 
 
 def test_backend_audit_store_public_write_surface_is_append_only():
@@ -1533,6 +1706,22 @@ operators:
 """,
         encoding="utf-8",
     )
+
+
+def api_audit_event(event_id: str, created_at_sec: float, decision: str) -> dict:
+    return {
+        "id": event_id,
+        "created_at_sec": created_at_sec,
+        "event_type": "mission_command",
+        "operator_id": "operator-demo",
+        "decision": decision,
+        "mission_id": "demo_forward_stop",
+        "command_type": "start",
+        "reason": "operator_policy",
+        "request_path": "/missions/demo_forward_stop/start",
+        "source_ip": "127.0.0.1",
+        "retention_class": "standard",
+    }
 
 
 def run_verify_project_fake(pattern: str, *args: str) -> subprocess.CompletedProcess:

@@ -421,6 +421,8 @@ Status: Accepted
 Decision:
 API Audit should first ship as dashboard list and filter browsing. JSON export and verifier support for backend API audit events are explicitly deferred to a future ticket.
 
+Superseded by Decision 052, which adds API Audit Package export and verification.
+
 Reason:
 Mission History already has filter, drilldown, export, and verifier workflows. Backend API Audit will eventually need similar review parity, but list and filter browsing is the correct scope for the current operator-dashboard step.
 
@@ -523,6 +525,16 @@ The dashboard should group existing operator surfaces into URL-addressable tabs 
 
 Reason:
 The dashboard now contains enough operational, audit, replay, evidence, and readiness surfaces that a single dense grid is harder to scan. URL-addressable tabs preserve shareable operator context while keeping every existing action reachable in equal-or-fewer clicks.
+
+### 052 - Add API Audit Package Export And Verifier
+
+Status: Accepted
+
+Decision:
+Backend authorization audit events should be exportable as JSON ORIMUS API Audit Packages with schema version `1.0`, export-level SHA-256 hashing, and a dedicated verifier.
+
+Reason:
+Mission reports already support export and verification. Backend authorization events need the same chain-of-custody discipline, but as a separate schema family from mission Evidence Packages because they answer a different audit question: who attempted which protected API call and what decision did the backend make.
 
 ## Pending Decisions
 

@@ -361,6 +361,26 @@ Status codes:
 
 - `200`: audit events listed.
 
+### `GET /audit/events/export`
+
+Purpose: export filtered backend authorization audit events as an ORIMUS API Audit Package JSON file.
+
+Policy: `none` for current development dashboard export.
+
+Query params:
+
+- `operator_id`
+- `decision`: `allowed` or `denied`
+- `event_type`
+- `date_from`: Unix seconds
+- `date_to`: Unix seconds
+
+Response: JSON API Audit Package Schema v1.0 with export-level SHA-256 hash.
+
+Status codes:
+
+- `200`: audit package returned.
+
 ## Deferred / Not Yet Stable
 
 These contract areas are intentionally marked as likely to evolve:
@@ -372,5 +392,4 @@ These contract areas are intentionally marked as likely to evolve:
 - Artifact `artifact_type`, `source`, and `metadata_json`: deliberately free-form until the CTO reviews real payload artifact taxonomy.
 - Mission YAML step fields for robot movement: current `walk_velocity` parameters support the simulation path. Real robot command payloads may change if the platform adapter introduces richer command contracts.
 - Mission command bridge responses: current responses mirror the ROS mission API bridge. They may be normalized later if multiple platform adapters require a stricter backend envelope.
-- API Audit export/verifier: browsing exists now. JSON export and verifier parity with mission evidence packages is explicitly deferred.
 - Authentication: `X-ORIMUS-Operator` is development-mode attribution only. Production auth is deferred.

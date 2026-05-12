@@ -343,9 +343,12 @@
         <section class="panel api-audit-panel">
           <div class="panel-header">
             <h2>API Audit</h2>
-            <button id="audit-refresh-button" class="icon-button" type="button" aria-label="Refresh API audit events">
-              <span aria-hidden="true">R</span>
-            </button>
+            <div class="panel-actions">
+              <button id="audit-export-json" class="filter-clear" type="button">Export JSON</button>
+              <button id="audit-refresh-button" class="icon-button" type="button" aria-label="Refresh API audit events">
+                <span aria-hidden="true">R</span>
+              </button>
+            </div>
           </div>
           <div id="audit-status" class="report-status">No API audit events loaded</div>
           <div class="audit-filters" aria-label="API audit filters">

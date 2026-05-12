@@ -19,6 +19,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Evidence Package Verification](docs/evidence_package_verification.md)
 - [Evidence Bundle Schema v1.0](docs/evidence_bundle_schema_v1.md)
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
+- [API Audit Package Schema v1.0](docs/api_audit_package_schema_v1.md)
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Scenario Test Harness](docs/scenario_test_harness.md)
@@ -134,6 +135,7 @@ Current endpoints:
 - `POST /missions/{mission_id}/cancel`
 - `POST /missions/{mission_id}/reset`
 - `GET /audit/events`
+- `GET /audit/events/export`
 - `GET /artifacts`
 - `GET /artifacts/{artifact_id}`
 - `GET /artifacts/{artifact_id}/download`
@@ -188,6 +190,7 @@ Selected reports can be exported as JSON evidence packages or ZIP evidence bundl
 Evidence packages can be verified with `backend/scripts/verify_evidence_package.py`.
 Evidence bundles can be verified with `backend/scripts/verify_evidence_bundle.py`.
 The API Audit panel filters backend authorization events by operator, decision, event type, and date range, with denied attempts visually highlighted for review.
+The API Audit panel can export filtered authorization events as an ORIMUS API Audit Package JSON file.
 The Mission Replay panel can play, scrub, speed up, and URL-address a selected report's chronological event stream.
 The dashboard header keeps a persistent readiness indicator and polls backend readiness automatically.
 

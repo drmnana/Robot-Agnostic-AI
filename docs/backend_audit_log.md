@@ -97,9 +97,19 @@ The panel supports operator, decision, event type, and date filters. Denied atte
 
 ## Deferred Export And Verification
 
-API Audit export and verifier support are deferred.
+API Audit export and verifier support are available through:
 
-Mission History already supports filter, drilldown, JSON export, and verifier workflows. API Audit will eventually need similar review parity, but the current scope is dashboard browsing and filtering.
+```text
+GET /audit/events/export
+```
+
+The export returns an ORIMUS API Audit Package JSON document. It uses a separate schema family from mission Evidence Packages.
+
+Verify it with:
+
+```powershell
+docker compose run --rm backend python backend/scripts/verify_audit_package.py path/to/audit-package.json
+```
 
 ## Scope
 

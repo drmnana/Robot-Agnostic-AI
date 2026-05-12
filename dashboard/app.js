@@ -92,6 +92,7 @@ const elements = {
   replaySlider: document.querySelector("#replay-slider"),
   replayFrame: document.querySelector("#replay-frame"),
   auditRefreshButton: document.querySelector("#audit-refresh-button"),
+  auditExportJson: document.querySelector("#audit-export-json"),
   auditStatus: document.querySelector("#audit-status"),
   auditList: document.querySelector("#audit-list"),
   auditFilterOperator: document.querySelector("#audit-filter-operator"),
@@ -114,6 +115,7 @@ elements.refreshButton.addEventListener("click", () => refreshAll());
 elements.reportRefreshButton.addEventListener("click", () => refreshLatestReport());
 elements.readinessRefreshButton.addEventListener("click", () => refreshReadiness({ fresh: true }));
 elements.auditRefreshButton.addEventListener("click", () => refreshAuditEvents());
+elements.auditExportJson.addEventListener("click", () => exportAuditEvents());
 elements.reportCopyHash.addEventListener("click", () => copyReportHash());
 elements.reportExportJson.addEventListener("click", () => exportSelectedReport());
 elements.reportExportBundle.addEventListener("click", () => exportSelectedReportBundle());
@@ -325,6 +327,11 @@ async function refreshAuditEvents() {
 }
 
 function buildAuditListUrl() {
+  const query = buildAuditQueryString();
+  return query ? `/audit/events?${query}` : "/audit/events";
+}
+
+function buildAuditQueryString() {
   const params = new URLSearchParams();
   addParam(params, "operator_id", elements.auditFilterOperator.value);
   addParam(params, "decision", elements.auditFilterDecision.value);
@@ -332,8 +339,7 @@ function buildAuditListUrl() {
   addDateParam(params, "date_from", elements.auditFilterDateFrom.value, false);
   addDateParam(params, "date_to", elements.auditFilterDateTo.value, true);
 
-  const query = params.toString();
-  return query ? `/audit/events?${query}` : "/audit/events";
+  return params.toString();
 }
 
 function clearAuditFilters() {
@@ -343,6 +349,11 @@ function clearAuditFilters() {
   elements.auditFilterDateFrom.value = "";
   elements.auditFilterDateTo.value = "";
   refreshAuditEvents();
+}
+
+function exportAuditEvents() {
+  const query = buildAuditQueryString();
+  window.location.href = query ? `/audit/events/export?${query}` : "/audit/events/export";
 }
 
 function tabFromUrl() {

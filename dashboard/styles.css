@@ -186,6 +186,14 @@ h3 {
   border-bottom: 1px solid var(--line);
 }
 
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .mission-panel {
   grid-row: span 3;
 }

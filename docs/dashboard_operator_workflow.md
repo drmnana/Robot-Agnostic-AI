@@ -37,6 +37,7 @@ This map records the pre-reorganization dashboard surface and where each item no
 | Commands / Safety / Perception / Payload detail panels | Mission History | one tab click or `?tab=history` |
 | API Audit filters | API Audit | one tab click or `?tab=audit` |
 | API Audit event list | API Audit | one tab click or `?tab=audit` |
+| API Audit JSON export | API Audit | one tab click or `?tab=audit` |
 | Readiness detail panel | System Readiness | one tab click or `?tab=readiness` |
 | Manual readiness refresh | System Readiness | one tab click or `?tab=readiness` |
 

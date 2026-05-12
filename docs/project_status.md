@@ -71,6 +71,8 @@ Do not finalize these without CTO guidance:
 - Operator-to-API command policy.
 - Backend API audit log.
 - API Audit dashboard panel.
+- API Audit Package Schema v1.0.
+- API Audit export and verifier.
 - Mission History panel.
 - Report filters.
 - Report timeline.
@@ -115,11 +117,11 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 
 ## Work We Can Do Before CTO Review
 
-1. Add API Audit export and verifier parity.
-2. Add PDF report export.
+1. Add PDF report export.
+2. Add severity field on events with dashboard color-coding.
 
 ## Recommended Next Step
 
-Create an **API Audit Export And Verifier** ticket.
+Create a **PDF Report Export** ticket.
 
-This will close the known parity gap between mission evidence exports and backend authorization audit exports while staying away from CTO-deferred autonomy and hardware contracts.
+This will add a human-readable report sibling to the existing JSON evidence package without changing the underlying audit data model.
