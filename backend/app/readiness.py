@@ -6,6 +6,7 @@ from typing import Callable
 
 import httpx
 
+from .event_severity import severity_for_readiness
 from .mission_schema import validate_mission_directory
 from .operator_policy import read_operator_policy
 from .settings import Settings
@@ -19,14 +20,15 @@ CheckStatus = str
 class ReadinessCheck:
     name: str
     status: CheckStatus
-    severity: str
+    requirement: str
     message: str
 
     def as_dict(self) -> dict:
         return {
             "name": self.name,
             "status": self.status,
-            "severity": self.severity,
+            "requirement": self.requirement,
+            "severity": severity_for_readiness(self.status, self.requirement).value,
             "message": self.message,
         }
 
@@ -87,7 +89,7 @@ def run_cheap_checks(settings: Settings) -> list[ReadinessCheck]:
         ReadinessCheck(
             name="backend_process",
             status="ready",
-            severity="required",
+            requirement="required",
             message="Backend process is responsive.",
         ),
         check_path_exists("mission_config_dir", settings.mission_config_dir),
@@ -215,7 +217,7 @@ def check_ros_bridge(bridge_url: str) -> ReadinessCheck:
 
 
 def overall_status(checks: list[ReadinessCheck]) -> str:
-    if any(check.status == "not_ready" and check.severity == "required" for check in checks):
+    if any(check.status == "not_ready" and check.requirement == "required" for check in checks):
         return "not_ready"
     if any(check.status != "ready" for check in checks):
         return "degraded"

@@ -80,6 +80,7 @@ Do not finalize these without CTO guidance:
 - Mission replay viewer.
 - Backend liveness and readiness endpoints.
 - Persistent dashboard readiness indicator.
+- Normalized event severity contract and dashboard labels.
 - Backend API contract documentation.
 - Committed OpenAPI artifact with drift test.
 - CI-ready local verification command.
@@ -118,7 +119,7 @@ See [Current Architecture Snapshot](current_architecture_snapshot.md) for detail
 ## Work We Can Do Before CTO Review
 
 1. Add PDF report export.
-2. Add severity field on events with dashboard color-coding.
+2. Add WebSocket or SSE live event streaming.
 
 ## Recommended Next Step
 

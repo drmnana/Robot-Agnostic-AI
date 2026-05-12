@@ -20,6 +20,7 @@ The project has a working simulation-first vertical slice with mission execution
 - [Evidence Bundle Schema v1.0](docs/evidence_bundle_schema_v1.md)
 - [Evidence Artifact Registry](docs/evidence_artifact_registry.md)
 - [API Audit Package Schema v1.0](docs/api_audit_package_schema_v1.md)
+- [Event Severity Semantics](docs/event_severity_semantics.md)
 - [Mission Replay Viewer](docs/mission_replay_viewer.md)
 - [Simulation Scenario Library](docs/simulation_scenario_library.md)
 - [Scenario Test Harness](docs/scenario_test_harness.md)

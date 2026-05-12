@@ -1,6 +1,14 @@
 import json
 from typing import Any
 
+from .event_severity import (
+    severity_for_mission_event,
+    severity_for_payload_result,
+    severity_for_perception_event,
+    severity_for_robot_command,
+    severity_for_safety_event,
+)
+
 
 def build_replay_frames(
     report: dict,
@@ -36,6 +44,7 @@ def build_all_frames(report: dict) -> list[dict]:
                 artifact_url=None,
                 artifact_hash=None,
                 source_id=event.get("event_id"),
+                severity=severity_for_mission_event(event).value,
             )
         )
 
@@ -51,6 +60,7 @@ def build_all_frames(report: dict) -> list[dict]:
                 artifact_url=None,
                 artifact_hash=None,
                 source_id=command.get("command_id"),
+                severity=severity_for_robot_command(command).value,
             )
         )
 
@@ -66,6 +76,7 @@ def build_all_frames(report: dict) -> list[dict]:
                 artifact_url=None,
                 artifact_hash=None,
                 source_id=event.get("event_id"),
+                severity=severity_for_safety_event(event).value,
             )
         )
 
@@ -81,6 +92,7 @@ def build_all_frames(report: dict) -> list[dict]:
                 artifact_url=event.get("evidence_artifact_url") or None,
                 artifact_hash=event.get("evidence_hash") or None,
                 source_id=event.get("event_id"),
+                severity=severity_for_perception_event(event).value,
             )
         )
 
@@ -96,6 +108,7 @@ def build_all_frames(report: dict) -> list[dict]:
                 artifact_url=None,
                 artifact_hash=None,
                 source_id=result.get("result_id"),
+                severity=severity_for_payload_result(result).value,
             )
         )
 
@@ -113,6 +126,7 @@ def base_frame(
     artifact_url: str | None,
     artifact_hash: str | None,
     source_id: str | None,
+    severity: str,
 ) -> dict:
     return {
         "frame_index": 0,
@@ -125,6 +139,7 @@ def base_frame(
         "artifact_url": artifact_url,
         "artifact_hash": artifact_hash,
         "source_id": source_id or "",
+        "severity": severity,
     }
 
 

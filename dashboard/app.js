@@ -446,7 +446,7 @@ function renderRuntime() {
     ? `${perception.event_type} from ${perception.source} (${formatRatioPercent(perception.confidence)})`
     : "No data";
   elements.safetyEvent.textContent = safety
-    ? `${safety.severity}: ${safety.message}`
+    ? `${severitySymbol(safety.severity)} ${safety.severity}: ${safety.message}`
     : "No data";
   renderEventHistory(events);
 }
@@ -463,9 +463,10 @@ function renderEventHistory(events) {
   elements.eventHistory.replaceChildren(
     ...recentEvents.map((event) => {
       const item = document.createElement("li");
-      item.className = `history-item ${event.category ?? "event"}`;
+      const severity = normalizedSeverity(event.severity);
+      item.className = `history-item ${event.category ?? "event"} severity-${severity}`;
       item.innerHTML = `
-        <span class="history-meta">${escapeHtml(event.category ?? "event")} - ${formatStamp(event.stamp)}</span>
+        <span class="history-meta">${severityBadge(severity)} ${escapeHtml(event.category ?? "event")} - ${formatStamp(event.stamp)}</span>
         <strong>${escapeHtml(event.event_type ?? event.rule ?? "event")}</strong>
         <span>${escapeHtml(event.message ?? "")}</span>
       `;
@@ -492,9 +493,10 @@ function renderReadiness() {
   elements.readinessList.replaceChildren(
     ...problemChecks.map((check) => {
       const item = document.createElement("li");
-      item.className = `readiness-item ${readinessStatusClass(check.status)}`;
+      const severity = normalizedSeverity(check.severity);
+      item.className = `readiness-item severity-${severity}`;
       item.innerHTML = `
-        <span class="history-meta">${escapeHtml(check.severity)} - ${escapeHtml(check.status)}</span>
+        <span class="history-meta">${severityBadge(severity)} ${escapeHtml(check.requirement ?? "check")} - ${escapeHtml(check.status)}</span>
         <strong>${escapeHtml(check.name)}</strong>
         <span>${escapeHtml(check.message)}</span>
       `;
@@ -641,10 +643,11 @@ function setReplayFrame(index, updateUrl) {
 
   state.replayIndex = clamp(Math.round(index), 0, state.replayFrames.length - 1);
   const frame = state.replayFrames[state.replayIndex];
+  const severity = normalizedSeverity(frame.severity);
   elements.replaySlider.value = String(state.replayIndex);
-  elements.replayFrame.className = `replay-frame ${frame.category}`;
+  elements.replayFrame.className = `replay-frame ${frame.category} severity-${severity}`;
   elements.replayFrame.innerHTML = `
-    <span class="history-meta">Frame ${frame.frame_index + 1} / ${state.replayFrames.length} - ${escapeHtml(frame.category)} - ${formatAuditTime(frame.timestamp_sec)}</span>
+    <span class="history-meta">${severityBadge(severity)} Frame ${frame.frame_index + 1} / ${state.replayFrames.length} - ${escapeHtml(frame.category)} - ${formatAuditTime(frame.timestamp_sec)}</span>
     <strong>${escapeHtml(frame.title)}</strong>
     <span>${escapeHtml(frame.message)}</span>
     ${frame.operator_id ? `<span class="history-detail">operator ${escapeHtml(frame.operator_id)}</span>` : ""}
@@ -748,10 +751,11 @@ function renderAuditEvents() {
     ...events.slice(0, 20).map((event) => {
       const item = document.createElement("article");
       const decision = event.decision === "denied" ? "denied" : "allowed";
-      item.className = `audit-card ${decision}`;
+      const severity = normalizedSeverity(event.severity);
+      item.className = `audit-card ${decision} severity-${severity}`;
       item.innerHTML = `
         <div class="audit-card-main">
-          <span class="decision-pill ${decision}">${decision === "denied" ? "! denied" : "allowed"}</span>
+          <span class="decision-pill ${decision}">${severityBadge(severity)} ${decision}</span>
           <strong>${escapeHtml(event.command_type ?? event.event_type ?? "api_event")}</strong>
         </div>
         <span class="history-meta">${escapeHtml(formatAuditTime(event.created_at_sec))}</span>
@@ -776,9 +780,10 @@ function renderAuditTimeline(report) {
   elements.reportTimeline.replaceChildren(
     ...entries.map((entry) => {
       const item = document.createElement("li");
-      item.className = `history-item ${entry.category}`;
+      const severity = normalizedSeverity(entry.severity);
+      item.className = `history-item ${entry.category} severity-${severity}`;
       item.innerHTML = `
-        <span class="history-meta">${escapeHtml(entry.category)} - ${formatStamp(entry.stamp)}</span>
+        <span class="history-meta">${severityBadge(severity)} ${escapeHtml(entry.category)} - ${formatStamp(entry.stamp)}</span>
         <strong>${escapeHtml(entry.title)}</strong>
         <span>${escapeHtml(entry.message)}</span>
         ${entry.meta ? `<span class="history-detail">${escapeHtml(entry.meta)}</span>` : ""}
@@ -797,6 +802,7 @@ function buildAuditTimeline(report) {
     entries.push({
       stamp: event.stamp,
       category: "mission",
+      severity: severityForMissionEntry(event),
       title: event.event_type ?? "mission_event",
       message: event.message ?? "",
       meta: [event.step_name, event.target, `operator ${details.operator_id ?? "anonymous"}`]
@@ -810,6 +816,7 @@ function buildAuditTimeline(report) {
     entries.push({
       stamp: command.stamp,
       category: "command",
+      severity: verdict?.severity ?? "info",
       title: `${command.command_type ?? "command"} ${command.topic === "robot/command" ? "approved" : "requested"}`,
       message: verdict?.label ?? "No safety verdict recorded",
       meta: [command.command_id, `operator ${command.operator_id ?? operatorFromDetails(command.details_json)}`]
@@ -822,6 +829,7 @@ function buildAuditTimeline(report) {
     entries.push({
       stamp: event.stamp,
       category: "safety",
+      severity: severityForSafetyEvent(event),
       title: event.rule ?? "safety_event",
       message: event.message ?? "",
       meta: [
@@ -836,6 +844,7 @@ function buildAuditTimeline(report) {
     entries.push({
       stamp: event.stamp,
       category: "perception",
+      severity: severityForPerceptionEvent(event),
       title: event.event_type ?? "perception_event",
       message: `${event.source ?? "sensor"} confidence ${formatRatioPercent(event.confidence)}`,
       meta: artifact,
@@ -846,6 +855,7 @@ function buildAuditTimeline(report) {
     entries.push({
       stamp: result.stamp,
       category: "payload",
+      severity: severityForPayloadResult(result),
       title: result.result_type ?? "payload_result",
       message: result.summary ?? "",
       meta: `${result.payload_id ?? "payload"} confidence ${formatRatioPercent(result.confidence)}`,
@@ -862,6 +872,7 @@ function renderEvidencePanels(report) {
     message: commandVerdicts.get(command.command_id)?.label ?? "No safety verdict recorded",
     meta: [command.command_id ?? "No command id", `operator ${command.operator_id ?? operatorFromDetails(command.details_json)}`].join(" - "),
     category: "command",
+    severity: commandVerdicts.get(command.command_id)?.severity ?? "info",
   }));
   const safety = (report?.safety_events ?? []).map((event) => ({
     title: event.rule ?? "safety_event",
@@ -871,6 +882,7 @@ function renderEvidencePanels(report) {
       `operator ${event.operator_id ?? "anonymous"}`,
     ].join(" - "),
     category: "safety",
+    severity: severityForSafetyEvent(event),
   }));
   const perception = (report?.perception_events ?? []).map((event) => ({
     title: event.event_type ?? "perception_event",
@@ -878,12 +890,14 @@ function renderEvidencePanels(report) {
     meta: `${formatRatioPercent(event.confidence)} confidence - ${evidenceLabel(event)}`,
     metaHtml: `${escapeHtml(formatRatioPercent(event.confidence))} confidence - ${artifactLinkHtml(event)}`,
     category: "perception",
+    severity: severityForPerceptionEvent(event),
   }));
   const payload = (report?.payload_results ?? []).map((result) => ({
     title: result.result_type ?? "payload_result",
     message: result.summary ?? "",
     meta: `${result.payload_id ?? "payload"} - ${formatRatioPercent(result.confidence)} confidence`,
     category: "payload",
+    severity: severityForPayloadResult(result),
   }));
 
   elements.reportCommandCount.textContent = String(commands.length);
@@ -905,8 +919,10 @@ function renderDetailList(element, entries, emptyMessage) {
   element.replaceChildren(
     ...entries.map((entry) => {
       const item = document.createElement("li");
-      item.className = `history-item ${entry.category}`;
+      const severity = normalizedSeverity(entry.severity);
+      item.className = `history-item ${entry.category} severity-${severity}`;
       item.innerHTML = `
+        <span class="history-meta">${severityBadge(severity)}</span>
         <strong>${escapeHtml(entry.title)}</strong>
         <span>${escapeHtml(entry.message)}</span>
         <span class="history-detail">${entry.metaHtml ?? escapeHtml(entry.meta)}</span>
@@ -943,14 +959,19 @@ function buildCommandVerdicts(commands, safetyEvents) {
     const adjusted = verdict.safetyEvents.find((event) => !event.command_blocked);
     if (blocked) {
       verdict.label = `Blocked by ${blocked.rule}: ${blocked.message}`;
+      verdict.severity = "critical";
     } else if (adjusted && verdict.hasApproval) {
       verdict.label = `Approved with safety note ${adjusted.rule}: ${adjusted.message}`;
+      verdict.severity = severityForSafetyEvent(adjusted);
     } else if (verdict.hasApproval) {
       verdict.label = "Approved by safety gate";
+      verdict.severity = "notice";
     } else if (adjusted) {
       verdict.label = `Safety note ${adjusted.rule}: ${adjusted.message}`;
+      verdict.severity = severityForSafetyEvent(adjusted);
     } else {
       verdict.label = "Requested; no approval observed";
+      verdict.severity = "info";
     }
   });
 
@@ -1104,6 +1125,70 @@ function readinessStatusClass(value) {
     return "error";
   }
   return "pending";
+}
+
+function normalizedSeverity(value) {
+  return ["info", "notice", "warning", "critical"].includes(value) ? value : "info";
+}
+
+function severitySymbol(value) {
+  const severity = normalizedSeverity(value);
+  if (severity === "critical") {
+    return "[!]";
+  }
+  if (severity === "warning") {
+    return "[warn]";
+  }
+  if (severity === "notice") {
+    return "[note]";
+  }
+  return "[info]";
+}
+
+function severityBadge(value) {
+  const severity = normalizedSeverity(value);
+  return `<span class="severity-badge severity-${severity}" aria-label="Severity ${severity}">${severitySymbol(severity)} ${escapeHtml(severity)}</span>`;
+}
+
+function severityForMissionEntry(event) {
+  const text = `${event?.event_type ?? ""} ${event?.message ?? ""}`.toLowerCase();
+  if (["failed", "error", "emergency"].some((token) => text.includes(token))) {
+    return "critical";
+  }
+  if (["canceled", "paused", "blocked"].some((token) => text.includes(token))) {
+    return "warning";
+  }
+  if (["started", "running", "completed", "step"].some((token) => text.includes(token))) {
+    return "notice";
+  }
+  return "info";
+}
+
+function severityForSafetyEvent(event) {
+  const raw = String(event?.severity ?? "").toLowerCase();
+  if (event?.command_blocked === true || ["critical", "error", "fatal"].includes(raw)) {
+    return "critical";
+  }
+  if (["warning", "warn", "degraded"].includes(raw)) {
+    return "warning";
+  }
+  return "notice";
+}
+
+function severityForPerceptionEvent(event) {
+  const eventType = String(event?.event_type ?? "").toLowerCase();
+  return ["human", "person", "vehicle", "animal"].some((token) => eventType.includes(token)) ? "warning" : "notice";
+}
+
+function severityForPayloadResult(result) {
+  const text = `${result?.result_type ?? ""} ${result?.summary ?? ""}`.toLowerCase();
+  if (["failed", "error", "hazard"].some((token) => text.includes(token))) {
+    return "critical";
+  }
+  if (["detected", "warning", "anomaly"].some((token) => text.includes(token))) {
+    return "warning";
+  }
+  return "notice";
 }
 
 function formatPercent(value) {

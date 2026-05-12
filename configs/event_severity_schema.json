@@ -1,0 +1,13 @@
+{
+  "$id": "https://orimus.local/schemas/event_severity.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Canonical ORIMUS event severity vocabulary.",
+  "enum": [
+    "info",
+    "notice",
+    "warning",
+    "critical"
+  ],
+  "title": "ORIMUS Event Severity",
+  "type": "string"
+}

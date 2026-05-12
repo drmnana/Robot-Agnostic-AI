@@ -3,6 +3,8 @@ import time
 import uuid
 from pathlib import Path
 
+from .event_severity import severity_for_api_decision
+
 
 class BackendAuditStore:
     """Append-only backend API audit event store."""
@@ -108,7 +110,12 @@ class BackendAuditStore:
                 params,
             ).fetchall()
 
-        return [dict(row) for row in rows]
+        return [self.with_severity(dict(row)) for row in rows]
+
+    @staticmethod
+    def with_severity(event: dict) -> dict:
+        event["severity"] = severity_for_api_decision(event.get("decision")).value
+        return event
 
     def initialize(self) -> None:
         self.database_path.parent.mkdir(parents=True, exist_ok=True)

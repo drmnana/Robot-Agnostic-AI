@@ -28,6 +28,15 @@ from app.evidence_bundle import (
     verify_evidence_bundle,
 )
 from app.evidence_package import hash_evidence_package, hash_mission_report
+from app.event_severity import (
+    EVENT_SEVERITY_VALUES,
+    EventSeverity,
+    event_severity_schema,
+    severity_for_api_decision,
+    severity_for_perception_event,
+    severity_for_readiness,
+    severity_for_safety_event,
+)
 from app.evidence_verifier import (
     EXIT_HASH_MISMATCH,
     EXIT_SCHEMA_MISMATCH,
@@ -84,6 +93,7 @@ def test_readiness_returns_ready_when_dependencies_are_available(tmp_path: Path,
         body = response.json()
         assert body["status"] == "ready"
         assert body["cached"] is False
+        assert all(check["severity"] == "info" for check in body["checks"])
         assert {check["name"] for check in body["checks"]}.issuperset(
             {"backend_process", "mission_yaml_validation", "sqlite_database", "ros_bridge"}
         )
@@ -138,6 +148,7 @@ def test_readiness_reports_required_failures(tmp_path: Path, monkeypatch):
         body = response.json()
         assert body["status"] == "not_ready"
         failed = {check["name"] for check in body["checks"] if check["status"] == "not_ready"}
+        assert {check["severity"] for check in body["checks"] if check["status"] == "not_ready"} == {"critical"}
         assert {
             "mission_yaml_validation",
             "sqlite_database",
@@ -230,6 +241,10 @@ def test_dashboard_artifact_link_markup_is_available():
     assert "highlightLinkedRecord" in text
     assert "setInterval(refreshReadiness, 20000)" in text
     assert "fresh=true" in text
+    assert "severityBadge" in text
+    assert "aria-label=\"Severity" in text
+    assert "severityForSafetyEvent" in text
+    assert "[!]" in text
 
 
 def test_dashboard_tabs_are_url_addressable_and_preserve_surface():
@@ -267,6 +282,26 @@ def test_mission_schema_file_exists_and_matches_model():
     assert json.loads(schema_path.read_text(encoding="utf-8")) == json.loads(
         mission_schema_json()
     )
+
+
+def test_event_severity_schema_file_exists_and_matches_enum():
+    schema_path = Path(__file__).resolve().parents[2] / "configs" / "event_severity_schema.json"
+
+    assert schema_path.exists()
+    assert json.loads(schema_path.read_text(encoding="utf-8")) == event_severity_schema()
+    assert EVENT_SEVERITY_VALUES == ["info", "notice", "warning", "critical"]
+
+
+def test_event_severity_mapping_rules_are_stable():
+    assert severity_for_readiness("ready", "required") == EventSeverity.INFO
+    assert severity_for_readiness("degraded", "optional") == EventSeverity.WARNING
+    assert severity_for_readiness("not_ready", "required") == EventSeverity.CRITICAL
+    assert severity_for_api_decision("allowed") == EventSeverity.INFO
+    assert severity_for_api_decision("denied") == EventSeverity.CRITICAL
+    assert severity_for_safety_event({"command_blocked": True}) == EventSeverity.CRITICAL
+    assert severity_for_safety_event({"severity": "warning"}) == EventSeverity.WARNING
+    assert severity_for_safety_event({"severity": "info"}) == EventSeverity.NOTICE
+    assert severity_for_perception_event({"event_type": "person_detected"}) == EventSeverity.WARNING
 
 
 def test_committed_openapi_spec_matches_live_app():
@@ -622,6 +657,7 @@ def test_allowed_mission_command_is_logged_to_backend_audit(tmp_path: Path, monk
         assert events[0]["command_type"] == "start"
         assert events[0]["reason"] == "operator_policy"
         assert events[0]["retention_class"] == "standard"
+        assert events[0]["severity"] == "info"
         assert events[0]["source_ip"]
     finally:
         settings.report_database_path = original_database_path
@@ -646,6 +682,7 @@ def test_denied_mission_command_is_logged_to_backend_audit(tmp_path: Path, monke
         assert len(events) == 1
         assert events[0]["operator_id"] == "anonymous"
         assert events[0]["decision"] == "denied"
+        assert events[0]["severity"] == "critical"
         assert events[0]["command_type"] == "start"
         assert events[0]["reason"] == "operator_policy"
     finally:
@@ -1032,7 +1069,14 @@ def test_get_runtime_state(monkeypatch):
             "payload": None,
             "perception": None,
             "safety": None,
-            "events": [],
+            "events": [
+                {
+                    "category": "safety",
+                    "severity": "info",
+                    "command_blocked": True,
+                    "message": "blocked",
+                }
+            ],
         }
 
     monkeypatch.setattr(main_module, "get_runtime_resource", fake_get_runtime_resource)
@@ -1042,6 +1086,7 @@ def test_get_runtime_state(monkeypatch):
     assert response.status_code == 200
     assert response.json()["bridge"]["connected"] is True
     assert response.json()["mission"]["state"] == "running"
+    assert response.json()["events"][0]["severity"] == "critical"
     assert calls == ["state"]
 
 
@@ -1069,8 +1114,10 @@ def test_report_replay_returns_sorted_frames_and_cross_references(tmp_path: Path
             frame for frame in frames if frame["category"] == "perception"
         )
         assert safety_frame["command_id"] == "demo_forward_stop_stand_120"
+        assert safety_frame["severity"] == "notice"
         assert perception_frame["artifact_url"] == "/artifacts/artifact-001/download"
         assert perception_frame["artifact_hash"] == "artifact-hash-001"
+        assert perception_frame["severity"] == "warning"
     finally:
         settings.report_database_path = original_database_path
 

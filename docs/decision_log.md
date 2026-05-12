@@ -536,6 +536,16 @@ Backend authorization audit events should be exportable as JSON ORIMUS API Audit
 Reason:
 Mission reports already support export and verification. Backend authorization events need the same chain-of-custody discipline, but as a separate schema family from mission Evidence Packages because they answer a different audit question: who attempted which protected API call and what decision did the backend make.
 
+### 053 - Normalize Operator Event Severity
+
+Status: Accepted
+
+Decision:
+ORIMUS should use one canonical event severity vocabulary: `info`, `notice`, `warning`, and `critical`. Backend runtime, replay, readiness, and API audit surfaces should expose normalized severity, and the dashboard should render severity with both color and text/icon labels.
+
+Reason:
+Operators need to scan live events, readiness, replay, reports, and audit records consistently. A shared severity contract prevents each surface from inventing its own meaning, and non-color labels keep the interface accessible and reviewable.
+
 ## Pending Decisions
 
 - Real robot platform adapter design.

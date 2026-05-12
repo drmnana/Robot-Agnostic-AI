@@ -70,7 +70,7 @@ Query params:
 
 - `fresh`: boolean, optional. When `true`, bypasses the 10-second expensive-check cache.
 
-Response: readiness summary with overall `status`, cache metadata, and per-check records.
+Response: readiness summary with overall `status`, cache metadata, and per-check records. Each check includes `requirement` and normalized event `severity`.
 
 Status codes:
 
@@ -355,7 +355,7 @@ Query params:
 - `date_from`: Unix seconds
 - `date_to`: Unix seconds
 
-Response: `events` array with operator ID, decision, mission ID, command type, request path, optional source IP, reason, retention class, and timestamp.
+Response: `events` array with operator ID, decision, mission ID, command type, request path, optional source IP, reason, retention class, normalized severity, and timestamp.
 
 Status codes:
 

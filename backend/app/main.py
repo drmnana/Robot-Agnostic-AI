@@ -17,6 +17,7 @@ from .audit_package import build_api_audit_package
 from .backend_audit import BackendAuditStore
 from .evidence_bundle import build_evidence_bundle
 from .evidence_package import build_evidence_package
+from .event_severity import annotate_runtime_resource
 from .mission_bridge_client import get_runtime_resource, send_mission_command
 from .operator_policy import is_mission_command_allowed
 from .readiness import build_readiness
@@ -237,7 +238,7 @@ def get_runtime(resource: str) -> dict:
     if resource not in RUNTIME_RESOURCES:
         raise HTTPException(status_code=400, detail="Unsupported runtime resource")
 
-    return get_runtime_resource(settings, resource)
+    return annotate_runtime_resource(resource, get_runtime_resource(settings, resource))
 
 
 @app.get("/reports/latest")
